@@ -64,7 +64,7 @@ Un bref appui dessus permet de faire défiler les modes. La LED verte s'allume �
 
 Un appui long pendant plus de 5 secondes permet de sauter la phase de montée en luminosité. La LED verte clignote lorsque la commande a été prise en compte.
 
-Attention: Le boîtier n'a pas d'horloge. Il gère les bêtement les horaires. A l'allumage, il monte la luminosité pendant 2 heures puis éclaire à 100% pendant 12 heures et baisse ensuite sa luminosité pendant 2 heures.
+**Attention:** Le boîtier n'a pas d'horloge. Il gère les bêtement les horaires. A l'allumage, il monte la luminosité pendant 2 heures puis éclaire à 100% pendant 12 heures et baisse ensuite sa luminosité pendant 2 heures.
 En attendant une horloge dans le boîtier de commande, le meuble doit être allumé par un autre automatisme (Hue par exemple).
 
 ![GitHub Logo](images/boitier_cmd.png)
