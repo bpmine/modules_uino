@@ -12,14 +12,14 @@ C'est ce que réalise le meuble à semis de la photo suivante.
 
 ## Description de l'éclairage souhaité
 
-Pendant la phase de germinaison, il est conseillé d'éclairer avec une teinte composée de 20% de bleu et 80% de rouge.
+Pendant la phase de germinaison et de croissance, il est conseillé d'éclairer avec une teinte composée de 20% de bleu et 80% de rouge.
 La lumière doit être répartie de faàon homogène pour éviter que les pousses prenent une direction particulière ou/et ne mollissent.
 
 Nous avons choisi une durée d'éclairage de 16 heures par jour.
 
 Pour se rapprocher du cycle naturel, il y'a une montée de la luminosité pendant les 2 premières heures et une descente les 2 dernières heures de la journée.
 
-Pendant la deuxième phase de croissance, la lumière est blanche.
+Pendant la deuxième phase de croissance, la lumière est blanche. Mais les avis diverges. Le meuble permet donc de choisir plusieurs modes d'éclairage.
 
 ## Description du meuble
 
@@ -45,13 +45,19 @@ L'interrupteur général permet d'allumer ou d'éteindre le système. Son état 
 
 L'interrupteur de sélection permet de choisir le mode de fonctionnement du système:
 
-- Mode 1: Eteint
-- Mode 2: Haut 80%R/20%B et bas éteint
-- Mode 3: Haut éteint et bas blanc
-- Mode 4: Haut 80%R/20%B et bas blanc
-- Mode 5: Haut et bas blancs
-- Mode 6: Mode de démonstration avec alternance R/G/B
-- Mode 7: Bleu/Blanc/Rouge (pour le fun)
+Mode|Haut|Bas|Luminosité
+-|-|-
+0|Eteint|Eteint|Cycle standard
+1|80%R/20%B|Eteint|Cycle standard
+2|Eteint|80%R/20%B|Cycle standard
+3|80%R/20%B|80%R/20%B|Cycle standard
+4|Blanc|Eteint|Cycle standard
+5|Eteint|Blanc|Cycle standard
+6|Blanc|Blanc|Cycle standard
+7|80%R/20%B|Blanc|Cycle standard
+8|Blanc|80%R/20%B|Cycle standard
+9|Démonstration R/G/B
+10|Bleu/Blanc/Rouge fixe
 
 Un bref appui dessus permet de faire défiler les modes. La LED verte s'allume à chaque fois.
 
