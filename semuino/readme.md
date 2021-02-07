@@ -47,7 +47,7 @@ L'interrupteur général permet d'allumer ou d'éteindre le système. Son état 
 L'interrupteur de sélection permet de choisir le mode de fonctionnement du système:
 
 Mode | Haut | Bas | Luminosité
--- | -- | --
+------ | ------ | ------ | ------
 0 | Eteint | Eteint | Cycle standard
 1 | 80%R/20%B | Eteint | Cycle standard
 2 | Eteint | 80%R/20%B | Cycle standard
@@ -57,8 +57,8 @@ Mode | Haut | Bas | Luminosité
 6 | Blanc | Blanc | Cycle standard
 7 | 80%R/20%B | Blanc | Cycle standard
 8 | Blanc | 80%R/20%B | Cycle standard
-9 | Démonstration R/G/B
-10 | Bleu/Blanc/Rouge fixe
+9 | Démonstration R/G/B | | Maximale
+10 | Bleu/Blanc/Rouge fixe | | Maximale
 
 Un bref appui dessus permet de faire défiler les modes. La LED verte s'allume à chaque fois.
 
@@ -69,8 +69,14 @@ En attendant une horloge dans le boîtier de commande, le meuble doit être allu
 
 ![GitHub Logo](images/boitier_cmd.png)
  
-## Détail technique / schéma et programme
+## Détail technique
+
+### Schéma
 
 ![GitHub Logo](images/schema.png)
 
-    
+### Composants
+
+- Un arduino Nano
+- 5 m de LEDs WS28128 5V / 18W / 60 LEDs/m
+- composants courants...
