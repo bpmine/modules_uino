@@ -22,7 +22,7 @@
 #define COL_GROWING         CRGB(127,0,32)      ///< Couleur de croissance
 #define COL_WHITE           CRGB(127,127,127)   ///< Blanc
 
-#define MAX_MODE  6     ///< Nombre de modes
+#define MAX_MODE  8     ///< Nombre de modes
 int mode=0;             ///< Mode en cours
 
 Stc rtc;
@@ -328,8 +328,22 @@ void loop()
       updatePower();
       break;
     }
-    
     case 2:
+    {
+      setAll(leds_haut,COL_WHITE);
+      clearAll(leds_bas);
+      updatePower();
+      break;
+    }
+    
+    case 3:
+    {
+      clearAll(leds_haut);
+      setAll(leds_bas,COL_GROWING);
+      updatePower();
+      break;
+    }
+    case 4:
     {
       clearAll(leds_haut);
       setAll(leds_bas,COL_WHITE);
@@ -337,21 +351,21 @@ void loop()
       break;
     }
 
-    case 3:
+    case 5:
     {
       setAll(leds_haut,COL_GROWING);
       setAll(leds_bas,COL_WHITE);
       updatePower();
       break;
     }
-    case 4:
+    case 6:
     {
       setAll(leds_haut,COL_WHITE);
       setAll(leds_bas,COL_WHITE);
       updatePower();
       break;
     }
-    case 5: ///< Alternance R G B d'un etage a l'autre (anim pour le fun / demo)
+    case 7: ///< Alternance R G B d'un etage a l'autre (anim pour le fun / demo)
     {
       g_power=POWER_MAX;
       FastLED.setBrightness(g_power);
@@ -385,7 +399,7 @@ void loop()
 
       break;
     }
-    case 6:
+    case 8:
     {
       g_power=POWER_MAX;
       setBBR(leds_bas);
