@@ -10,7 +10,7 @@
 #define POWER_MAX         255
 #define POWER_MIN         10
 
-#define NUM_LEDS          (23*3)  ///< Nombre de LEDs a chaque etage (3 rangées de 23 LEDs)
+#define NUM_LEDS          (23*7)  ///< Nombre de LEDs a chaque etage (3 rangées de 23 LEDs)
 
 #define PIN_DATA_LED_BAS    (7)   ///< Broche etage du bas
 #define PIN_DATA_LED_HAUT   (6)   ///< Broche etage du haut
@@ -81,11 +81,19 @@ void clearAll()
 */
 void setBBR(CRGB *pLeds)
 {
-  for (int i=0;i<NUM_LEDS/3;i++)
+  for (int i=0;i<(23*3);i++)
   {
      pLeds[i] = CRGB(127,0,0);
-     pLeds[i+(NUM_LEDS/3)] = CRGB(127,127,127);
-     pLeds[i+2*(NUM_LEDS/3)] = CRGB(0,0,127);
+  }
+  
+  for (int i=0;i<23;i++)
+  {
+     pLeds[i+(23*3)] = CRGB(127,127,127);
+  }
+
+  for (int i=0;i<(23*3);i++)
+  {
+     pLeds[i+(23*4)] = CRGB(0,0,127);
   }
 }
 
@@ -98,16 +106,16 @@ void setBBR(CRGB *pLeds)
 */
 void animDemarrage(CRGB *pLeds)
 {
-  CRGB cols[]={CRGB(127,0,0),CRGB(127,127,127),CRGB(0,0,127)};
+  CRGB cols[]={CRGB(127,0,0),CRGB(0,127,0),CRGB(0,0,127),CRGB(127,127,127),CRGB(127,0,0),CRGB(0,127,0),CRGB(0,0,127)};
   
-  for (int n=0;n<3;n++)
+  for (int n=0;n<7;n++)
   {
     clearAll(pLeds);
     for (int i=0;i<23;i++)
     {
       pLeds[n*23+i]=cols[n];
       FastLED.show();
-      delay(10);      
+      delay(8);      
     }
   } 
 
