@@ -13,7 +13,7 @@ Description | Mesure éclairage | Puissance électrique
 Eclairage en 80%R / 20%B | 30 lux | 3,53 W
 Eclairage en blanc | 660 lux | 7,38 W
 
-Résultat: La lumière est insuffisante pour les premiers semis. Les plants montent plus vite.
+Résultat: La lumière est insuffisante pour les premiers semis. Les plants montent trop vite.
 
 ## Mesures avec un dispositif horticole du marché
 
@@ -25,7 +25,7 @@ Eclairage Rose/Violet 39 LEDs | 1018 lux | 6,33 W
 Eclairage 39 rouges + 21 bleues | 213 lux | 8,96 W
 Eclairage 21 bleues | 0 lux | 3,847 W
 
-Les 0 lux obtenus avec le bleu sont dus à l'outi de mesure qui visiblement ne prend pas en compte la composante bleue.
+Les 0 lux obtenus avec le bleu sont dus à l'outil de mesure qui visiblement ne prend pas en compte la composante bleue.
 
 ## Mise à jour du dispositif avec plus de LEDs
 
