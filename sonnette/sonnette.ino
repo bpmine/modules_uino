@@ -29,17 +29,34 @@
 
 #define PIN_BUZZER    5   ///< D1
 #define PIN_BOUTON    4   ///< D2
-#define PIN_LED       0   ///< D3
-#define PIN_LED2      2   ///< D4
+#define PIN_LED_RED   0   ///< D3
+#define PIN_LED_GREEN 2   ///< D4
 #define PIN_MOVE      14  ///< D5
 #define PIN_SELECTOR  12  ///< D6
 #define PIN_SILENT    13  ///< D7
+
+//#define NO_SOUND
 
 bool flgMouvement=false;
 bool flgBouton=false;
 bool flgMouvement_prev=false;
 bool flgSelector=false;
 bool flgSilent=false;
+
+bool flgMouvement_front_up=false;
+int iCtrMouvement=0;
+int iCtrSonnette=0;
+
+bool flgAsonne=false;
+bool flgAbouge=false;
+
+long lTick250ms=0;
+bool flgTick250ms=false;
+long lTick500ms=0;
+bool flgTick500ms=false;
+long lTick1s=0;
+bool flgTick1s=false;
+
 
 WiFiClient espClient;
 PubSubClient client(espClient);
@@ -102,12 +119,20 @@ void reconnect()
   }
 }
 
+void sendEvent(char *strEvent)
+{
+  long lTicks=millis();
+    char strMsg[100];
+    sprintf(strMsg,"{\"event\":\"%s\",\"moves\":\"%d\",\"drings\":\"%d\",\"ticks\":\"%ld\"}",strEvent,iCtrMouvement,iCtrSonnette,lTicks);  
+    client.publish("/maison/sonnette/events", strMsg);
+}
+
 void setup() 
 {
   Serial.begin(9600);
 
-  pinMode(PIN_LED, OUTPUT);
-  pinMode(PIN_LED2, OUTPUT);
+  pinMode(PIN_LED_RED, OUTPUT);
+  pinMode(PIN_LED_GREEN, OUTPUT);
   pinMode(PIN_BOUTON, INPUT_PULLUP);  
   pinMode(PIN_MOVE, INPUT); 
   pinMode(PIN_BUZZER, OUTPUT);   
@@ -115,8 +140,8 @@ void setup()
   pinMode(PIN_SELECTOR, INPUT_PULLUP);  
   pinMode(PIN_SILENT, INPUT_PULLUP);  
 
-  digitalWrite(PIN_LED,LOW);
-  digitalWrite(PIN_LED2,LOW);
+  digitalWrite(PIN_LED_RED,LOW);
+  digitalWrite(PIN_LED_GREEN,LOW);
 
   flgMouvement=digitalRead(PIN_MOVE);
   flgMouvement_prev=flgMouvement;
@@ -131,61 +156,162 @@ void setup()
   //rtc.setTime(temps.getSeconds(),temps.getMinutes(),temps.getHours(),temps.getDay(),temps.getMonth(),temps.getYear());
 
   Serial.println(temps.getFormattedTime());
+  sendEvent("boot");
+
+  lTick250ms=millis();
+  lTick500ms=millis();
+  lTick1s=millis();
 }
 
 void shortMelodie()
 {
-  tone(PIN_BUZZER, 440);
-  delay(400);
-  tone(PIN_BUZZER, 440);
+  digitalWrite(PIN_LED_GREEN,HIGH);
+
+  #ifdef NO_SOUND
+    delay(800);
+    return;
+  #endif
+
+  tone(PIN_BUZZER, 1500);
+  delay(100);
+  noTone(PIN_BUZZER);
+  delay(100);
+  tone(PIN_BUZZER, 800);
+  delay(100);
   noTone(PIN_BUZZER);
 }
 
+//int LONG=1000;
+int LONG=200;
+//int SHORT=100;
+int SHORT=100;
+
 void melodie()
 {
-  digitalWrite(PIN_LED,HIGH);
+  digitalWrite(PIN_LED_GREEN,HIGH);
+  
+  #ifdef NO_SOUND
+    delay(3000);
+    return;
+  #endif
+  
+  digitalWrite(PIN_LED_GREEN,HIGH);
   
   tone(PIN_BUZZER, 440);
-  delay(1000);
+  delay(LONG);
   tone(PIN_BUZZER, 349);
-  delay(1000);
+  delay(LONG);
   tone(PIN_BUZZER, 392);
-  delay(1000);
+  delay(LONG);
   tone(PIN_BUZZER, 261);
-  delay(1000);
+  delay(LONG);
   noTone(PIN_BUZZER);
-  delay(100);
+  delay(SHORT);
   tone(PIN_BUZZER, 261);
-  delay(1000);
+  delay(LONG);
   tone(PIN_BUZZER, 392);
-  delay(1000);
+  delay(LONG);
   tone(PIN_BUZZER, 440);
-  delay(1000);
+  delay(LONG);
   tone(PIN_BUZZER, 349);
-  delay(1000);
+  delay(LONG);
   noTone(PIN_BUZZER);  
+}
 
-  digitalWrite(PIN_LED,LOW);
+bool readFiltered(int pin,int state)
+{
+  if (digitalRead(pin)==state)
+  {
+    for (int i=0;i<5;i++)
+    {
+      delay(1);
+      if (digitalRead(pin)!=state)
+        return false;
+    }
+
+    return true;
+  }
+
+  return false;
+}
+
+long getElapsedTimeFrom(long t0)
+{
+  long t=millis();
+  long delta=0;
+  
+  if (t<t0)
+    delta=0xFFFFFFFF-t0+t;
+  else
+    delta=t-t0;
+
+  return delta;
+}
+
+void flgTicks()
+{
+  if (getElapsedTimeFrom(lTick250ms)>=250)
+  {
+    flgTick250ms=!flgTick250ms;
+    lTick250ms=millis();
+  }
+  
+  if (getElapsedTimeFrom(lTick500ms)>=500)
+  {
+    flgTick500ms=!flgTick500ms;
+    lTick500ms=millis();
+  }
+  
+  if (getElapsedTimeFrom(lTick1s)>=1000)
+  {
+    flgTick1s=!flgTick1s;
+    lTick1s=millis();
+  }  
 }
 
 void loop() 
 {
-  /// Lire les entrees
-  flgBouton=(digitalRead(PIN_BOUTON)==0)?true:false;
-  flgMouvement=digitalRead(PIN_MOVE);
-  flgSelector=(digitalRead(PIN_SELECTOR)==0)?true:false;
-  flgSilent=(digitalRead(PIN_SILENT)==0)?true:false;
+  /// Lire les entrees (en filtrant)
+  flgBouton=readFiltered(PIN_BOUTON,LOW);
+  flgMouvement=readFiltered(PIN_MOVE,HIGH);
+  flgSelector=readFiltered(PIN_SELECTOR,LOW);
+  flgSilent=readFiltered(PIN_SILENT,LOW);
 
-  /// Calculs
-  if (flgMouvement==true)
+  /// Detection front montant pour le mouvement
+  if ( (flgMouvement==true) && (flgMouvement_prev==false)  )
+    flgMouvement_front_up=true;
+  else
+    flgMouvement_front_up=false;
+
+  flgTicks();
+  
+  /// Detection mouvement
+  if (flgMouvement_front_up==true)
   {
-    shortMelodie();
+    iCtrMouvement++;
+
+    if (flgSilent==false)
+      shortMelodie();
+
+    sendEvent("move");
+    flgAbouge=true;
   }
 
-  if (flgBouton==true)
+  if ( flgBouton==true )
   {
-    melodie();
-    client.publish("/maison/sonnette/events", "Dring");
+    iCtrSonnette++;
+
+    if (flgSilent==false)
+      melodie();
+    
+    sendEvent("dring");
+    flgAsonne=true;
+  }
+
+  if (flgSelector==true)
+  {
+    flgAsonne=false;
+    flgAbouge=false;
   }
 
   delay(100);
@@ -193,18 +319,32 @@ void loop()
   if (!client.connected()) {
     reconnect();
   }
+  
   if(!client.loop())
   {
     client.connect(mqtt_id,mqtt_login,mqtt_pass);
-    client.publish("/maison/sonnette/event","BOOT");
+    sendEvent("reconnect");
   }
 
-
   /// Ecrire les sorties
-
-  if (flgSilent==false)
-    digitalWrite(PIN_LED2,(flgSelector==true)?HIGH:LOW);
+  if (flgSilent==true)
+    digitalWrite(PIN_LED_RED,flgTick1s);
   else
-    digitalWrite(PIN_LED2,!digitalRead(PIN_LED2));
+    digitalWrite(PIN_LED_RED,LOW);
+  
 
+  if (flgAsonne)
+  {
+    digitalWrite(PIN_LED_GREEN,flgTick250ms);
+  }
+  else if (flgAbouge)
+  {
+    digitalWrite(PIN_LED_GREEN,flgTick1s);    
+  }
+  else
+  {
+    digitalWrite(PIN_LED_GREEN,LOW);        
+  }
+
+  flgMouvement_prev=flgMouvement;
 }
