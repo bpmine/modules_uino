@@ -44,6 +44,8 @@ bool flgSelector=false;
 bool flgSilent=false;
 
 bool flgMouvement_front_up=false;
+long lTickStartMove=0;
+bool flgMouvementEnCours=false;
 int iCtrMouvement=0;
 int iCtrSonnette=0;
 
@@ -289,12 +291,41 @@ void loop()
   if (flgMouvement_front_up==true)
   {
     iCtrMouvement++;
-
-    if (flgSilent==false)
-      shortMelodie();
+    
+    lTickStartMove=millis();
+    flgMouvementEnCours=true;
 
     sendEvent("move");
-    flgAbouge=true;
+  }
+
+  if (flgMouvementEnCours==true)
+  {
+    if (flgMouvement==true)
+    {
+      if (getElapsedTimeFrom(lTickStartMove)>10200)
+      {
+        if (flgSilent==false)
+          shortMelodie();
+        flgAbouge=true;
+
+        flgMouvementEnCours=false;
+
+        sendEvent("move_dring");
+      }
+    }    
+    else
+    {
+      Serial.print("Move detected: ");
+      Serial.print(getElapsedTimeFrom(lTickStartMove));
+      Serial.println(" ms");
+      
+      flgMouvementEnCours=false;
+
+      char strMsg[50];
+      long lDelta=getElapsedTimeFrom(lTickStartMove);
+      sprintf(strMsg,"Fin move: %ld",lDelta);
+      client.publish("/maison/sonnette/logs", strMsg);
+    }
   }
 
   if ( flgBouton==true )
