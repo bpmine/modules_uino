@@ -102,74 +102,6 @@ void setup_wifi()
   }
 }
 
-// This functions reconnects your ESP8266 to your MQTT broker
-// Change the function below if you want to subscribe to more topics with your ESP8266 
-void reconnect() 
-{
-  // Loop until we're reconnected
-  if (!client.connected())
-  {
-    Serial.print("Attempting MQTT connection...");
-    
-    // Attempt to connect
-    if (client.connect(mqtt_id,mqtt_login,mqtt_pass)) 
-    {
-      Serial.println("connected");  
-    } 
-    else
-    {
-      Serial.print("failed, rc=");
-      Serial.print(client.state());
-      Serial.println(" try again in 5 seconds");
-    }
-  }
-}
-
-void sendEvent(char *strEvent)
-{
-  long lTicks=millis();
-  char strMsg[100];
-  sprintf(strMsg,"{\"event\":\"%s\",\"moves\":\"%d\",\"drings\":\"%d\",\"ticks\":\"%ld\"}",strEvent,iCtrMouvement,iCtrSonnette,lTicks);  
-  client.publish("/maison/sonnette/events", strMsg,true);
-}
-
-void setup() 
-{
-  Serial.begin(9600);
-
-  pinMode(PIN_LED_RED, OUTPUT);
-  pinMode(PIN_LED_GREEN, OUTPUT);
-  pinMode(PIN_BOUTON, INPUT_PULLUP);  
-  pinMode(PIN_MOVE, INPUT); 
-  pinMode(PIN_BUZZER, OUTPUT);   
-
-  pinMode(PIN_SELECTOR, INPUT_PULLUP);  
-  pinMode(PIN_SILENT, INPUT_PULLUP);  
-
-  digitalWrite(PIN_LED_RED,LOW);
-  digitalWrite(PIN_LED_GREEN,LOW);
-
-  flgMouvement=digitalRead(PIN_MOVE);
-  flgMouvement_prev=flgMouvement;
-
-  setup_wifi();
-  client.setServer(mqtt_server, 1883);
-  //client.setCallback(callback);
-
-  //temps.begin();
-  //temps.forceUpdate();
-  //rtc.setTime(temps.getEpochTime());
-  //rtc.setTime(temps.getSeconds(),temps.getMinutes(),temps.getHours(),temps.getDay(),temps.getMonth(),temps.getYear());
-
-  //Serial.println(temps.getFormattedTime());
-  sendEvent("boot");
-
-  lTick250ms=millis();
-  lTick500ms=millis();
-  lTick1s=millis();
-  lTick5s=millis();
-}
-
 void shortMelodie()
 {
   digitalWrite(PIN_LED_GREEN,HIGH);
@@ -292,6 +224,91 @@ void flgTicks()
   flgTick5s_prev=flgTick5s;
 }
 
+// This functions reconnects your ESP8266 to your MQTT broker
+// Change the function below if you want to subscribe to more topics with your ESP8266 
+void reconnect() 
+{
+  // Try to reconnected
+  if (!client.connected())
+  {
+    Serial.print("Attempting MQTT connection...");
+    
+    // Attempt to connect
+    //if (client.connect(mqtt_id,mqtt_login,mqtt_pass)) 
+    if (client.connect(mqtt_id,mqtt_login,mqtt_pass, "",0,false,"",true))
+    {
+      Serial.println("connected");  
+    } 
+    else
+    {
+      Serial.print("failed, rc=");
+      Serial.print(client.state());
+      Serial.println(" try again in 5 seconds");
+    }
+  }
+}
+
+void sendEvent(char *strEvent)
+{
+  long lTicks=millis();
+  char strMsg[100];
+  sprintf(strMsg,"{\"event\":\"%s\",\"moves\":\"%d\",\"drings\":\"%d\",\"ticks\":\"%ld\"}",strEvent,iCtrMouvement,iCtrSonnette,lTicks);  
+
+
+  if (!client.connected())
+    reconnect();
+
+  if (client.connected())
+  {
+    client.publish("/maison/sonnette/events", strMsg,true);
+    client.disconnect();
+    flgPasDeReseau=false;
+  }
+  else
+  {
+    flgPasDeReseau=true;
+  }
+}
+
+void setup() 
+{
+  Serial.begin(9600);
+
+  pinMode(PIN_LED_RED, OUTPUT);
+  pinMode(PIN_LED_GREEN, OUTPUT);
+  pinMode(PIN_BOUTON, INPUT_PULLUP);  
+  pinMode(PIN_MOVE, INPUT); 
+  pinMode(PIN_BUZZER, OUTPUT);   
+
+  pinMode(PIN_SELECTOR, INPUT_PULLUP);  
+  pinMode(PIN_SILENT, INPUT_PULLUP);  
+
+  digitalWrite(PIN_LED_RED,LOW);
+  digitalWrite(PIN_LED_GREEN,LOW);
+
+  flgMouvement=digitalRead(PIN_MOVE);
+  flgMouvement_prev=flgMouvement;
+
+  setup_wifi();
+  client.setServer(mqtt_server, 1883);
+  //client.setCallback(callback);
+
+  //temps.begin();
+  //temps.forceUpdate();
+  //rtc.setTime(temps.getEpochTime());
+  //rtc.setTime(temps.getSeconds(),temps.getMinutes(),temps.getHours(),temps.getDay(),temps.getMonth(),temps.getYear());
+
+  //Serial.println(temps.getFormattedTime());
+  sendEvent("boot");
+
+  lTick250ms=millis();
+  lTick500ms=millis();
+  lTick1s=millis();
+  lTick5s=millis();
+}
+
+
+
 void tick_inside(void)
 {
   if (flgBoutonInside==false)
@@ -309,10 +326,10 @@ void loop()
   flgBoutonInside=false;
   if (flgTick5sUpFront==true)
   {
-    if ( (!client.connected()) && (!client.loop()) ) 
+    if ( (flgPasDeReseau) && (!client.connected()) && (!client.loop()) ) 
     {
-        digitalWrite(PIN_LED_RED,HIGH);
-        digitalWrite(PIN_LED_GREEN,LOW);
+      digitalWrite(PIN_LED_RED,HIGH);
+      digitalWrite(PIN_LED_GREEN,LOW);
       flgPasDeReseau=true;
       reconnect();
       sendEvent("connect");
@@ -322,7 +339,9 @@ void loop()
       flgPasDeReseau=false;        
     }
   }
-  
+
+  client.loop();
+    
   /// ******************* PROCESS ENTREES *********************
   
   /// Lire les entrees (en filtrant)
@@ -330,6 +349,8 @@ void loop()
   flgMouvement=readFiltered(PIN_MOVE,HIGH) || flgMouvementInside;
   flgSelector=readFiltered(PIN_SELECTOR,LOW);
   flgSilent=readFiltered(PIN_SILENT,LOW);
+  flgBoutonInside=false;
+  flgMouvementInside=false;
 
   /// Detection front montant pour le mouvement
   if ( (flgMouvement==true) && (flgMouvement_prev==false)  )
