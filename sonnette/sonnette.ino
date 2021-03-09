@@ -19,7 +19,7 @@
 */
 #include <ESP8266WiFi.h>
 #include <WiFiClient.h>
-#include <PubSubClient.h>
+#include "PubSubClient.h"
 
 #include "credentials.h"
 
@@ -38,6 +38,8 @@ bool flgBouton=false;
 bool flgMouvement_prev=false;
 bool flgSelector=false;
 bool flgSilent=false;
+bool flgMouvementInside=false;
+bool flgBoutonInside=false;
 
 bool flgLedVerte=false;
 bool flgLedRouge=false;
@@ -290,13 +292,42 @@ void flgTicks()
   flgTick5s_prev=flgTick5s;
 }
 
+void tick_inside(void)
+{
+  if (flgBoutonInside==false)
+    flgBoutonInside=readFiltered(PIN_BOUTON,LOW);
+
+  if (flgMouvementInside==false)
+    flgMouvementInside=readFiltered(PIN_MOVE,HIGH);
+}
+
 void loop() 
 {
+  /// ******************* SURVEILLANCE COMM *********************
+
+  flgMouvementInside=false;
+  flgBoutonInside=false;
+  if (flgTick5sUpFront==true)
+  {
+    if ( (!client.connected()) && (!client.loop()) ) 
+    {
+        digitalWrite(PIN_LED_RED,HIGH);
+        digitalWrite(PIN_LED_GREEN,LOW);
+      flgPasDeReseau=true;
+      reconnect();
+      sendEvent("connect");
+    }
+    else
+    {
+      flgPasDeReseau=true;        
+    }
+  }
+  
   /// ******************* PROCESS ENTREES *********************
   
   /// Lire les entrees (en filtrant)
-  flgBouton=readFiltered(PIN_BOUTON,LOW);
-  flgMouvement=readFiltered(PIN_MOVE,HIGH);
+  flgBouton=readFiltered(PIN_BOUTON,LOW) || flgBoutonInside;
+  flgMouvement=readFiltered(PIN_MOVE,HIGH) || flgMouvementInside;
   flgSelector=readFiltered(PIN_SELECTOR,LOW);
   flgSilent=readFiltered(PIN_SILENT,LOW);
 
@@ -372,24 +403,6 @@ void loop()
   }
 
   delay(100);
-
-  /// ******************* SURVEILLANCE COMM *********************
-
-  if (flgTick5sUpFront==true)
-  {
-    if ( (!client.connected()) && (!client.loop()) ) 
-    {
-        digitalWrite(PIN_LED_RED,HIGH);
-        digitalWrite(PIN_LED_GREEN,LOW);
-      flgPasDeReseau=true;
-      reconnect();
-      sendEvent("connect");
-    }
-    else
-    {
-      flgPasDeReseau=true;        
-    }
-  }
 
   /// ******************* DETERMINER ETAT DES LEDS *********************
 
