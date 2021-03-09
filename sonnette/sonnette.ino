@@ -21,10 +21,6 @@
 #include <WiFiClient.h>
 #include <PubSubClient.h>
 
-//#include <ESP32Time.h>
-#include <NTPClient.h>
-#include <WiFiUdp.h>
-
 #include "credentials.h"
 
 #define PIN_BUZZER    5   ///< D1
@@ -43,6 +39,11 @@ bool flgMouvement_prev=false;
 bool flgSelector=false;
 bool flgSilent=false;
 
+bool flgLedVerte=false;
+bool flgLedRouge=false;
+
+bool flgPasDeReseau=false;
+
 bool flgMouvement_front_up=false;
 long lTickStartMove=0;
 bool flgMouvementEnCours=false;
@@ -58,14 +59,14 @@ long lTick500ms=0;
 bool flgTick500ms=false;
 long lTick1s=0;
 bool flgTick1s=false;
+long lTick5s=0;
+bool flgTick5s=false;
+bool flgTick5s_prev=false;
+bool flgTick5sUpFront=false;
 
 
 WiFiClient espClient;
 PubSubClient client(espClient);
-
-WiFiUDP ntpUDP;
-NTPClient temps(ntpUDP, "fr.pool.ntp.org", 3600, 60000);
-//ESP32Time rtc;
 
 // Don't change the function below. This functions connects your ESP8266 to your router
 void setup_wifi()
@@ -76,13 +77,27 @@ void setup_wifi()
   Serial.print("Connecting to ");
   Serial.println(ssid);
   WiFi.begin(ssid, password);
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
+
+  for (int i=0;i<20;i++)
+  {
+    if (WiFi.status() != WL_CONNECTED) 
+    {
+      delay(500);
+      Serial.print(".");
+    }
   }
-  Serial.println("");
-  Serial.print("WiFi connected - ESP IP address: ");
-  Serial.println(WiFi.localIP());
+
+  if (WiFi.status() == WL_CONNECTED)
+  {
+    Serial.println("");
+    Serial.print("WiFi connected - ESP IP address: ");
+    Serial.println(WiFi.localIP());
+    flgPasDeReseau=false;
+  }
+  else
+  {
+    flgPasDeReseau=true;
+  }
 }
 
 // This functions reconnects your ESP8266 to your MQTT broker
@@ -90,22 +105,11 @@ void setup_wifi()
 void reconnect() 
 {
   // Loop until we're reconnected
-  while (!client.connected())
+  if (!client.connected())
   {
     Serial.print("Attempting MQTT connection...");
     
     // Attempt to connect
-    /*
-     YOU MIGHT NEED TO CHANGE THIS LINE, IF YOU'RE HAVING PROBLEMS WITH MQTT MULTIPLE CONNECTIONS
-     To change the ESP device ID, you will have to give a new name to the ESP8266.
-     Here's how it looks:
-       if (client.connect("ESP8266Client")) {
-     You can do it like this:
-       if (client.connect("ESP1_Office")) {
-     Then, for the other ESP:
-       if (client.connect("ESP2_Garage")) {
-      That should solve your MQTT multiple connections problem
-    */
     if (client.connect(mqtt_id,mqtt_login,mqtt_pass)) 
     {
       Serial.println("connected");  
@@ -115,8 +119,6 @@ void reconnect()
       Serial.print("failed, rc=");
       Serial.print(client.state());
       Serial.println(" try again in 5 seconds");
-      // Wait 5 seconds before retrying
-      delay(5000);
     }
   }
 }
@@ -124,9 +126,9 @@ void reconnect()
 void sendEvent(char *strEvent)
 {
   long lTicks=millis();
-    char strMsg[100];
-    sprintf(strMsg,"{\"event\":\"%s\",\"moves\":\"%d\",\"drings\":\"%d\",\"ticks\":\"%ld\"}",strEvent,iCtrMouvement,iCtrSonnette,lTicks);  
-    client.publish("/maison/sonnette/events", strMsg);
+  char strMsg[100];
+  sprintf(strMsg,"{\"event\":\"%s\",\"moves\":\"%d\",\"drings\":\"%d\",\"ticks\":\"%ld\"}",strEvent,iCtrMouvement,iCtrSonnette,lTicks);  
+  client.publish("/maison/sonnette/events", strMsg);
 }
 
 void setup() 
@@ -152,17 +154,18 @@ void setup()
   client.setServer(mqtt_server, 1883);
   //client.setCallback(callback);
 
-  temps.begin();
-  temps.forceUpdate();
+  //temps.begin();
+  //temps.forceUpdate();
   //rtc.setTime(temps.getEpochTime());
   //rtc.setTime(temps.getSeconds(),temps.getMinutes(),temps.getHours(),temps.getDay(),temps.getMonth(),temps.getYear());
 
-  Serial.println(temps.getFormattedTime());
+  //Serial.println(temps.getFormattedTime());
   sendEvent("boot");
 
   lTick250ms=millis();
   lTick500ms=millis();
   lTick1s=millis();
+  lTick5s=millis();
 }
 
 void shortMelodie()
@@ -269,10 +272,28 @@ void flgTicks()
     flgTick1s=!flgTick1s;
     lTick1s=millis();
   }  
+
+  if (getElapsedTimeFrom(lTick5s)>=5000)
+  {
+    flgTick5s=!flgTick5s;
+    lTick5s=millis();
+  }    
+  
+  if ( (flgTick5s_prev==false) && (flgTick5s==true) )
+  {
+    flgTick5sUpFront=true;
+  }
+  else
+  {
+    flgTick5sUpFront=false;
+  }
+  flgTick5s_prev=flgTick5s;
 }
 
 void loop() 
 {
+  /// ******************* PROCESS ENTREES *********************
+  
   /// Lire les entrees (en filtrant)
   flgBouton=readFiltered(PIN_BOUTON,LOW);
   flgMouvement=readFiltered(PIN_MOVE,HIGH);
@@ -298,6 +319,9 @@ void loop()
     sendEvent("move");
   }
 
+  /// ******************* DETECTION DES EVENEMENTS *********************
+
+  /// Mouvement...
   if (flgMouvementEnCours==true)
   {
     if (flgMouvement==true)
@@ -328,6 +352,7 @@ void loop()
     }
   }
 
+  /// Appui sur le bouton de la sonnette...
   if ( flgBouton==true )
   {
     iCtrSonnette++;
@@ -339,6 +364,7 @@ void loop()
     flgAsonne=true;
   }
 
+  /// Reset des evenements
   if (flgSelector==true)
   {
     flgAsonne=false;
@@ -347,35 +373,58 @@ void loop()
 
   delay(100);
 
-  if (!client.connected()) {
-    reconnect();
-  }
-  
-  if(!client.loop())
+  /// ******************* SURVEILLANCE COMM *********************
+
+  if (flgTick5sUpFront==true)
   {
-    client.connect(mqtt_id,mqtt_login,mqtt_pass);
-    sendEvent("reconnect");
+    if ( (!client.connected()) && (!client.loop()) ) 
+    {
+        digitalWrite(PIN_LED_RED,HIGH);
+        digitalWrite(PIN_LED_GREEN,LOW);
+      flgPasDeReseau=true;
+      reconnect();
+      sendEvent("connect");
+    }
+    else
+    {
+      flgPasDeReseau=true;        
+    }
   }
 
-  /// Ecrire les sorties
-  if (flgSilent==true)
-    digitalWrite(PIN_LED_RED,flgTick1s);
-  else
-    digitalWrite(PIN_LED_RED,LOW);
-  
+  /// ******************* DETERMINER ETAT DES LEDS *********************
 
+  // Si mode silencieux, LED rouge a 1s
+  if (flgSilent==true)
+    flgLedRouge=flgTick1s;
+  else
+    flgLedRouge=false;
+
+  /// Si quelqu'un a sonne, Verte a 500ms
   if (flgAsonne)
   {
-    digitalWrite(PIN_LED_GREEN,flgTick250ms);
+    flgLedVerte=flgTick250ms;
   }
+  /// Si quelqu'un a sonne, Rouge a 250ms
   else if (flgAbouge)
   {
-    digitalWrite(PIN_LED_GREEN,flgTick1s);    
+    flgLedVerte=flgTick1s;    
   }
   else
   {
-    digitalWrite(PIN_LED_GREEN,LOW);        
+    flgLedVerte=false;        
   }
+
+  /// Si pas de reseau, on clignote alternativement Vert/Rouge Pendant 5s puis on affiche l'etat en cours pdt 5s
+  if ( flgPasDeReseau==true )
+  {
+    flgLedRouge=flgTick250ms;
+    flgLedVerte=!flgTick250ms;
+  }
+
+  /// ******************* APPLIQUER ETAT DES LEDS *********************
+
+  digitalWrite(PIN_LED_RED,(flgLedRouge==true)?HIGH:LOW);
+  digitalWrite(PIN_LED_GREEN,(flgLedVerte==true)?HIGH:LOW);
 
   flgMouvement_prev=flgMouvement;
 }
