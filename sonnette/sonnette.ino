@@ -130,7 +130,7 @@ void sendEvent(char *strEvent)
   long lTicks=millis();
   char strMsg[100];
   sprintf(strMsg,"{\"event\":\"%s\",\"moves\":\"%d\",\"drings\":\"%d\",\"ticks\":\"%ld\"}",strEvent,iCtrMouvement,iCtrSonnette,lTicks);  
-  client.publish("/maison/sonnette/events", strMsg);
+  client.publish("/maison/sonnette/events", strMsg,true);
 }
 
 void setup() 
@@ -319,7 +319,7 @@ void loop()
     }
     else
     {
-      flgPasDeReseau=true;        
+      flgPasDeReseau=false;        
     }
   }
   
@@ -379,7 +379,7 @@ void loop()
       char strMsg[50];
       long lDelta=getElapsedTimeFrom(lTickStartMove);
       sprintf(strMsg,"Fin move: %ld",lDelta);
-      client.publish("/maison/sonnette/logs", strMsg);
+      client.publish("/maison/sonnette/logs", strMsg,true);
     }
   }
 
