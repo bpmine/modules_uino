@@ -19,7 +19,7 @@
 */
 #include <ESP8266WiFi.h>
 #include <WiFiClient.h>
-#include "PubSubClient.h"
+#include <ArduinoMqttClient.h>
 
 #include "credentials.h"
 
@@ -38,8 +38,6 @@ bool flgBouton=false;
 bool flgMouvement_prev=false;
 bool flgSelector=false;
 bool flgSilent=false;
-bool flgMouvementInside=false;
-bool flgBoutonInside=false;
 
 bool flgLedVerte=false;
 bool flgLedRouge=false;
@@ -68,7 +66,7 @@ bool flgTick5sUpFront=false;
 
 
 WiFiClient espClient;
-PubSubClient client(espClient);
+MqttClient client(espClient);
 
 // Don't change the function below. This functions connects your ESP8266 to your router
 void setup_wifi()
@@ -224,50 +222,51 @@ void flgTicks()
   flgTick5s_prev=flgTick5s;
 }
 
-// This functions reconnects your ESP8266 to your MQTT broker
-// Change the function below if you want to subscribe to more topics with your ESP8266 
-void reconnect() 
+void tryReconnect()
 {
-  // Try to reconnected
-  if (!client.connected())
+  if ( (flgPasDeReseau==true) && (flgTick5sUpFront==true) )
   {
-    Serial.print("Attempting MQTT connection...");
+    Serial.print("Tentative reconnexion: ");
     
-    // Attempt to connect
-    //if (client.connect(mqtt_id,mqtt_login,mqtt_pass)) 
-    if (client.connect(mqtt_id,mqtt_login,mqtt_pass, "",0,false,"",true))
+    if (!client.connect(mqtt_server,1883))
     {
-      Serial.println("connected");  
-    } 
-    else
-    {
-      Serial.print("failed, rc=");
-      Serial.print(client.state());
-      Serial.println(" try again in 5 seconds");
+      flgPasDeReseau=true;
+      Serial.println("[NOK]");
+      return;
     }
-  }
+
+    client.stop();
+    Serial.println("[OK]");
+
+    sendEvent("Reconnect");
+  }  
 }
 
 void sendEvent(char *strEvent)
 {
+  Serial.print("Send ");
+  Serial.print(strEvent);
+  Serial.print(": ");
+  
   long lTicks=millis();
   char strMsg[100];
   sprintf(strMsg,"{\"event\":\"%s\",\"moves\":\"%d\",\"drings\":\"%d\",\"ticks\":\"%ld\"}",strEvent,iCtrMouvement,iCtrSonnette,lTicks);  
-
-
-  if (!client.connected())
-    reconnect();
-
-  if (client.connected())
+  
+  if (!client.connect(mqtt_server,1883))
   {
-    client.publish("/maison/sonnette/events", strMsg,true);
-    client.disconnect();
-    flgPasDeReseau=false;
+     flgPasDeReseau=true;
+     Serial.println("[ERROR COMM.]");
+     return;
   }
-  else
-  {
-    flgPasDeReseau=true;
-  }
+
+  client.beginMessage("/maison/sonnette/events", true,1,false);
+  client.write((uint8_t *)strMsg,strlen(strMsg));
+  client.endMessage();
+  client.stop();
+
+  Serial.println("[OK]");
+  
+  flgPasDeReseau=false;
 }
 
 void setup() 
@@ -290,15 +289,10 @@ void setup()
   flgMouvement_prev=flgMouvement;
 
   setup_wifi();
-  client.setServer(mqtt_server, 1883);
-  //client.setCallback(callback);
+  client.setId(mqtt_id);
+  client.setUsernamePassword(mqtt_login, mqtt_pass);
+  client.setCleanSession(true);
 
-  //temps.begin();
-  //temps.forceUpdate();
-  //rtc.setTime(temps.getEpochTime());
-  //rtc.setTime(temps.getSeconds(),temps.getMinutes(),temps.getHours(),temps.getDay(),temps.getMonth(),temps.getYear());
-
-  //Serial.println(temps.getFormattedTime());
   sendEvent("boot");
 
   lTick250ms=millis();
@@ -308,49 +302,20 @@ void setup()
 }
 
 
-
-void tick_inside(void)
-{
-  if (flgBoutonInside==false)
-    flgBoutonInside=readFiltered(PIN_BOUTON,LOW);
-
-  if (flgMouvementInside==false)
-    flgMouvementInside=readFiltered(PIN_MOVE,HIGH);
-}
-
 void loop() 
 {
   /// ******************* SURVEILLANCE COMM *********************
 
-  flgMouvementInside=false;
-  flgBoutonInside=false;
-  if (flgTick5sUpFront==true)
-  {
-    if ( (flgPasDeReseau) && (!client.connected()) && (!client.loop()) ) 
-    {
-      digitalWrite(PIN_LED_RED,HIGH);
-      digitalWrite(PIN_LED_GREEN,LOW);
-      flgPasDeReseau=true;
-      reconnect();
-      sendEvent("connect");
-    }
-    else
-    {
-      flgPasDeReseau=false;        
-    }
-  }
-
-  client.loop();
+  client.poll();
+  tryReconnect();
     
   /// ******************* PROCESS ENTREES *********************
   
   /// Lire les entrees (en filtrant)
-  flgBouton=readFiltered(PIN_BOUTON,LOW) || flgBoutonInside;
-  flgMouvement=readFiltered(PIN_MOVE,HIGH) || flgMouvementInside;
+  flgBouton=readFiltered(PIN_BOUTON,LOW) ;
+  flgMouvement=readFiltered(PIN_MOVE,HIGH) ;
   flgSelector=readFiltered(PIN_SELECTOR,LOW);
   flgSilent=readFiltered(PIN_SILENT,LOW);
-  flgBoutonInside=false;
-  flgMouvementInside=false;
 
   /// Detection front montant pour le mouvement
   if ( (flgMouvement==true) && (flgMouvement_prev==false)  )
@@ -397,10 +362,10 @@ void loop()
       
       flgMouvementEnCours=false;
 
-      char strMsg[50];
+      /*char strMsg[50];
       long lDelta=getElapsedTimeFrom(lTickStartMove);
       sprintf(strMsg,"Fin move: %ld",lDelta);
-      client.publish("/maison/sonnette/logs", strMsg,true);
+      sendEvent("/maison/sonnette/logs", strMsg,true);*/
     }
   }
 
@@ -410,10 +375,18 @@ void loop()
     iCtrSonnette++;
 
     if (flgSilent==false)
+    {
       melodie();
+    }
     
     sendEvent("dring");
     flgAsonne=true;
+
+    if (flgSilent==true)
+    {
+      /// Timing pour filtrer si pas de melodie
+      delay(2000);      
+    }
   }
 
   /// Reset des evenements
