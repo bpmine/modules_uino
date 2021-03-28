@@ -105,22 +105,16 @@ void shortMelodie()
   digitalWrite(PIN_LED_GREEN,HIGH);
 
   #ifdef NO_SOUND
-    delay(800);
+    delay(100);
     return;
   #endif
 
-  tone(PIN_BUZZER, 1500);
-  delay(100);
-  noTone(PIN_BUZZER);
-  delay(100);
-  tone(PIN_BUZZER, 800);
-  delay(100);
+  tone(PIN_BUZZER, 440*2);
+  delay(50);
   noTone(PIN_BUZZER);
 }
 
-//int LONG=1000;
 int LONG=200;
-//int SHORT=100;
 int SHORT=100;
 
 void melodie()
