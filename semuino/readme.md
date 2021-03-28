@@ -6,10 +6,9 @@ Les semis (Graines mises à germer) on aussi besoin de lumière.
 
 Pour une croissance optimale, il faut éclairer les semis pendant une certaine durée journalière et avec un spectre de lumière donné (couleurs).
 
-C'est ce que réalise le meuble à semis sur les photos suivantes.
+C'est ce que réalise le meuble à semis sur la photo suivante.
 
-![GitHub Logo](images/eclairage_violet.png)
-![GitHub Logo](images/eclairage_blanc.png)
+![GitHub Logo](images/meuble.png)
 
 ## Description de l'éclairage souhaité
 
