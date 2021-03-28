@@ -64,8 +64,8 @@ Un bref appui dessus permet de faire défiler les modes. La LED verte s'allume �
 
 Un appui long pendant plus de 5 secondes permet de sauter la phase de montée en luminosité. La LED verte clignote lorsque la commande a été prise en compte.
 
-**Attention:** Le boîtier n'a pas d'horloge. Il gère les bêtement les horaires. A l'allumage, il monte la luminosité pendant 2 heures puis éclaire à 100% pendant 12 heures et baisse ensuite sa luminosité pendant 2 heures.
-En attendant une horloge dans le boîtier de commande, le meuble doit être allumé par un autre automatisme (Hue par exemple).
+**Attention:** Le boîtier n'a pas d'horloge. Il gère "bêtement" les horaires. A l'allumage, il monte la luminosité pendant 2 heures puis éclaire à 100% pendant 12 heures et baisse ensuite sa luminosité pendant 2 heures.
+Dans l'attente d'une future (hypothétique) horloge dans le boîtier de commande, le meuble doit être allumé par un autre automatisme (Hue par exemple).
 
 ![GitHub Logo](images/boitier_cmd.png)
  
@@ -80,3 +80,14 @@ En attendant une horloge dans le boîtier de commande, le meuble doit être allu
 - Un arduino Nano
 - 5 m de LEDs WS28128 5V / 18W / 60 LEDs/m
 - composants courants...
+
+# Bilan et configuration finale
+
+La bonne configuration a été obtenue avec 23 x 7 = 161 LEDs à chaque étage.
+Le dispositif consomme jusqu'à 19.51 W.
+
+Voir les résultats et mesures [ici](./resultats.md).
+
+Au-dessus du meuble, nous avons fixé la lampe horticole du commerce. Celle-ci est autonome (avec son propre programmateur).
+
+![GitHub Logo](images/vue_ensemble.png)
