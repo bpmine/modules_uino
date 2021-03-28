@@ -49,3 +49,5 @@ Nombre de LEDs : 23 x 7 = 161
 La consommation totale passe à 3.84A pour 5.08V, soit une puissance de 19.51W pour un éclairage blanc à 100% en haut et en bas.
 
 Test en cours avec les mêmes plants repiqués dans des pots plus grands
+
+
