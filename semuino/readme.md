@@ -50,13 +50,13 @@ Mode | Haut | Bas | Luminosité
 ------ | ------ | ------ | ------
 0 | Eteint | Eteint | Cycle standard
 1 | 80%R/20%B | Eteint | Cycle standard
-2 | Eteint | 80%R/20%B | Cycle standard
-3 | 80%R/20%B | 80%R/20%B | Cycle standard
-4 | Blanc | Eteint | Cycle standard
-5 | Eteint | Blanc | Cycle standard
-6 | Blanc | Blanc | Cycle standard
-7 | 80%R/20%B | Blanc | Cycle standard
-8 | Blanc | 80%R/20%B | Cycle standard
+2 | Blanc | Eteint | Cycle standard
+3 | Eteint | 80%R/20%B | Cycle standard
+4 | Eteint | Blanc | Cycle standard
+5 | 80%R/20%B | 80%R/20%B | Cycle standard
+6 | 80%R/20%B | Blanc | Cycle standard
+7 | Blanc | 80%R/20%B | Cycle standard
+8 | Blanc | Blanc | Cycle standard
 9 | Démonstration R/G/B | | Maximale
 10 | Bleu/Blanc/Rouge fixe | | Maximale
 
