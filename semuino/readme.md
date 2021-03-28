@@ -90,3 +90,5 @@ Voir les résultats et mesures [ici](./resultats.md).
 Au-dessus du meuble, nous avons fixé la lampe horticole du commerce. Celle-ci est autonome (avec son propre programmateur).
 
 ![GitHub Logo](images/vue_ensemble.png)
+
+[Voir aussi le diaporama ici](./images/diaporama.pptx).
