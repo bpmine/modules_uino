@@ -2,7 +2,7 @@
 
 Toutes les plantes ont besoin de lumière.
 
-Les semis (Graines mises à germer) on aussi besoin de lumière.
+Les semis ont aussi besoin de lumière.
 
 Pour une croissance optimale, il faut éclairer les semis pendant une certaine durée journalière et avec un spectre de lumière donné (couleurs).
 
