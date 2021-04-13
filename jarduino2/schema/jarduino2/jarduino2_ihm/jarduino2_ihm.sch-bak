@@ -123,7 +123,7 @@ U 1 1 60E53ABB
 P 9700 4950
 F 0 "J4" H 9780 4942 50  0000 L CNN
 F 1 "Pompes" H 9780 4851 50  0000 L CNN
-F 2 "Connector_PinHeader_2.54mm:PinHeader_1x05_P2.54mm_Vertical" H 9700 4950 50  0001 C CNN
+F 2 "Connector_PinHeader_2.54mm:PinHeader_1x04_P2.54mm_Vertical" H 9700 4950 50  0001 C CNN
 F 3 "~" H 9700 4950 50  0001 C CNN
 	1    9700 4950
 	1    0    0    -1  
@@ -277,7 +277,7 @@ L Switch:SW_DIP_x01 SW1
 U 1 1 60E60A89
 P 2150 1650
 F 0 "SW1" H 2150 1917 50  0000 C CNN
-F 1 "Pile On/Off" H 2150 1826 50  0000 C CNN
+F 1 "Solaire On/Off" H 2150 1826 50  0000 C CNN
 F 2 "Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical" H 2150 1650 50  0001 C CNN
 F 3 "~" H 2150 1650 50  0001 C CNN
 	1    2150 1650
