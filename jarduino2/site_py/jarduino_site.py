@@ -89,6 +89,9 @@ def home():
     
     return render_template(r'index.html',datas=datas)
 
+@app.rount("/robots.txt")
+def robots():
+	return "User-Agent: *\nDisallow: /"
 
 if __name__=="__main__":    
     app.run(host="0.0.0.0",debug = False,port=80)
