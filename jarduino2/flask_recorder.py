@@ -2,7 +2,6 @@ import pika
 import requests
 import json
 import demjson
-import sqlite3
 from pymongo import MongoClient
 
 class ReadJardin:
