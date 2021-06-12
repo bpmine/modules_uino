@@ -25,58 +25,58 @@ def getDate(strDt):
 
 def getDatas():
     jrs=[
-        'dimanche',
         'lundi',
         'mardi',
         'mercredi',
         'jeudi',
         'vendredi',
-        'samedi'
+        'samedi',
+        'dimanche'
         ];
     
     datas={
-    'state':'On/Off ?',
+    'state':'?',
     'vsun':'?',
     'vbatt':'?',
     'last':'?',
     'now':'?'
     }
-    
-    mg=MongoClient("mongodb://127.0.0.1:27017");
-    db=mg.jarduino;
-    logs = db["logs"]
-    res=logs.find({}).sort('date',pymongo.DESCENDING).limit(1)
-    try:
-        d=res[0]
 
-        if (d['pompe']==1):
-            datas['state']='ON'
-        else:
-            datas['state']='OFF'
+    try:    
+        mg=MongoClient("mongodb://127.0.0.1:27017");
+        db=mg.jarduino;
+        logs = db["logs"]
+        res=logs.find({'serial':'J1'}).sort('date',pymongo.DESCENDING).limit(1)
+        try:
+            d=res[0]
 
-        fTmp=float(int(d['vsun']))
-        fTmp=fTmp/10;
-        datas['vsun']='%.1f' % fTmp
+            datas['state']=d['pompe']
 
-        fTmp=float(int(d['vbatt']))
-        fTmp=fTmp/10;
-        datas['vbatt']='%.1f' % fTmp
+            fTmp=float(int(d['vsun']))
+            fTmp=fTmp/10;
+            datas['vsun']='%.1f' % fTmp
 
-        dte=getDate(d['date'])
+            fTmp=float(int(d['vbatt']))
+            fTmp=fTmp/10;
+            datas['vbatt']='%.1f' % fTmp
+
+            dte=d['date']
+            jdls=jrs[dte.weekday()]
+            datas['now']="%s %02d/%02d/%02d à %02d:%02d" % (jdls,dte.day,dte.month,dte.year,dte.hour,dte.minute)
+
+        except:
+            pass;
+                           
+        res=logs.find({'pompe':1,'serial':'J1'}).sort('date',pymongo.DESCENDING).limit(1)
+        dte=res[0]['date']
+        
+        print(dte)
         jdls=jrs[dte.weekday()]
-        datas['now']="%s %02d/%02d/%02d à %02d:%02d" % (jdls,dte.day,dte.month,dte.year,dte.hour,dte.minute)
+        datas['last']="%s %02d/%02d/%02d à %02d:%02d" % (jdls,dte.day,dte.month,dte.year,dte.hour,dte.minute)
 
+        mg.close()
     except:
-        pass;
-                       
-    res=logs.find({'pompe':1}).sort('date',pymongo.DESCENDING).limit(1)
-    dte=getDate(res[0]['date'])
-    
-    print(dte)
-    jdls=jrs[dte.weekday()]
-    datas['last']="%s %02d/%02d/%02d à %02d:%02d" % (jdls,dte.day,dte.month,dte.year,dte.hour,dte.minute)
-
-    mg.close()
+        datas['error']=True;
 
     return datas;
     
@@ -89,7 +89,7 @@ def home():
     
     return render_template(r'index.html',datas=datas)
 
-@app.rount("/robots.txt")
+@app.route("/robots.txt")
 def robots():
 	return "User-Agent: *\nDisallow: /"
 
