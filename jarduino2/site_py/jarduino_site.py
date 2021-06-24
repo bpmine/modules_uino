@@ -44,9 +44,11 @@ def getDatas():
 
     try:    
         mg=MongoClient("mongodb://127.0.0.1:27017");
+        
         db=mg.jarduino;
         logs = db["logs"]
-        res=logs.find({'serial':'J1'}).sort('date',pymongo.DESCENDING).limit(1)
+        res=logs.find({'serial':'d477863a7d80'}).sort('date',pymongo.DESCENDING).limit(1)
+
         try:
             d=res[0]
 
@@ -66,16 +68,21 @@ def getDatas():
 
         except:
             pass;
-                           
-        res=logs.find({'pompe':1,'serial':'J1'}).sort('date',pymongo.DESCENDING).limit(1)
-        dte=res[0]['date']
-        
-        print(dte)
-        jdls=jrs[dte.weekday()]
-        datas['last']="%s %02d/%02d/%02d à %02d:%02d" % (jdls,dte.day,dte.month,dte.year,dte.hour,dte.minute)
 
+        res=logs.find({'pompe':1,'serial':'d477863a7d80'}).sort('date',pymongo.DESCENDING).limit(1)
+
+        try:
+            dte=res[0]['date']
+
+            print(dte)
+            jdls=jrs[dte.weekday()]
+            datas['last']="%s %02d/%02d/%02d à %02d:%02d" % (jdls,dte.day,dte.month,dte.year,dte.hour,dte.minute)
+        except:
+            datas['last']="?"
+            
         mg.close()
-    except:
+    except Exception as ex:
+        print(ex)
         datas['error']=True;
 
     return datas;

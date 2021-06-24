@@ -37,9 +37,9 @@ class ReadJardin:
 
         self.connect()
 
-    def send(self,msg):
+    def send(self,msg,id):
         self.ch.basic_publish(exchange="amq.topic",
-                              routing_key=".jarduino.cmd",
+                              routing_key=".jarduino.cmd.%s" %id,
                               body=msg)
 
     def close(self):
@@ -99,81 +99,85 @@ stats = db["stats"]
 errors=db["errors"]
 
 def cb(key,msg):
-    SERIAL='J1'
-    
-    if (key==".jarduino.log"):
-        try:
-            obj=demjson.decode(msg)
-            obj['date']=getDateFromIso(obj['date'])
-            obj['serial']=SERIAL
-            dteComm=datetime.now()
-            obj['dateComm']=dteComm
-            print("Log received: %s" % (obj))            
-            logs.insert_one(obj)
+    p=re.compile("^\\.jarduino\\.([a-z]+)\\.([A-Za-z0-9]+)$");
+    m=p.match(key);
+    if (m!=None):
+        topic=m.group(1)
+        mac=m.group(2)
 
-            if DONT_CONSUME==False:
-                return True;
-            
-        except Exception as ex:
-            print(ex)
-            errors.insert_one({'key':key,'msg':msg});
-            
-    elif (key==".jarduino.msg"):
-        dteComm=datetime.now()
-        obj={'dateComm':dteComm,'msg':msg,'serial':SERIAL}        
-        print("Message received: %s" % (obj))
-        msgs.insert_one(obj)
+        if (topic=="log"):
+            try:
+                obj=demjson.decode(msg)
+                obj['date']=getDateFromIso(obj['date'])
+                obj['serial']=mac
+                dteComm=datetime.now()
+                obj['dateComm']=dteComm
+                print("Log received: %s" % (obj))            
+                logs.insert_one(obj)
 
-        if DONT_CONSUME==False:
-            return True;
-
-    elif (key==".jarduino.stats"):
-        try:
-            obj=demjson.decode(msg)
-            obj['date']=getDateFromIso(obj['date'])
-            obj['serial']=SERIAL
-            dteComm=datetime.now()
-            obj['dateComm']=dteComm
-            print("Statistics received: %s" % (obj))
-            stats.insert_one(obj)
-
-            if DONT_CONSUME==False:
-                return True;
-            
-        except:
-            p=re.compile("^{date:(.{20}),(.+)$")
-            m=p.match(msg)
-            if (m!=None):
+                if DONT_CONSUME==False:
+                    return True;
                 
-                newStr="{date:'%s',%s" % (m.group(1),m.group(2))
+            except Exception as ex:
+                print(ex)
+                errors.insert_one({'key':key,'msg':msg});
+                
+        elif (topic=="msg"):
+            dteComm=datetime.now()
+            obj={'dateComm':dteComm,'msg':msg,'serial':mac}        
+            print("Message received: %s" % (obj))
+            msgs.insert_one(obj)
 
-                try:
-                    obj=demjson.decode(newStr)
-                    obj['date']=getDateFromIso(obj['date'])
-                    obj['serial']=SERIAL
-                    dteComm=datetime.now()
-                    obj['dateComm']=dteComm
-                    print("Statistics received: %s" % (obj))
-                    stats.insert_one(obj)
+            if DONT_CONSUME==False:
+                return True;
+
+        elif (topic=="stats"):
+            try:
+                obj=demjson.decode(msg)
+                obj['date']=getDateFromIso(obj['date'])
+                obj['serial']=mac
+                dteComm=datetime.now()
+                obj['dateComm']=dteComm
+                print("Statistics received: %s" % (obj))
+                stats.insert_one(obj)
+
+                if DONT_CONSUME==False:
+                    return True;
+                
+            except:
+                p=re.compile("^{date:(.{20}),(.+)$")
+                mm=p.match(msg)
+                if (mm!=None):
                     
-                    if DONT_CONSUME==False:
-                        return True;
+                    newStr="{date:'%s',%s" % (mm.group(1),mm.group(2))
 
-                except Exception as ex:
-                    print(ex)
-                    errors.insert_one({'key':key,'msg':msg,'new_msg':newStr});
+                    try:
+                        obj=demjson.decode(newStr)
+                        obj['date']=getDateFromIso(obj['date'])
+                        obj['serial']=mac
+                        dteComm=datetime.now()
+                        obj['dateComm']=dteComm
+                        print("Statistics received: %s" % (obj))
+                        stats.insert_one(obj)
+                        
+                        if DONT_CONSUME==False:
+                            return True;
+
+                    except Exception as ex:
+                        print(ex)
+                        errors.insert_one({'key':key,'msg':msg,'new_msg':newStr});
             
-    elif (key==".jarduino.cmd"):
-        dteComm=datetime.now()            
-        obj={'dateComm':dteComm,'msg':msg,'serial':SERIAL}
-        print("Command sent to device: %s" % (obj))        
-        cmds.insert_one(obj)
+        elif (topic=="cmd"):
+            dteComm=datetime.now()            
+            obj={'dateComm':dteComm,'msg':msg,'serial':mac}
+            print("Command sent to device: %s" % (obj))        
+            cmds.insert_one(obj)
 
-        if DONT_CONSUME==False:
-            return True;
-        
-    else:
-        print("UNKNOWN KEY: %s (%s)" % (key,msg))
+            if DONT_CONSUME==False:
+                return True;
+            
+        else:
+            print("UNKNOWN KEY: %s (%s)" % (key,msg))
 
     return False
 
