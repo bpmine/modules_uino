@@ -4,7 +4,10 @@ import pymongo;
 import datetime;
 import re;
 
-app = Flask(__name__) 
+app = Flask(__name__,
+            static_url_path='', 
+            static_folder='static',
+            template_folder='templates')
 
 p=re.compile("^([0-9]{4})-([0-9]{2})-([0-9]{2})T([0-9]{2}):([0-9]{2}):([0-9]{2})Z$")
 def getDate(strDt):
@@ -23,7 +26,7 @@ def getDate(strDt):
 
     return None
 
-def getDatas():
+def getDatas(serial):
     jrs=[
         'lundi',
         'mardi',
@@ -47,7 +50,7 @@ def getDatas():
         
         db=mg.jarduino;
         logs = db["logs"]
-        res=logs.find({'serial':'d477863a7d80'}).sort('date',pymongo.DESCENDING).limit(1)
+        res=logs.find({'serial':serial}).sort('date',pymongo.DESCENDING).limit(1)
 
         try:
             d=res[0]
@@ -69,7 +72,7 @@ def getDatas():
         except:
             pass;
 
-        res=logs.find({'pompe':1,'serial':'d477863a7d80'}).sort('date',pymongo.DESCENDING).limit(1)
+        res=logs.find({'pompe':1,'serial':serial}).sort('date',pymongo.DESCENDING).limit(1)
 
         try:
             dte=res[0]['date']
@@ -85,14 +88,18 @@ def getDatas():
         print(ex)
         datas['error']=True;
 
+    datas['serial']=serial
     return datas;
     
 
 @app.route("/") 
 def home():
+    datas=[]
+    datas.append(getDatas('d477863a7d80'))
+    datas.append(getDatas('5804c11f9c9c'))
 
-    datas=getDatas()    
-
+    datas[0]['name']='Côté réduit'
+    datas[1]['name']='Barbecue'
     
     return render_template(r'index.html',datas=datas)
 

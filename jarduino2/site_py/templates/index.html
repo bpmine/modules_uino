@@ -12,7 +12,6 @@
 		
         <div class="container">
 		<div class="row">
-			<h1></h1>
 		</div>		
 		<div class="row">
 			<div class="container bg-secondary">
@@ -28,23 +27,30 @@
 			</div>
 		</div>		
 		<div class="row">
-			{% if datas['error']==True %}
+			<img src="imgs/jardin.jpg" class="img-fluid" alt="Jardin">
+		</div>		
+		{%for d in datas%}
+		<div class="row">
+			{% if d['error']==True %}
 				<div class="alert alert-danger alert-dismissible fade show" role="alert">
 					<strong>Attention</strong> : Une erreur d'accès aux données est survenue
 				</div>				
 			{% endif %}
 		</div>	
 		<div class="row">
+			{{ d['name'] }} ({{ d['serial'] }})
+		</div>	
+		<div class="row">
 			<div class="container bg-primary text-white">
 				<div class="row">
 					<div class="col-4 text-center">
-						<H1>{{ datas['state'] }}</H1>
+						<H1>{{ d['state'] }}</H1>
 					</div>		
 					<div class="col-4 text-center">
-						<H1>Panneau {{ datas['vsun'] }} V</H1>
+						<H1>Panneau {{ d['vsun'] }} V</H1>
 					</div>		
 					<div class="col-4 text-center">
-						<H1>Batterie {{datas['vbatt']}} V</H1>
+						<H1>Batterie {{d['vbatt']}} V</H1>
 					</div>		
 				</div>
 			</div>
@@ -53,7 +59,7 @@
 			<div class="container bg-secondary text-white">
 				<div class="row ">
 					<div class="col-6 text-center">
-						Dernière information reçue le {{datas['now']}}
+						Dernière information reçue le {{d['now']}}
 					</div>		
 				</div>
 			</div>
@@ -65,11 +71,13 @@
 						<H1>Dernier arrosage le</H1>
 					</div>		
 					<div class="col-6 text-center ">
-						<H1>{{datas['last']}}</H1>
+						<H1>{{d['last']}}</H1>
 					</div>		
 				</div>
 			</div>
 		</div>
+		
+		{%endfor%}
 	</div>
 
     </body>

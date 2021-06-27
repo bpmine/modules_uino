@@ -62,7 +62,7 @@ class ReadJardin:
 
         self.ch.start_consuming()
 
-p=re.compile("^([0-9]{4})-([0-9]{2})-([0-9]{2})T([0-9]{2}):([0-9]{2}):([0-9]{2})Z$")
+p=re.compile("([0-9]{4})-([0-9]{2})-([0-9]{2})T([0-9]{2}):([0-9]{2}):([0-9]{2})Z")
 def getDateFromIso(strDt):
     m=p.match(strDt)
     if (m!=None):
