@@ -60,7 +60,7 @@ bool g_blink_1s=false;
 
 Timer tmrBlink(250UL);
 Timer tmrPmp1(10000UL,true);
-Timer tmrPmp2(10000UL,true);
+Timer tmrPmp2(2UL*60UL*1000UL,true);
 
 //DHTesp dht;
 DS1307 RTC;
@@ -313,7 +313,6 @@ void cycle_inputs()
 
   tmp=analogRead(PIN_MES_POW_BATT);
   g_powBatt=(int)((tmp*150L)/1023L);
-  //g_powBatt=tmp;
 }
   
 void loop() 
@@ -340,8 +339,9 @@ void loop()
   flgPmp1Tmr=tmrPmp1.isRunning();
   flgPmp2Tmr=tmrPmp2.isRunning();
 
-  g_cmdPmp1=(flgPmp1Tmr || g_dryPeriod) && g_btnOnOff;
-  g_cmdPmp2=(flgPmp2Tmr || g_dryPeriod) && g_btnOnOff;
+  g_cmdPmp1=(flgPmp1Tmr || g_dryPeriod || flgPmp2Tmr) && g_btnOnOff;
+  //g_cmdPmp2=(flgPmp2Tmr || g_dryPeriod) && g_btnOnOff;
+  g_cmdPmp2=false;
 
   calcPowLevels();
   
