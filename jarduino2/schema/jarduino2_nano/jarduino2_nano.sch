@@ -964,7 +964,7 @@ U 1 1 60AD911D
 P 5850 5900
 F 0 "A1" H 5200 7000 50  0000 C CNN
 F 1 "Arduino_Nano_v3.x" H 5500 7100 50  0000 C CNN
-F 2 "Module:Arduino_Nano" H 5850 5900 50  0001 C CIN
+F 2 "bpc:BPC_Arduino_Nano" H 5850 5900 50  0001 C CIN
 F 3 "http://www.mouser.com/pdfdocs/Gravitech_Arduino_Nano3_0.pdf" H 5850 5900 50  0001 C CNN
 	1    5850 5900
 	1    0    0    -1  
@@ -1139,7 +1139,7 @@ $EndComp
 Wire Wire Line
 	5200 1250 5350 1250
 $Comp
-L bpc:DHT22 U3
+L bpc:BPC_DHT22 U3
 U 1 1 6236E527
 P 3850 6950
 F 0 "U3" H 3942 7175 50  0000 C CNN
