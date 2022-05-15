@@ -12,8 +12,11 @@ DS1307 rtc;
 Pump pump1;
 Pump pump2;
 
-Jard::Jard()
-{
+Jard::Jard():tmrBlink(TEMPS_BLINK_MS,false)
+{  
+  m_flgBlk=true;
+  m_flgBattOk=false;
+  m_flgSunOk=false;
 }
 
 void Jard::init()
@@ -25,6 +28,8 @@ void Jard::init()
 
   enablePompe(1,true);
   enablePompe(2,true);
+
+  tmrBlink.start();
 }
 
 void Jard::save(void)
@@ -175,39 +180,81 @@ unsigned char Jard::getHum(void)
 
 void Jard::loop(void)
 {
-  bool battOk=false;
-  if (m_batt_level_dxv>10)
-    battOk=true;
+  bool outLedPmp1=false;
+  bool outLedPmp2=false;
+  bool outCmdPmp1=false;
+  bool outCmdPmp2=false;
+  bool outCpu=false;
+  bool outSun=false;
+  bool outBatt=false;
+  
+  if (tmrBlink.tick()==true)
+    m_flgBlk=!m_flgBlk;
+  
+  if (m_batt_level_dxv>=SEUIL_LOW_BATT_H)
+    m_flgBattOk=true;
+  else if (m_batt_level_dxv<=SEUIL_LOW_BATT_L)
+    m_flgBattOk=false;
+    
+  if (m_sun_level_dxv>=SEUIL_LOW_SUN_H)
+    m_flgSunOk=true;
+  else if (m_sun_level_dxv<=SEUIL_LOW_SUN_L)
+    m_flgSunOk=false;
 
-  if (mbs_inputs.getFalling(IB_BTN_PMP1))
-    pump1.startTimer(60000);
+  bool on=!mbs_inputs.get(IB_BTN_ON);
+  if (on==true)
+  {
+    if (mbs_inputs.getFalling(IB_BTN_PMP1))
+      pump1.startTimer(TEMPS_TIMER_MS);
+    
+    if (mbs_inputs.getFalling(IB_BTN_PMP2))
+      pump2.startTimer(TEMPS_TIMER_MS);
   
-  if (mbs_inputs.getFalling(IB_BTN_PMP2))
-    pump2.startTimer(60000);
+    pump1.setForced(mbs.get(MB_PMP1_FORCED));
+    pump1.setEnable(mbs.get(MB_PMP1_ENABLE));
+    pump1.setAuto(mbs.get(MB_PMP1_AUTO));
+    pump1.setBattOK(m_flgBattOk);
+    
+    pump2.setForced(mbs.get(MB_PMP2_FORCED));
+    pump2.setEnable(mbs.get(MB_PMP2_ENABLE));
+    pump2.setAuto(mbs.get(MB_PMP2_AUTO));
+    pump2.setBattOK(m_flgBattOk);
+    
+    pump1.loop();
+    pump2.loop();
 
-  pump1.setForced(mbs.get(MB_PMP1_FORCED));
-  pump1.setEnable(mbs.get(MB_PMP1_ENABLE));
-  pump1.setAuto(mbs.get(MB_PMP1_AUTO));
-  pump1.setBattOK(battOk);
+    outBatt=m_flgBattOk?true:m_flgBlk;
+    outSun=m_flgSunOk;
+    
+    outLedPmp1=pump1.getError()?m_flgBlk:pump1.getOut();
+    outCmdPmp1=pump1.getOut();
+    
+    outLedPmp2=pump2.getError()?m_flgBlk:pump2.getOut();
+    outCmdPmp2=pump2.getOut();
+  }
+  else
+  {
+    pump1.stopTimer();
+    pump1.setEnable(false);
+    pump1.setAuto(false);
+    pump1.setBattOK(false);
+    
+    pump2.stopTimer();
+    pump2.setEnable(false);
+    pump2.setAuto(false);
+    pump2.setBattOK(false);
+  }
   
-  pump2.setForced(mbs.get(MB_PMP2_FORCED));
-  pump2.setEnable(mbs.get(MB_PMP2_ENABLE));
-  pump2.setAuto(mbs.get(MB_PMP2_AUTO));
-  pump2.setBattOK(battOk);
+    
+  mbs_outputs.start_latch();
+  mbs_outputs.fromBool(OB_LED_CPU,on);
+  mbs_outputs.fromBool(OB_LED_BATT,outBatt);
+  mbs_outputs.fromBool(OB_LED_SUN,outSun);  
+  mbs_outputs.fromBool(OB_CMD_PMP1,outCmdPmp1);
+  mbs_outputs.fromBool(OB_LED_PMP1,outLedPmp1);
   
-  pump1.loop();
-  pump2.loop();
-  
-  mbs_outputs.start_latch();    
-
-  mbs_outputs.fromBool(OB_LED_CPU,!mbs_inputs.get(IB_BTN_ON));
-  mbs_outputs.fromBool(OB_LED_BATT,battOk);
-  
-  mbs_outputs.fromBool(OB_CMD_PMP1,pump1.getOut());
-  mbs_outputs.fromBool(OB_LED_PMP1,pump1.getOut());
-  
-  mbs_outputs.fromBool(OB_CMD_PMP2,pump2.getOut());
-  mbs_outputs.fromBool(OB_LED_PMP2,pump2.getOut());
+  mbs_outputs.fromBool(OB_CMD_PMP2,outCmdPmp2);
+  mbs_outputs.fromBool(OB_LED_PMP2,outLedPmp2);
   
   mbs_outputs.end_latch();
 ;}

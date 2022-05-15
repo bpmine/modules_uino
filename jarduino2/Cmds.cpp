@@ -9,6 +9,7 @@
 #include "IJardCmd.h"
 #include <arduino.h>
 #include "pins.h"
+#include "autom.h"
 
 Cmds cmds;
 
@@ -150,10 +151,14 @@ void Cmds::onSerialEvent()
   else if (cmd.equals("values"))
   {
     m_pSerial->println("Values:");
-    m_pSerial->print("  - Batt:");
+    m_pSerial->print("  - Batt :");
     m_pSerial->println(m_pJardCmd->getBattLevel());
-    m_pSerial->print("  - Sun :");
+    m_pSerial->print("  - Sun  :");
     m_pSerial->println(m_pJardCmd->getSunLevel());
+    m_pSerial->print("  - Pmp1 :");
+    m_pSerial->println(mbs_outputs.get(OB_CMD_PMP1));
+    m_pSerial->print("  - Pmp2 :");
+    m_pSerial->println(mbs_outputs.get(OB_CMD_PMP2));
   }
   else if (cmd.equals("save"))
   {
