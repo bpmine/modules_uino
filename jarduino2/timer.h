@@ -7,7 +7,7 @@ class Timer
     bool single;
   
   public:
-    Timer(unsigned long duration_ms,bool single=true);
+    Timer(unsigned long duration_ms=1000,bool single=true);
 
     bool tick(void);
     void reset(void);
