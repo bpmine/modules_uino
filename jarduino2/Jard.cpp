@@ -34,29 +34,45 @@ void Jard::init()
 
 void Jard::save(void)
 {
-  T_MEMOIRE mem; 
-  
-  memoire_load(&mem);  
-
-  mem.bPump1Enable=pump1.isEnabled()?1:0;
-  mem.bPump1Auto=pump1.isAuto()?1:0;
-
-  mem.bPump2Enable=pump2.isEnabled()?1:0;
-  mem.bPump2Auto=pump2.isAuto()?1:0;
-
-  memoire_save(&mem);
 }
 
 void Jard::load(void)
 {
-  T_MEMOIRE mem; 
-  memoire_load(&mem);
+  T_ID id; 
+  if (memoire_load_id(&id)==false)
+  {
+    id.bVersion=1;
+    id.bSerial=1;
+    memoire_save_id(&id);
 
-  pump1.setEnable(mem.bPump1Enable==1?true:false);
-  pump2.setEnable(mem.bPump2Enable==1?true:false);
+    for (int i=MEM_START_ADDR_STATS;i<MEM_STATS_ADDR_MAX;i++)
+    {
+      memoire_stats_reset(i);
+    }
 
-  pump1.setAuto(mem.bPump1Auto==1?true:false);
-  pump2.setAuto(mem.bPump2Auto==1?true:false);  
+    memoire_set(MEM_SETTINGS_ADDR_PUMP1_EN,0);
+    memoire_set(MEM_SETTINGS_ADDR_PUMP1_AUTO,0);
+    memoire_set(MEM_SETTINGS_ADDR_PUMP1_REMOTE,0);
+    
+    memoire_set(MEM_SETTINGS_ADDR_PUMP2_EN,0);
+    memoire_set(MEM_SETTINGS_ADDR_PUMP2_AUTO,0);
+    memoire_set(MEM_SETTINGS_ADDR_PUMP2_REMOTE,0);
+  }
+
+  unsigned char ucVal;
+  if (memoire_read(MEM_SETTINGS_ADDR_PUMP1_EN,&ucVal)==true)
+    pump1.setEnable(ucVal==1?true:false);
+  if (memoire_read(MEM_SETTINGS_ADDR_PUMP1_AUTO,&ucVal)==true)
+    pump1.setAuto(ucVal==1?true:false);
+  //if (memoire_read(MEM_SETTINGS_ADDR_PUMP1_REMOTE,&ucVal)==true)
+  //  pump1.setEnable(ucVal==1?true:false);
+  
+  if (memoire_read(MEM_SETTINGS_ADDR_PUMP2_EN,&ucVal)==true)
+    pump2.setEnable(ucVal==1?true:false);
+  if (memoire_read(MEM_SETTINGS_ADDR_PUMP2_AUTO,&ucVal)==true)
+    pump2.setAuto(ucVal==1?true:false);
+  //if (memoire_read(MEM_SETTINGS_ADDR_PUMP2_REMOTE,&ucVal)==true)
+  //  pump2.setEnable(ucVal==1?true:false);
 }
 
 
@@ -109,7 +125,9 @@ void Jard::enablePompe(int i_iNumPompe,bool i_flgEnabled)
     if (i_flgEnabled==true)
       mbs.set(MB_PMP1_ENABLE);
     else
-      mbs.reset(MB_PMP1_ENABLE);    
+      mbs.reset(MB_PMP1_ENABLE); 
+
+    memoire_set(MEM_SETTINGS_ADDR_PUMP1_EN,i_flgEnabled?1:0);
   }
   else if (i_iNumPompe==2)
   {
@@ -117,6 +135,8 @@ void Jard::enablePompe(int i_iNumPompe,bool i_flgEnabled)
       mbs.set(MB_PMP2_ENABLE);
     else
       mbs.reset(MB_PMP2_ENABLE);    
+
+    memoire_set(MEM_SETTINGS_ADDR_PUMP2_EN,i_flgEnabled?1:0);
   }
 }
 
@@ -127,7 +147,9 @@ void Jard::setAuto(int i_iNumPompe,bool i_flgAuto)
     if (i_flgAuto==true)
       mbs.set(MB_PMP1_AUTO);
     else
-      mbs.reset(MB_PMP1_AUTO);    
+      mbs.reset(MB_PMP1_AUTO);
+
+    memoire_set(MEM_SETTINGS_ADDR_PUMP1_AUTO,i_flgAuto?1:0);
   }
   else if (i_iNumPompe==2)
   {
@@ -135,6 +157,8 @@ void Jard::setAuto(int i_iNumPompe,bool i_flgAuto)
       mbs.set(MB_PMP2_AUTO);
     else
       mbs.reset(MB_PMP2_AUTO);    
+
+    memoire_set(MEM_SETTINGS_ADDR_PUMP2_AUTO,i_flgAuto?1:0);
   }
 }
 

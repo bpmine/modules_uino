@@ -13,6 +13,8 @@ private:
   IJardCmd *m_pJardCmd;         ///< Interface vers les commandes jarduino
 
   void returnDate(void);
+  void execCmd(char *strCmd);
+  void execCmdWithParam(char *strCmd,char *strParams);
 
 public:
 	/**

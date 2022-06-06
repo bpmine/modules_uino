@@ -9,45 +9,38 @@
 Jard jard;
 DHT dhtSensor(PIN_DHT_DATA,DHT21);
 
-T_PIN_MAPPING in_mapping[]=
+void latch_input(int pin,int ob)
 {
-  {PIN_BTN_PMP1,IB_BTN_PMP1},
-  {PIN_BTN_PMP2,IB_BTN_PMP2},
-  {PIN_BTN_ONOFF,IB_BTN_ON}  
-};
-
-
-
-T_PIN_MAPPING out_mapping[]=
-{
-  {PIN_CMD_PMP1,OB_CMD_PMP1},
-  {PIN_CMD_PMP2,OB_CMD_PMP2},
-  {PIN_LED_PMP1,OB_LED_PMP1},
-  {PIN_LED_PMP2,OB_LED_PMP2},
-  {PIN_LED_BATT,OB_LED_BATT},
-  {PIN_LED_SUN,OB_LED_SUN},
-  {PIN_LED_CPU,OB_LED_CPU}
-};
+  if (digitalRead(pin)==HIGH)
+    mbs_inputs.set(ob);
+  else
+    mbs_inputs.reset(ob);
+}
 
 void latch_inputs(void)
 {
   mbs_inputs.start_latch();
-  for (int i=0;i<sizeof(in_mapping)/sizeof(T_PIN_MAPPING);i++)
-  {
-    if (digitalRead(in_mapping[i].pin)==HIGH)
-      mbs_inputs.set(in_mapping[i].bNumMB);
-    else
-      mbs_inputs.reset(in_mapping[i].bNumMB);
-  }
+
+  latch_input(PIN_BTN_PMP1,IB_BTN_PMP1);
+  latch_input(PIN_BTN_PMP2,IB_BTN_PMP2);
+  latch_input(PIN_BTN_ONOFF,IB_BTN_ON);
+  
   mbs_inputs.end_latch();
 }
 
+void apply_output(int pin,int ob)
+{
+    digitalWrite(pin,mbs_outputs.get(ob)==true?HIGH:LOW);  
+}
 void apply_outputs(void)
 {  
-  for (int i=0;i<sizeof(out_mapping)/sizeof(T_PIN_MAPPING);i++)
-  {
-    digitalWrite(out_mapping[i].pin,mbs_outputs.get(out_mapping[i].bNumMB)==true?HIGH:LOW);
-  } 
+  apply_output(PIN_CMD_PMP1,OB_CMD_PMP1);
+  apply_output(PIN_CMD_PMP2,OB_CMD_PMP2);
+  apply_output(PIN_LED_PMP1,OB_LED_PMP1);
+  apply_output(PIN_LED_PMP2,OB_LED_PMP2);
+  apply_output(PIN_LED_BATT,OB_LED_BATT);
+  apply_output(PIN_LED_SUN,OB_LED_SUN);
+  apply_output(PIN_LED_CPU,OB_LED_CPU);  
 }
 
 unsigned long getElapsedTimeFrom_ms(unsigned long tick0_ms)
