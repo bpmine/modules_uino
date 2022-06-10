@@ -74,7 +74,7 @@ void setup()
 
   char tmp[25];
   jard.getDateStr(tmp,25);  
-  cmds.println(tmp);
+  //Serial.println(tmp);
 
   pinMode(PIN_CMD_PMP1,OUTPUT);
   digitalWrite(PIN_CMD_PMP1,LOW);
