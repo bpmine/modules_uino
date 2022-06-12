@@ -16,6 +16,9 @@ extern "C"{
 #include <mdbus.h>
 }
 
+#define MODBUS_JARDUINO_VERSION (1)
+
+
 void user_mdbus_send(void *back,unsigned char* pbuff, int sz)
 {
   if (back!=NULL)
@@ -27,18 +30,24 @@ void user_mdbus_send(void *back,unsigned char* pbuff, int sz)
 
 int user_mdbus_read_coils(unsigned short addr, unsigned short count, unsigned char* o_pBuffer)
 {
+  cmds.m_pJardCmd->aliveComm();
+  
   for (int i=0;i<count;i++)
   {
     unsigned char ucVal;
     switch (addr+i)
     {
-      case 0:ucVal=mbs.get(MB_PMP1_FORCED);break;
-      case 1:ucVal=mbs.get(MB_PMP1_ENABLE);break;
-      case 2:ucVal=mbs.get(MB_PMP1_AUTO);break;
+      case 10:ucVal=mbs.get(MB_PMP1_FORCED);break;
+      case 11:ucVal=mbs.get(MB_PMP1_ENABLE);break;
+      case 12:ucVal=mbs.get(MB_PMP1_AUTO);break;
+      case 13:ucVal=mbs.get(MB_PMP1_REMOTE);break;
+      case 14:ucVal=mbs.get(MB_PMP1_RM_CMD);break;
 
-      case 10:ucVal=mbs.get(MB_PMP2_FORCED);break;
-      case 11:ucVal=mbs.get(MB_PMP2_ENABLE);break;
-      case 12:ucVal=mbs.get(MB_PMP2_AUTO);break;
+      case 20:ucVal=mbs.get(MB_PMP2_FORCED);break;
+      case 21:ucVal=mbs.get(MB_PMP2_ENABLE);break;
+      case 22:ucVal=mbs.get(MB_PMP2_AUTO);break;
+      case 23:ucVal=mbs.get(MB_PMP2_REMOTE);break;
+      case 24:ucVal=mbs.get(MB_PMP2_RM_CMD);break;
 
       default:return MDBUS_ERR;
     }
@@ -51,18 +60,26 @@ int user_mdbus_read_coils(unsigned short addr, unsigned short count, unsigned ch
 
 int user_mdbus_write_coils(unsigned short addr, unsigned short count, unsigned char* i_pBuffer)
 {
+  cmds.m_pJardCmd->aliveComm();
+  
   for (int i = 0; i < count; i++)
   {
     unsigned char val = mdbus_get_coil_data(i_pBuffer, i);
     switch (addr+i)
     {
-      case 0:mbs.fromBool(MB_PMP1_FORCED,val);break;
-      case 1:mbs.fromBool(MB_PMP1_ENABLE,val);break;
-      case 2:mbs.fromBool(MB_PMP1_AUTO,val);break;
+      case 10:mbs.fromBool(MB_PMP1_FORCED,val);break;
+      case 11:mbs.fromBool(MB_PMP1_ENABLE,val);memoire_set(MEM_SETTINGS_ADDR_PUMP1_EN,val);break;
+      case 12:mbs.fromBool(MB_PMP1_AUTO,val);memoire_set(MEM_SETTINGS_ADDR_PUMP1_AUTO,val);break;
+      case 13:mbs.fromBool(MB_PMP1_REMOTE,val);memoire_set(MEM_SETTINGS_ADDR_PUMP2_REMOTE,val);break;
+      case 14:mbs.fromBool(MB_PMP1_RM_CMD,val);break;
+      
 
-      case 10:mbs.fromBool(MB_PMP2_FORCED,val);break;
-      case 11:mbs.fromBool(MB_PMP2_ENABLE,val);break;
-      case 12:mbs.fromBool(MB_PMP2_AUTO,val);break;
+      case 20:mbs.fromBool(MB_PMP2_FORCED,val);break;
+      case 21:mbs.fromBool(MB_PMP2_ENABLE,val);memoire_set(MEM_SETTINGS_ADDR_PUMP2_EN,val);break;
+      case 22:mbs.fromBool(MB_PMP2_AUTO,val);memoire_set(MEM_SETTINGS_ADDR_PUMP2_AUTO,val);break;
+      case 23:mbs.fromBool(MB_PMP2_REMOTE,val);memoire_set(MEM_SETTINGS_ADDR_PUMP2_REMOTE,val);break;
+      case 24:mbs.fromBool(MB_PMP2_RM_CMD,val);break;
+      
       default:return MDBUS_ERR;
     }
   }
@@ -72,11 +89,29 @@ int user_mdbus_write_coils(unsigned short addr, unsigned short count, unsigned c
 
 int user_mdbus_read_inputs(unsigned short addr, unsigned short count, unsigned char* o_pBuffer)
 {
-    return MDBUS_ERR;
+  cmds.m_pJardCmd->aliveComm();
+  
+  for (int i=0;i<count;i++)
+  {
+    unsigned char ucVal;
+    switch (addr+i)
+    {
+      case 0:ucVal=mbs_outputs.get(OB_CMD_PMP1);break;
+      case 1:ucVal=mbs_outputs.get(OB_CMD_PMP2);break;      
+
+      default:return MDBUS_ERR;
+    }
+          
+    mdbus_fill_coil_data(o_pBuffer, i, ucVal);
+  }
+  
+  return MDBUS_OK; 
 }
 
 int user_mdbus_read_input_registers(unsigned short addr, unsigned short count, unsigned char* o_pBuffer)
 {
+  cmds.m_pJardCmd->aliveComm();
+  
     for (int i = 0; i < count; i++)
     {
       unsigned short usVal;
@@ -86,6 +121,38 @@ int user_mdbus_read_input_registers(unsigned short addr, unsigned short count, u
         case 1:usVal=cmds.m_pJardCmd->getSunLevel();break;
         case 2:usVal=cmds.m_pJardCmd->getTemp();break;
         case 3:usVal=cmds.m_pJardCmd->getHum();break;
+
+        case 100:memoire_stats_read(MEM_STATS_ADDR_TOT_BOOTS,&usVal);break;
+        case 101:memoire_stats_read(MEM_STATS_ADDR_TOT_P1_H,&usVal);break;
+        case 102:memoire_stats_read(MEM_STATS_ADDR_TOT_P2_H,&usVal);break;
+        case 103:memoire_stats_read(MEM_STATS_ADDR_TOT_SUN_H,&usVal);break;
+        case 104:memoire_stats_read(MEM_STATS_ADDR_TOT_BTN1,&usVal);break;
+        case 105:memoire_stats_read(MEM_STATS_ADDR_TOT_BTN2,&usVal);break;
+
+        case 200:
+        {
+          T_ID id;
+          
+          if (memoire_load_id(&id)==true)
+            usVal=id.bVersion;
+          else
+            usVal=0;
+            
+          break;          
+        }
+
+        case 201:
+        {
+          T_ID id;
+          
+          if (memoire_load_id(&id)==true)
+            usVal=id.bSerial;
+          else
+            usVal=0;
+            
+          break;          
+        }
+        case 202:usVal=MODBUS_JARDUINO_VERSION;break;
         
         default:return MDBUS_ERR;
       }
@@ -97,46 +164,106 @@ int user_mdbus_read_input_registers(unsigned short addr, unsigned short count, u
 
 int user_mdbus_read_holding_registers(unsigned short addr, unsigned short count, unsigned char* o_pBuffer)
 {
-    for (int i = 0; i < count; i++)
+  unsigned short usYear=0;
+  unsigned char ucMonth=0;
+  unsigned char ucDay=0;
+  unsigned char ucHour=0;
+  unsigned char ucMin=0;
+  unsigned char ucSec=0;
+
+  unsigned char ucHourStart=0;
+  unsigned char ucMinStart=0;
+  unsigned char ucDuration=0;
+  unsigned char ucDaysWeek=0;  
+
+  cmds.m_pJardCmd->aliveComm();
+
+  if ( (addr>=0) && (addr<=5) )
+  {
+    cmds.m_pJardCmd->getDate(&usYear,&ucMonth,&ucDay,&ucHour,&ucMin,&ucSec);
+  }
+
+  cmds.m_pJardCmd->getSheduler(1,&ucHourStart,&ucMinStart,&ucDuration,&ucDaysWeek);
+  
+  for (int i = 0; i < count; i++)
+  {
+    unsigned short usVal;
+    switch (addr+i)
     {
-      unsigned short usVal;
-      switch (addr+i)
-      {
-        case 0:usVal=1978;break;
-        case 1:usVal=6;break;
-        case 2:usVal=26;break;
-        case 3:usVal=9;break;
-        case 4:usVal=15;break;
-        case 5:usVal=0;break;
+      case 0:usVal=usYear;break;
+      case 1:usVal=ucMonth;break;
+      case 2:usVal=ucDay;break;
+      case 3:usVal=ucHour;break;
+      case 4:usVal=ucMin;break;
+      case 5:usVal=ucSec;break;
         
-        default:return MDBUS_ERR;
-
-      }
-      mdbus_fill_register_data(o_pBuffer, i, usVal);
+      case 10:usVal=ucHourStart;break;
+      case 11:usVal=ucMinStart;break;
+      case 12:usVal=ucDuration;break;
+      case 13:usVal=ucDaysWeek;break;
+      
+      default:return MDBUS_ERR;
     }
+    mdbus_fill_register_data(o_pBuffer, i, usVal);
+  }
 
-    return MDBUS_OK;
+  return MDBUS_OK;
 }
 
 int user_mdbus_write_holding_registers(unsigned short addr, unsigned short count, unsigned char* i_pBuffer)
 {
-    for (int i = 0; i < count; i++)
-    {
-        unsigned short usVal = mdbus_get_register_data(i_pBuffer, i);
-        switch (addr+i)
-        {
-          case 0:usVal=1978;break;
-          case 1:usVal=6;break;
-          case 2:usVal=26;break;
-          case 3:usVal=9;break;
-          case 4:usVal=15;break;
-          case 5:usVal=0;break;
-          
-          default:return MDBUS_ERR;
-        }
-    }
+  unsigned short usYear=0;
+  unsigned char ucMonth=0;
+  unsigned char ucDay=0;
+  unsigned char ucHour=0;
+  unsigned char ucMin=0;
+  unsigned char ucSec=0;
+  
+  unsigned char ucHourStart=0;
+  unsigned char ucMinStart=0;
+  unsigned char ucDuration=0;
+  unsigned char ucDaysWeek=0;
 
-    return MDBUS_OK;
+  cmds.m_pJardCmd->aliveComm();
+  
+  cmds.m_pJardCmd->getDate(&usYear,&ucMonth,&ucDay,&ucHour,&ucMin,&ucSec);
+  cmds.m_pJardCmd->getSheduler(1,&ucHourStart,&ucMinStart,&ucDuration,&ucDaysWeek);
+
+  bool flgModifDtm=false;
+  bool flgModifSch1=false;
+  for (int i = 0; i < count; i++)
+  {
+    unsigned short usVal = mdbus_get_register_data(i_pBuffer, i);
+    switch (addr+i)
+    {
+      case 0:usYear=usVal;flgModifDtm=true;break;
+      case 1:ucMonth=(usVal&0xFF);flgModifDtm=true;break;
+      case 2:ucDay=(usVal&0xFF);flgModifDtm=true;break;
+      case 3:ucHour=(usVal&0xFF);flgModifDtm=true;break;
+      case 4:ucMin=(usVal&0xFF);flgModifDtm=true;break;
+      case 5:ucSec=(usVal&0xFF);flgModifDtm=true;break;
+
+      case 10:ucHourStart=(usVal&0xFF);flgModifSch1=true;break;
+      case 11:ucMinStart=(usVal&0xFF);flgModifSch1=true;break;
+      case 12:ucDuration=(usVal&0xFF);flgModifSch1=true;break;
+      case 13:ucDaysWeek=(usVal&0xFF);flgModifSch1=true;break;
+          
+      default:return MDBUS_ERR;
+    }
+  }
+
+  if (flgModifSch1)
+  {
+    cmds.m_pJardCmd->setSheduler(1,ucHourStart,ucMinStart,ucDuration,ucDaysWeek);
+  }
+  
+  if (flgModifDtm)
+  {
+    cmds.m_pJardCmd->setDate(usYear,ucMonth,ucDay);
+    cmds.m_pJardCmd->setHour(ucHour,ucMin);
+  }
+
+  return MDBUS_OK;
 }
 
 T_MDBUS_CTX ctx;
@@ -160,7 +287,7 @@ void Cmds::init(HardwareSerial *pSerial, IJardCmd *pJardCmd)
   //m_pSerial->println("Boot...");
 
   mdbus_init(&ctx,md_buffer, sizeof(md_buffer),4);  
-  ctx.back=m_pSerial;
+  ctx.back=(void *)m_pSerial;
 }
 
 void Cmds::onSerialEvent()

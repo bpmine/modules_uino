@@ -34,12 +34,18 @@
 #define OB_LED_CPU    (6)
 
 #define MB_BATT_OK     (0)
+#define MB_COMM_OK     (1)
 
-#define MB_PMP1_FORCED (1)
-#define MB_PMP1_ENABLE (2)
-#define MB_PMP1_AUTO   (3)
+#define MB_PMP1_FORCED (2)
+#define MB_PMP1_ENABLE (3)
+#define MB_PMP1_AUTO   (4)
+#define MB_PMP1_REMOTE (5)
+#define MB_PMP1_RM_CMD (6)
 
-#define MB_PMP2_FORCED (4)
-#define MB_PMP2_ENABLE (5)
-#define MB_PMP2_AUTO   (6)
+#define MB_PMP2_FORCED (7)
+#define MB_PMP2_ENABLE (8)
+#define MB_PMP2_AUTO   (9)
+#define MB_PMP2_REMOTE (10)
+#define MB_PMP2_RM_CMD (11)
+
 #endif

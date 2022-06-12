@@ -3,11 +3,12 @@
 #include "jard.h"
 #include "pins.h"
 #include "autom.h"
+#include "memoire.h"
 
 #include <DHT.h>
 
 Jard jard;
-DHT dhtSensor(PIN_DHT_DATA,DHT21);
+DHT dhtSensor(PIN_DHT_DATA,DHT22);
 
 void latch_input(int pin,int ob)
 {
@@ -107,6 +108,10 @@ void setup()
   digitalWrite(PIN_LED_BATT,LOW);
   digitalWrite(PIN_LED_SUN,LOW);
   digitalWrite(PIN_LED_CPU,LOW);
+
+  dhtSensor.begin();
+
+  memoire_stats_inc(MEM_STATS_ADDR_TOT_BOOTS);
 }
 
 Analog anBatt(4);
@@ -133,7 +138,7 @@ void read_dht(void)
   }  
   else
   {
-    anHum.latch(h);
+    anHum.latch(h);    
   }
   
   float t = dhtSensor.readTemperature();

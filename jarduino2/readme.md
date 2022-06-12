@@ -1,5 +1,24 @@
 # JARDUINO 2
 
+Jarduino2 est une évolution du premier jarduino fabriqué en 2019.
+
+Le premier jarduino était construit avec des platines de prototypage et un arduino MKR Zero Wifi.
+
+Ce nouveau jarduino est construit à partir d'un Nano. On peut le configurer à l'aide d'une interface MODBUS sur l'USB ou bien sur le port série d'extension.
+Il est possible de lui ajouter une extension Wifi pour le relier au réseau.
+
+## Hardware
+
+Caractéristiques:
+
+  - Alimentation 12V;
+  - Entrée de mesure de tension de panneau solaire;
+  - 2 sorties 5W pour pompe (De type aquarium);
+  - Sonde de température/Humidité;
+  - LEDs et interrupteurs.
+
+## Photos
+
 ## MODBUS
 
 Le jarduino implémente un serveur/esclave MODBUS.
@@ -18,14 +37,24 @@ Seules les functions suivantes sont implémentées:
 Adresse | Description
 --- | ---
 10 | Forçage POMPE 1
-11 | Activation POMPE 1
+11 | Autorisation/Activation POMPE 1
 12 | Mode automatique POMPE 1
 13 | Mode Distant POMPE 1
 --- | ---
-14 | Forçage POMPE 2
-15 | Activation POMPE 2
-16 | Mode automatique POMPE 2
-17 | Mode Distant POMPE 2
+20 | Forçage POMPE 2
+21 | Autorisation/Activation POMPE 2
+22 | Mode automatique POMPE 2
+23 | Mode Distant POMPE 2
+
+Ces bits sont enregistrés en EEPROM sauf ceux qui correspondent au forçage des pompes.
+
+
+### Table des Entrees (Lecture)
+
+Adresse | Description
+--- | ---
+30 | Etat LED pompe 1
+31 | Etat LED pompe 2
 
 ### Table des INPUT REGISTERs (Lecture)
 
@@ -35,3 +64,36 @@ Adresse | Description
 1 | Niveau du panneau solaire en dxV
 2 | Temperature en °C
 3 | Humidité en %
+--- | ---
+100 | Nombre total de boots
+101 | Temps de fonctionnement total POMPE 1 (en H)
+102 | Temps de fonctionnement total POMPE 1 (en H)
+103 | Temps total d'ensoleillement (en H)
+104 | Nombre total de pressions sur le bouton POMPE 1
+104 | Nombre total de pressions sur le bouton POMPE 2
+--- | ---
+200 | Version (2 pour jarduino 2)
+201 | Numéro de série du Jarduino
+202 | Version de la table MODBUS
+
+
+### Table des HOLDING REGISTERs (Lecture/Ecriture)
+
+Adresse | Description
+--- | ---
+0 | Année
+1 | Mois
+2 | Jour
+3 | Heure
+4 | Minute
+5 | Seconde
+--- | ---
+10 | Heure de démarrage POMPE 1
+11 | Minute de démarrage POMPE 1
+12 | Durée (en min) d'activation de la POMPE 1
+13 | Jours de la semaine pour l'activation de la POMPE 1 (Bit 0: Dimanche, Bit 1: Lundi, ..., Bit 7: Samedi)
+--- | ---
+20 | Heure de démarrage POMPE 2
+21 | Minute de démarrage POMPE 2
+22 | Durée (en min) d'activation de la POMPE 2
+23 | Jours de la semaine pour l'activation de la POMPE 2 (Bit 0: Dimanche, Bit 1: Lundi, ..., Bit 7: Samedi)

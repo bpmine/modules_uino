@@ -1,5 +1,5 @@
 #include "autom.h"
-#include <arduino.h>
+#include <stdio.h>
     
 #define MAX_MB_SIZE (8)
 
@@ -171,7 +171,7 @@ void MB::start_latch(void)
 
 void MB::end_latch(void)
 {
-  byte tmp[MAX_MB_SIZE];
+  unsigned char tmp[MAX_MB_SIZE];
   
   if (m_bSize == 0 )
     return;
