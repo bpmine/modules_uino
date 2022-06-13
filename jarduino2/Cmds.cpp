@@ -248,6 +248,32 @@ int user_mdbus_write_holding_registers(unsigned short addr, unsigned short count
       case 12:ucDuration=(usVal&0xFF);flgModifSch1=true;break;
       case 13:ucDaysWeek=(usVal&0xFF);flgModifSch1=true;break;
           
+        case 200:
+        {
+          T_ID id;
+          
+          if (memoire_load_id(&id)==true)
+          {
+            id.bVersion=(usVal&0xFF);
+            memoire_save_id(&id);
+          }
+            
+          break;          
+        }
+
+        case 201:
+        {
+          T_ID id;
+          
+          if (memoire_load_id(&id)==true)
+          {
+            id.bSerial=(usVal&0xFF);
+            memoire_save_id(&id);
+          }
+            
+          break;          
+        }
+
       default:return MDBUS_ERR;
     }
   }
