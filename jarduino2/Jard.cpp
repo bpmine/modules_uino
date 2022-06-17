@@ -154,6 +154,15 @@ void Jard::setSheduler(int num,unsigned char ucStartHour,unsigned char ucStartMi
     memoire_set(MEM_SETTINGS_ADDR_PUMP1_DURAT1,ucDuration_min);
     memoire_set(MEM_SETTINGS_ADDR_PUMP1_DAYSW,ucDaysOfWeek);    
   }
+  else if (num==2)
+  {
+    pump2.setSched(ucStartHour,ucStartMin,ucDuration_min,ucDaysOfWeek);
+    
+    memoire_set(MEM_SETTINGS_ADDR_PUMP2_STARTH1,ucStartHour);
+    memoire_set(MEM_SETTINGS_ADDR_PUMP2_STARTM1,ucStartMin);
+    memoire_set(MEM_SETTINGS_ADDR_PUMP2_DURAT1,ucDuration_min);
+    memoire_set(MEM_SETTINGS_ADDR_PUMP2_DAYSW,ucDaysOfWeek);        
+  }
 }
 
 void Jard::getSheduler(int num,unsigned char *o_ucStartHour,unsigned char *o_ucStartMin,unsigned char *o_ucDuration_min,unsigned char *o_ucDaysOfWeek)
@@ -161,6 +170,10 @@ void Jard::getSheduler(int num,unsigned char *o_ucStartHour,unsigned char *o_ucS
   if (num==1)
   {
     pump1.getSched(o_ucStartHour,o_ucStartMin,o_ucDuration_min,o_ucDaysOfWeek);
+  }  
+  else if (num==2)
+  {
+    pump2.getSched(o_ucStartHour,o_ucStartMin,o_ucDuration_min,o_ucDaysOfWeek);
   }  
 }
 

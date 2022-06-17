@@ -16,7 +16,7 @@ extern "C"{
 #include <mdbus.h>
 }
 
-#define MODBUS_JARDUINO_VERSION (1)
+#define MODBUS_JARDUINO_VERSION (2)
 
 
 void user_mdbus_send(void *back,unsigned char* pbuff, int sz)
