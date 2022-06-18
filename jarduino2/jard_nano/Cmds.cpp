@@ -310,7 +310,6 @@ void Cmds::init(HardwareSerial *pSerial, IJardCmd *pJardCmd)
     return;
 
   m_pSerial->begin(9600);
-  //m_pSerial->println("Boot...");
 
   mdbus_init(&ctx,md_buffer, sizeof(md_buffer),4);  
   ctx.back=(void *)m_pSerial;
