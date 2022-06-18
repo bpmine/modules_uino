@@ -30,10 +30,6 @@ void Jard::init()
    tmrBlink.start();
 }
 
-void Jard::save(void)
-{
-}
-
 void Jard::load(void)
 {
   T_ID id; 

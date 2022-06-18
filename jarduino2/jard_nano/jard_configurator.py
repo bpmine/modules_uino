@@ -184,11 +184,6 @@ def config_serial_version(cln):
 
 
 def config_jarduino(cln):
-    print('Read Coil status:',end='')
-    result= cln.read_coils(20,3,unit= 4)
-    print('[OK]')
-    print(result.bits)    
-
     print('Read Input Registers / Version and serial:',end='')
     result= cln.read_input_registers(200,3,unit= 4)
     assert len(result.registers)==3   
@@ -197,11 +192,6 @@ def config_jarduino(cln):
     print('Version MODBUS : %d' % (result.registers[0]) );
     print('Serial number  : %d' % (result.registers[1]) );
     print('Soft version   : %d' % (result.registers[2]) );
-##    print('Date           : %02d/%02d/%04d' % (
-##        result.registers[3],
-##        result.registers[4],
-##        result.registers[5]        
-##        ));
 
     print('Read Holding Registers / Heure:',end='')
     result= cln.read_holding_registers(0,6,unit= 4)
@@ -223,9 +213,8 @@ def config_jarduino(cln):
 
     test_readTempBatt(cln)
 
-
     print('Write Holding Registers / Scheduler:',end='')
-    result= cln.write_registers(10,[19,00,60,255],unit= 4)
+    result= cln.write_registers(10,[23,0,59,255],unit= 4)
     print('[OK]')
 
     print('Read Holding Registers / Scheduler:',end='')
@@ -244,11 +233,11 @@ def config_jarduino(cln):
     print(result.bits)    
 
     print('Write Holding Registers / Scheduler:',end='')
-    result= cln.write_registers(20,[19,00,60,255],unit= 4)
+    result= cln.write_registers(20,[0,5,59,255],unit= 4)
     print('[OK]')
 
     print('Read Holding Registers / Scheduler:',end='')
-    result= cln.read_holding_registers(10,4,unit= 4)
+    result= cln.read_holding_registers(20,4,unit= 4)
     assert len(result.registers)==4    
     print('[OK]')    
     print(result.registers)
@@ -263,7 +252,7 @@ def config_jarduino(cln):
     print(result.bits)    
     
 
-client= ModbusClient(method = "rtu", port=r"\\.\COM13",stopbits = 1, bytesize = 8, parity='N',baudrate= 9600,timeout=2)
+client= ModbusClient(method = "rtu", port=r"\\.\COM12",stopbits = 1, bytesize = 8, parity='N',baudrate= 9600,timeout=2)
 
 print('Connection:',end='')
 res = client.connect()

@@ -16,7 +16,7 @@ extern "C"{
 #include <mdbus.h>
 }
 
-#define MODBUS_JARDUINO_VERSION (2)
+#define MODBUS_JARDUINO_VERSION (3)
 
 
 void user_mdbus_send(void *back,unsigned char* pbuff, int sz)
@@ -171,10 +171,15 @@ int user_mdbus_read_holding_registers(unsigned short addr, unsigned short count,
   unsigned char ucMin=0;
   unsigned char ucSec=0;
 
-  unsigned char ucHourStart=0;
-  unsigned char ucMinStart=0;
-  unsigned char ucDuration=0;
-  unsigned char ucDaysWeek=0;  
+  unsigned char ucHourStart1=0;
+  unsigned char ucMinStart1=0;
+  unsigned char ucDuration1=0;
+  unsigned char ucDaysWeek1=0;  
+
+  unsigned char ucHourStart2=0;
+  unsigned char ucMinStart2=0;
+  unsigned char ucDuration2=0;
+  unsigned char ucDaysWeek2=0;  
 
   cmds.m_pJardCmd->aliveComm();
 
@@ -183,7 +188,8 @@ int user_mdbus_read_holding_registers(unsigned short addr, unsigned short count,
     cmds.m_pJardCmd->getDate(&usYear,&ucMonth,&ucDay,&ucHour,&ucMin,&ucSec);
   }
 
-  cmds.m_pJardCmd->getSheduler(1,&ucHourStart,&ucMinStart,&ucDuration,&ucDaysWeek);
+  cmds.m_pJardCmd->getSheduler(1,&ucHourStart1,&ucMinStart1,&ucDuration1,&ucDaysWeek1);
+  cmds.m_pJardCmd->getSheduler(2,&ucHourStart2,&ucMinStart2,&ucDuration2,&ucDaysWeek2);
   
   for (int i = 0; i < count; i++)
   {
@@ -197,11 +203,16 @@ int user_mdbus_read_holding_registers(unsigned short addr, unsigned short count,
       case 4:usVal=ucMin;break;
       case 5:usVal=ucSec;break;
         
-      case 10:usVal=ucHourStart;break;
-      case 11:usVal=ucMinStart;break;
-      case 12:usVal=ucDuration;break;
-      case 13:usVal=ucDaysWeek;break;
+      case 10:usVal=ucHourStart1;break;
+      case 11:usVal=ucMinStart1;break;
+      case 12:usVal=ucDuration1;break;
+      case 13:usVal=ucDaysWeek1;break;
       
+      case 20:usVal=ucHourStart2;break;
+      case 21:usVal=ucMinStart2;break;
+      case 22:usVal=ucDuration2;break;
+      case 23:usVal=ucDaysWeek2;break;
+
       default:return MDBUS_ERR;
     }
     mdbus_fill_register_data(o_pBuffer, i, usVal);
@@ -219,18 +230,25 @@ int user_mdbus_write_holding_registers(unsigned short addr, unsigned short count
   unsigned char ucMin=0;
   unsigned char ucSec=0;
   
-  unsigned char ucHourStart=0;
-  unsigned char ucMinStart=0;
-  unsigned char ucDuration=0;
-  unsigned char ucDaysWeek=0;
+  unsigned char ucHourStart1=0;
+  unsigned char ucMinStart1=0;
+  unsigned char ucDuration1=0;
+  unsigned char ucDaysWeek1=0;
+
+  unsigned char ucHourStart2=0;
+  unsigned char ucMinStart2=0;
+  unsigned char ucDuration2=0;
+  unsigned char ucDaysWeek2=0;
 
   cmds.m_pJardCmd->aliveComm();
   
   cmds.m_pJardCmd->getDate(&usYear,&ucMonth,&ucDay,&ucHour,&ucMin,&ucSec);
-  cmds.m_pJardCmd->getSheduler(1,&ucHourStart,&ucMinStart,&ucDuration,&ucDaysWeek);
+  cmds.m_pJardCmd->getSheduler(1,&ucHourStart1,&ucMinStart1,&ucDuration1,&ucDaysWeek1);
+  cmds.m_pJardCmd->getSheduler(2,&ucHourStart2,&ucMinStart2,&ucDuration2,&ucDaysWeek2);
 
   bool flgModifDtm=false;
   bool flgModifSch1=false;
+  bool flgModifSch2=false;
   for (int i = 0; i < count; i++)
   {
     unsigned short usVal = mdbus_get_register_data(i_pBuffer, i);
@@ -243,11 +261,16 @@ int user_mdbus_write_holding_registers(unsigned short addr, unsigned short count
       case 4:ucMin=(usVal&0xFF);flgModifDtm=true;break;
       case 5:ucSec=(usVal&0xFF);flgModifDtm=true;break;
 
-      case 10:ucHourStart=(usVal&0xFF);flgModifSch1=true;break;
-      case 11:ucMinStart=(usVal&0xFF);flgModifSch1=true;break;
-      case 12:ucDuration=(usVal&0xFF);flgModifSch1=true;break;
-      case 13:ucDaysWeek=(usVal&0xFF);flgModifSch1=true;break;
+      case 10:ucHourStart1=(usVal&0xFF);flgModifSch1=true;break;
+      case 11:ucMinStart1=(usVal&0xFF);flgModifSch1=true;break;
+      case 12:ucDuration1=(usVal&0xFF);flgModifSch1=true;break;
+      case 13:ucDaysWeek1=(usVal&0xFF);flgModifSch1=true;break;
           
+      case 20:ucHourStart2=(usVal&0xFF);flgModifSch2=true;break;
+      case 21:ucMinStart2=(usVal&0xFF);flgModifSch2=true;break;
+      case 22:ucDuration2=(usVal&0xFF);flgModifSch2=true;break;
+      case 23:ucDaysWeek2=(usVal&0xFF);flgModifSch2=true;break;
+
         case 200:
         {
           T_ID id;
@@ -280,9 +303,14 @@ int user_mdbus_write_holding_registers(unsigned short addr, unsigned short count
 
   if (flgModifSch1)
   {
-    cmds.m_pJardCmd->setSheduler(1,ucHourStart,ucMinStart,ucDuration,ucDaysWeek);
+    cmds.m_pJardCmd->setSheduler(1,ucHourStart1,ucMinStart1,ucDuration1,ucDaysWeek1);
   }
   
+  if (flgModifSch2)
+  {
+    cmds.m_pJardCmd->setSheduler(2,ucHourStart2,ucMinStart2,ucDuration2,ucDaysWeek2);
+  }
+
   if (flgModifDtm)
   {
     cmds.m_pJardCmd->setDate(usYear,ucMonth,ucDay);

@@ -45,8 +45,7 @@ class Jard: public IJardCmd
     unsigned short getSunLevel(void);
     int getTemp(void);
     unsigned char getHum(void);
-
-    void save(void);
+    
     void load(void);
   
   public:

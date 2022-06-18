@@ -22,7 +22,6 @@ public:
   virtual int getTemp(void)=0;
   virtual unsigned char getHum(void)=0;
 
-  virtual void save(void)=0;
   virtual void load(void)=0;
 };
 
