@@ -182,6 +182,58 @@ def config_serial_version(cln):
     print('[OK]')
 
 
+config={
+    1:{
+        'pmp1':([False,True,True,False],[22,30,45,255]),
+        'pmp2':([False,False,False,False],[0,0,0,0])
+    },
+    3:{
+        'pmp1':([False,True,True,False],[22,30,89,255]),
+        'pmp2':([False,False,False,False],[0,0,0,0])
+    },
+    }
+
+
+def disp_pump_cfg(pmp_cfg,pmp_coils):
+    print('Heure de début : %02d:%02d' % (pmp_cfg['hour'],pmp_cfg['minute']) )
+    print('Durée          : %02d mins' % (pmp_cfg['duration']) )
+    print('Masque jours   : %02xH' % (pmp_cfg['days']) )
+    print('Forced         : %d' % (pmp_coils['forced']) )
+    print('Enabled        : %d' % (pmp_coils['enabled']) )
+    print('Auto           : %d' % (pmp_coils['auto']) )
+    
+
+def config_jarduino_read_sched(cln,addr):
+    print('Read Holding Registers / Scheduler %d:' % (addr),end='')
+    result= cln.read_holding_registers(addr,4,unit= 4)
+    assert len(result.registers)==4    
+    print('[OK]')
+
+    cfg={
+        'hour':result.registers[0],
+        'minute':result.registers[1],
+        'duration':result.registers[2],
+        'days':result.registers[3]        
+        }
+
+    return cfg
+
+def config_jarduino_read_coils(cln,addr):
+    print('Read Coil status %d:' % (addr),end='')
+    result= cln.read_coils(addr,4,unit= 4)
+    print('[OK]')
+    assert len(result.bits)==8
+
+    cfg={
+        'forced':result.bits[0],
+        'enabled':result.bits[1],
+        'auto':result.bits[2],
+        'remote':result.bits[3]
+        }
+
+    return cfg
+
+    
 
 def config_jarduino(cln):
     print('Read Input Registers / Version and serial:',end='')
@@ -189,6 +241,7 @@ def config_jarduino(cln):
     assert len(result.registers)==3   
     print('[OK]')    
 
+    serial=result.registers[1]
     print('Version MODBUS : %d' % (result.registers[0]) );
     print('Serial number  : %d' % (result.registers[1]) );
     print('Soft version   : %d' % (result.registers[2]) );
@@ -211,45 +264,61 @@ def config_jarduino(cln):
         int(result.registers[5])
         ))
 
+    print('_'*60)
+    res_cfg=config_jarduino_read_sched(cln,10)
+    res_coils=config_jarduino_read_coils(cln,10)
+    disp_pump_cfg(res_cfg,res_coils)
+    print('_'*60)
+    res_cfg=config_jarduino_read_sched(cln,20)
+    res_coils=config_jarduino_read_coils(cln,20)
+    disp_pump_cfg(res_cfg,res_coils)
+    print('_'*60)    
+
     test_readTempBatt(cln)
 
+    if serial in config:
+        cfg=config[serial]
+    else:
+        raise(Exception('PAS DE CONFIG!'))
+
+    print('APPLICATION CONFIG:')
+    print(cfg)
+
+    res=input('Continuer? (O/n)')
+    if res!='O':
+        return
+
+    (coils,regs)=cfg['pmp1'];
     print('Write Holding Registers / Scheduler:',end='')
-    result= cln.write_registers(10,[23,0,59,255],unit= 4)
+    result= cln.write_registers(10,regs,unit= 4)
     print('[OK]')
+    res_cfg=config_jarduino_read_sched(cln,10)
 
-    print('Read Holding Registers / Scheduler:',end='')
-    result= cln.read_holding_registers(10,4,unit= 4)
-    assert len(result.registers)==4    
-    print('[OK]')    
-    print(result.registers)
-
-    print('Write Coil status / Pompe 1 activee auto:',end='')
-    result= cln.write_coils(10,[False,True,True],unit= 4)
+    print('Write Coil status:',end='')
+    result= cln.write_coils(10,coils,unit= 4)
     print('[OK]')
+    res_coils=config_jarduino_read_coils(cln,10)
 
-    print('Read Coil status:',end='')
-    result= cln.read_coils(10,3,unit= 4)
-    print('[OK]')
-    print(result.bits)    
+    disp_pump_cfg(res_cfg,res_coils)
 
+
+    (coils,regs)=cfg['pmp2'];   
     print('Write Holding Registers / Scheduler:',end='')
-    result= cln.write_registers(20,[0,5,59,255],unit= 4)
+    result= cln.write_registers(20,regs,unit= 4)
     print('[OK]')
 
     print('Read Holding Registers / Scheduler:',end='')
     result= cln.read_holding_registers(20,4,unit= 4)
     assert len(result.registers)==4    
     print('[OK]')    
-    print(result.registers)
+    res_cfg=config_jarduino_read_sched(cln,20)
 
-    print('Write Coil status / Pompe 2 desactivee:',end='')
-    result= cln.write_coils(20,[False,True,True],unit= 4)
+    print('Write Coil status:',end='')
+    result= cln.write_coils(20,coils,unit= 4)
     print('[OK]')
+    res_coils=config_jarduino_read_coils(cln,20)
 
-    print('Read Coil status:',end='')
-    result= cln.read_coils(20,3,unit= 4)
-    print('[OK]')
-    print(result.bits)    
+    disp_pump_cfg(res_cfg,res_coils)
     
 
 client= ModbusClient(method = "rtu", port=r"\\.\COM12",stopbits = 1, bytesize = 8, parity='N',baudrate= 9600,timeout=2)
