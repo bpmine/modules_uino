@@ -164,7 +164,9 @@ void loop()
   jard.setTemp(anTemp.get());
   jard.setHum(anHum.get());
   
+  mbs.start_latch();
   jard.loop();
+  mbs.end_latch();
   
   apply_outputs();
   delay(50);

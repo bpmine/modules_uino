@@ -7,8 +7,10 @@
 #include "IJardCmd.h"
 #include "timer.h"
 
-#define TEMPS_TIMER_MS    (60*60*1000UL)
-#define TEMPS_BLINK_MS    (800UL)
+#define TEMPS_TIMER_MS    		(60*60*1000UL)   	///< Une heure d'arrosage si timer presse
+#define TEMPS_BLINK_MS    		(800UL)
+#define TEMPS_AVANT_VEILLE_MS	(15*1000UL)			///< Entree en veille au bout d'une minute
+#define TEMPS_COMM_KO_MS		(5*1000UL)			///< Temps avant de détecter la perte de la comm
 
 #define SEUIL_LOW_BATT_L  (90)
 #define SEUIL_LOW_BATT_H  (100)
@@ -18,7 +20,8 @@
 class Jard: public IJardCmd
 {
   private:
-    Timer tmrComm=Timer(5000,false);
+	Timer tmrVeille=Timer(TEMPS_AVANT_VEILLE_MS,false);
+    Timer tmrComm=Timer(TEMPS_COMM_KO_MS,false);
     Timer tmrBlink;
     bool m_flgBlk;
   

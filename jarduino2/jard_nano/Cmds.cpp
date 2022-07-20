@@ -16,7 +16,7 @@ extern "C"{
 #include <mdbus.h>
 }
 
-#define MODBUS_JARDUINO_VERSION (3)
+#define MODBUS_JARDUINO_VERSION (4)
 
 
 void user_mdbus_send(void *back,unsigned char* pbuff, int sz)
@@ -98,6 +98,9 @@ int user_mdbus_read_inputs(unsigned short addr, unsigned short count, unsigned c
     {
       case 0:ucVal=mbs_outputs.get(OB_CMD_PMP1);break;
       case 1:ucVal=mbs_outputs.get(OB_CMD_PMP2);break;      
+      case 2:ucVal=mbs.get(MB_BATT_OK);break;
+      case 3:ucVal=mbs.get(MB_SUN_OK);break;
+      case 4:ucVal=mbs.get(MB_VEILLE);break;
 
       default:return MDBUS_ERR;
     }
@@ -337,7 +340,7 @@ void Cmds::init(HardwareSerial *pSerial, IJardCmd *pJardCmd)
   if ( (m_pSerial == NULL) && (m_pJardCmd != NULL) )
     return;
 
-  m_pSerial->begin(9600);
+  m_pSerial->begin(115200);
 
   mdbus_init(&ctx,md_buffer, sizeof(md_buffer),4);  
   ctx.back=(void *)m_pSerial;

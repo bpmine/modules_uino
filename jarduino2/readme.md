@@ -40,21 +40,28 @@ Adresse | Description
 11 | Autorisation/Activation POMPE 1
 12 | Mode automatique POMPE 1
 13 | Mode Distant POMPE 1
+14 | Commande distante POMPE 1
 --- | ---
 20 | Forçage POMPE 2
 21 | Autorisation/Activation POMPE 2
 22 | Mode automatique POMPE 2
 23 | Mode Distant POMPE 2
+24 | Commande distante POMPE 2
 
-Ces bits sont enregistrés en EEPROM sauf ceux qui correspondent au forçage des pompes.
+Ces bits sont enregistrés en EEPROM sauf ceux qui correspondent au forçage des pompes et à leur commande distante.
+
+NB: La commande à distance des pompe est appliquée seulement si le maître modbus communique toujours avec le jarduino nano.
 
 
 ### Table des Entrees (Lecture)
 
 Adresse | Description
 --- | ---
-30 | Etat LED pompe 1
-31 | Etat LED pompe 2
+0 | Etat LED pompe 1
+1 | Etat LED pompe 2
+2 | Tension battery OK
+3 | Tension panneau solaire OK
+4 | Est en mode veille
 
 ### Table des INPUT REGISTERs (Lecture)
 
@@ -74,7 +81,7 @@ Adresse | Description
 --- | ---
 200 | Version (2 pour jarduino 2)
 201 | Numéro de série du Jarduino
-202 | Version de la table MODBUS
+202 | Version du logiciel nano
 
 
 ### Table des HOLDING REGISTERs (Lecture/Ecriture)

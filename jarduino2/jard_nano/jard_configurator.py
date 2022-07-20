@@ -183,14 +183,18 @@ def config_serial_version(cln):
 
 
 config={
-    1:{
+    1:{ # Paul
         'pmp1':([False,True,True,False],[22,30,45,255]),
         'pmp2':([False,False,False,False],[0,0,0,0])
     },
-    3:{
+    2:{ # Reduit
+        'pmp1':([False,True,True,False],[23,0,59,255]),
+        'pmp2':([False,True,True,False],[0,2,59,255])
+    },
+    3:{ # Barbecue
         'pmp1':([False,True,True,False],[22,30,89,255]),
         'pmp2':([False,False,False,False],[0,0,0,0])
-    },
+    }
     }
 
 
@@ -321,7 +325,7 @@ def config_jarduino(cln):
     disp_pump_cfg(res_cfg,res_coils)
     
 
-client= ModbusClient(method = "rtu", port=r"\\.\COM12",stopbits = 1, bytesize = 8, parity='N',baudrate= 9600,timeout=2)
+client= ModbusClient(method = "rtu", port=r"\\.\COM13",stopbits = 1, bytesize = 8, parity='N',baudrate= 9600,timeout=2)
 
 print('Connection:',end='')
 res = client.connect()

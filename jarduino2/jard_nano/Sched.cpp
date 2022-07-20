@@ -28,13 +28,6 @@ void Sched::setSettings(unsigned char ucStartHour,unsigned char ucStartMin,unsig
     return;
   }
 
-  unsigned long minsSinceMidnightStart=ucStartHour*60+ucStartMin;
-  unsigned long minsSinceMidnightEnd=minsSinceMidnightStart+ucDuration;
-  if (minsSinceMidnightEnd>=60*24)
-  {
-    ucDuration=minsSinceMidnightEnd-60*24;
-  }  
-  
   m_ucStartHour=ucStartHour;
   m_ucStartMin=ucStartMin;
   m_ucDuration=ucDuration;
@@ -52,13 +45,13 @@ void Sched::getSettings(unsigned char *o_ucStartHour,unsigned char *o_ucStartMin
 bool Sched::check(int hour,int minute,int doW)
 {
   if ( (doW>6) || (doW<0) )
-    return;
+    return false;
 
   if ( (hour<0) || (hour>23) )
-    return;
+    return false;
   
   if ( (minute<0) || (minute>59) )
-    return;
+    return false;
 
   bool isDay=true;
   if ( m_ucDaysOfWeek!=0xFF )
@@ -70,6 +63,9 @@ bool Sched::check(int hour,int minute,int doW)
   unsigned long minsSinceMidnightStart=m_ucStartHour*60+m_ucStartMin;
   unsigned long minsSinceMidnightEnd=minsSinceMidnightStart+m_ucDuration;
   unsigned long minsSinceMidnight=hour*60+minute;
+
+  if (minsSinceMidnightEnd>23*60+59)
+	  minsSinceMidnight=minsSinceMidnight+23*60+59;
 
   if ( (isDay) && (minsSinceMidnight>=minsSinceMidnightStart) && (minsSinceMidnight<=minsSinceMidnightEnd) )
     return true;

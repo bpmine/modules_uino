@@ -27,7 +27,8 @@ void Jard::init()
 
   load();
 
-   tmrBlink.start();
+  tmrBlink.start();
+  tmrVeille.start();
 }
 
 void Jard::load(void)
@@ -215,123 +216,155 @@ unsigned char Jard::getHum(void)
 
 void Jard::loop(void)
 {
-  bool outLedPmp1=false;
-  bool outLedPmp2=false;
-  bool outCmdPmp1=false;
-  bool outCmdPmp2=false;
-  bool outCpu=false;
-  bool outSun=false;
-  bool outBatt=false;
+	bool outLedPmp1=false;
+	bool outLedPmp2=false;
+	bool outCmdPmp1=false;
+	bool outCmdPmp2=false;
+	bool outCpu=false;
+	bool outSun=false;
+	bool outBatt=false;
+	bool veille=false;
 
-  unsigned char ucHour=0;
-  unsigned char ucMin=0;
-  unsigned char ucSec=0;
-  
-  getHour(&ucHour,&ucMin,&ucSec);
-  
-  if (tmrBlink.tick()==true)
-    m_flgBlk=!m_flgBlk;
-  
-  if (m_batt_level_dxv>=SEUIL_LOW_BATT_H)
-    m_flgBattOk=true;
-  else if (m_batt_level_dxv<=SEUIL_LOW_BATT_L)
-    m_flgBattOk=false;
+	unsigned char ucHour=0;
+	unsigned char ucMin=0;
+	unsigned char ucSec=0;
 
-  m_flgBattOk=true;
-    
-  if (m_sun_level_dxv>=SEUIL_LOW_SUN_H)
-    m_flgSunOk=true;
-  else if (m_sun_level_dxv<=SEUIL_LOW_SUN_L)
-    m_flgSunOk=false;
+	getHour(&ucHour,&ucMin,&ucSec);
 
-  bool on=!mbs_inputs.get(IB_BTN_ON);
-  if (on==true)
-  {
-    if (mbs_inputs.getFalling(IB_BTN_PMP1))
-    {
-      pump1.startTimer(TEMPS_TIMER_MS);
-      memoire_stats_inc(MEM_STATS_ADDR_TOT_BTN1);      
-    }
-    
-    if (mbs_inputs.getFalling(IB_BTN_PMP2))
-    {
-      pump2.startTimer(TEMPS_TIMER_MS);
-      memoire_stats_inc(MEM_STATS_ADDR_TOT_BTN2);
-    }
-  
-    pump1.setForced(mbs.get(MB_PMP1_FORCED));
-    pump1.setEnable(mbs.get(MB_PMP1_ENABLE));
-    pump1.setAuto(mbs.get(MB_PMP1_AUTO));
-    pump1.setRemote(mbs.get(MB_PMP1_REMOTE));
-    
-    pump2.setForced(mbs.get(MB_PMP2_FORCED));
-    pump2.setEnable(mbs.get(MB_PMP2_ENABLE));
-    pump2.setAuto(mbs.get(MB_PMP2_AUTO));
-    pump2.setRemote(mbs.get(MB_PMP2_REMOTE));
+	if (tmrBlink.tick()==true)
+		m_flgBlk=!m_flgBlk;
 
-    pump1.loop(ucHour,ucMin,m_flgBattOk,mbs.get(MB_PMP1_RM_CMD));
-    pump2.loop(ucHour,ucMin,m_flgBattOk,mbs.get(MB_PMP2_RM_CMD));
+	if (m_batt_level_dxv>=SEUIL_LOW_BATT_H)
+		m_flgBattOk=true;
+	else if (m_batt_level_dxv<=SEUIL_LOW_BATT_L)
+		m_flgBattOk=false;
 
-    outBatt=m_flgBattOk?true:m_flgBlk;
-    outSun=m_flgSunOk;
-    
-    outLedPmp1=pump1.getError()?m_flgBlk:pump1.getOut();
-    outCmdPmp1=pump1.getOut();
-    
-    outLedPmp2=pump2.getError()?m_flgBlk:pump2.getOut();
-    outCmdPmp2=pump2.getOut();
-  }
-  else
-  {
-    pump1.stopTimer();
-    pump1.setEnable(false);
-    pump1.setAuto(false);
-    
-    pump2.stopTimer();
-    pump2.setEnable(false);
-    pump2.setAuto(false);
-  }
+	m_flgBattOk=true;
 
-  if (m_ucOldMin==0xFF)
-    m_ucOldMin=ucMin;
+	if (m_sun_level_dxv>=SEUIL_LOW_SUN_H)
+		m_flgSunOk=true;
+	else if (m_sun_level_dxv<=SEUIL_LOW_SUN_L)
+		m_flgSunOk=false;
 
-  if (m_ucOldMin!=ucMin)
-  {
-    if (m_flgSunOk)
-    {
-      m_ucMinsSun++;
-      if (m_ucMinsSun>=60)
-      {
-        m_ucMinsSun=0;
-        memoire_stats_inc(MEM_STATS_ADDR_TOT_SUN_H);
-      }
-    }   
-  
-    if (pump1.incMins()==true)
-      memoire_stats_inc(MEM_STATS_ADDR_TOT_P1_H);
-  
-    if (pump2.incMins()==true)
-      memoire_stats_inc(MEM_STATS_ADDR_TOT_P2_H);
-  
-    m_ucOldMin=ucMin; 
-  }
+	veille=tmrVeille.isRunning();
+	mbs.fromBool(MB_VEILLE,veille);
 
-  if (tmrComm.tick()==true)
-  {
-    mbs.fromBool(MB_COMM_OK,false);
-    mbs.fromBool(MB_PMP1_RM_CMD,false);
-    mbs.fromBool(MB_PMP2_RM_CMD,false);
-  }
-    
-  mbs_outputs.start_latch();
-  mbs_outputs.fromBool(OB_LED_CPU,on);
-  mbs_outputs.fromBool(OB_LED_BATT,outBatt);
-  mbs_outputs.fromBool(OB_LED_SUN,outSun);  
-  mbs_outputs.fromBool(OB_CMD_PMP1,outCmdPmp1);
-  mbs_outputs.fromBool(OB_LED_PMP1,outLedPmp1);
-  
-  mbs_outputs.fromBool(OB_CMD_PMP2,outCmdPmp2);
-  mbs_outputs.fromBool(OB_LED_PMP2,outLedPmp2);
-  
-  mbs_outputs.end_latch();
-;}
+	bool on=!mbs_inputs.get(IB_BTN_ON);
+	if (on==true)
+	{
+		if ( veille==true )
+		{
+			if (    (mbs_inputs.getFalling(IB_BTN_PMP1))
+				 || (mbs_inputs.getFalling(IB_BTN_PMP2))
+				 || (mbs_inputs.getFalling(IB_BTN_ON))
+				 )
+			{
+				tmrVeille.start();
+			}
+		}
+		else
+		{
+			if (mbs_inputs.getFalling(IB_BTN_PMP1))
+			{
+				pump1.startTimer(TEMPS_TIMER_MS);
+				memoire_stats_inc(MEM_STATS_ADDR_TOT_BTN1);
+			}
+
+			if (mbs_inputs.getFalling(IB_BTN_PMP2))
+			{
+				pump2.startTimer(TEMPS_TIMER_MS);
+				memoire_stats_inc(MEM_STATS_ADDR_TOT_BTN2);
+			}
+		}
+
+		pump1.setForced(mbs.get(MB_PMP1_FORCED));
+		pump1.setEnable(mbs.get(MB_PMP1_ENABLE));
+		pump1.setAuto(mbs.get(MB_PMP1_AUTO));
+		pump1.setRemote(mbs.get(MB_PMP1_REMOTE));
+
+		pump2.setForced(mbs.get(MB_PMP2_FORCED));
+		pump2.setEnable(mbs.get(MB_PMP2_ENABLE));
+		pump2.setAuto(mbs.get(MB_PMP2_AUTO));
+		pump2.setRemote(mbs.get(MB_PMP2_REMOTE));
+
+		pump1.loop(ucHour,ucMin,m_flgBattOk,mbs.get(MB_PMP1_RM_CMD));
+		pump2.loop(ucHour,ucMin,m_flgBattOk,mbs.get(MB_PMP2_RM_CMD));
+
+		if ( (veille==true) && (m_flgSunOk==false) )
+			outBatt=m_flgBattOk?false:m_flgBlk;
+		else
+			outBatt=m_flgBattOk?true:m_flgBlk;
+
+		outSun=m_flgSunOk;
+
+		outLedPmp1=pump1.getError()?m_flgBlk:pump1.getOut();
+		outCmdPmp1=pump1.getOut();
+
+		outLedPmp2=pump2.getError()?m_flgBlk:pump2.getOut();
+		outCmdPmp2=pump2.getOut();
+	}
+	else
+	{
+		pump1.stopTimer();
+		pump1.setEnable(false);
+		pump1.setAuto(false);
+
+		pump2.stopTimer();
+		pump2.setEnable(false);
+		pump2.setAuto(false);
+		tmrVeille.stop();
+	}
+
+	if (m_ucOldMin==0xFF)
+		m_ucOldMin=ucMin;
+
+	if (m_ucOldMin!=ucMin)
+	{
+		if (m_flgSunOk)
+		{
+			m_ucMinsSun++;
+			if (m_ucMinsSun>=60)
+			{
+				m_ucMinsSun=0;
+				memoire_stats_inc(MEM_STATS_ADDR_TOT_SUN_H);
+			}
+		}
+
+		if (pump1.incMins()==true)
+			memoire_stats_inc(MEM_STATS_ADDR_TOT_P1_H);
+
+		if (pump2.incMins()==true)
+			memoire_stats_inc(MEM_STATS_ADDR_TOT_P2_H);
+
+		m_ucOldMin=ucMin;
+	}
+
+	/// @remark Au bout du timer de comm, on coupe les commandes remote et on reporte la comm NOK
+	if (tmrComm.tick()==true)
+	{
+		mbs.fromBool(MB_COMM_OK,false);
+		mbs.fromBool(MB_PMP1_RM_CMD,false);
+		mbs.fromBool(MB_PMP2_RM_CMD,false);
+	}
+
+	if ( (mbs_outputs.get(OB_CMD_PMP1)==true) || (mbs_outputs.get(OB_CMD_PMP2)==true) )
+		tmrVeille.start();
+
+	if ( (veille==true) && (m_flgSunOk==false) )
+	{
+		on=m_flgBlk;
+		outLedPmp1=false;
+		outLedPmp2=false;
+	}
+
+	mbs_outputs.start_latch();
+	mbs_outputs.fromBool(OB_LED_CPU,on);
+	mbs_outputs.fromBool(OB_LED_BATT,outBatt);
+	mbs_outputs.fromBool(OB_LED_SUN,outSun);
+	mbs_outputs.fromBool(OB_CMD_PMP1,outCmdPmp1);
+	mbs_outputs.fromBool(OB_LED_PMP1,outLedPmp1);
+
+	mbs_outputs.fromBool(OB_CMD_PMP2,outCmdPmp2);
+	mbs_outputs.fromBool(OB_LED_PMP2,outLedPmp2);
+	mbs_outputs.end_latch();
+}
