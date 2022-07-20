@@ -71,6 +71,12 @@ Adresse | Description
 1 | Niveau du panneau solaire en dxV
 2 | Temperature en °C
 3 | Humidité en %
+4 | Temps restant avant détection Comm perdue (en ms)
+5 | Temps restant avant veille (en ms)
+--- | ---
+10 | Temps restant timer de pompe 1 (en min)
+--- | ---
+20 | Temps restant timer de pompe 2 (en min)
 --- | ---
 100 | Nombre total de boots
 101 | Temps de fonctionnement total POMPE 1 (en H)
@@ -99,8 +105,10 @@ Adresse | Description
 11 | Minute de démarrage POMPE 1
 12 | Durée (en min) d'activation de la POMPE 1
 13 | Jours de la semaine pour l'activation de la POMPE 1 (Bit 0: Dimanche, Bit 1: Lundi, ..., Bit 7: Samedi)
+14 | Réglage du délai du timer de pompe 1 (en min)
 --- | ---
 20 | Heure de démarrage POMPE 2
 21 | Minute de démarrage POMPE 2
 22 | Durée (en min) d'activation de la POMPE 2
 23 | Jours de la semaine pour l'activation de la POMPE 2 (Bit 0: Dimanche, Bit 1: Lundi, ..., Bit 7: Samedi)
+24 | Réglage du délai du timer de pompe 2 (en min)
