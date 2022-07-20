@@ -103,5 +103,10 @@ namespace JardConfig
             JardPumpInfo pmpInfo=ctrl.GetPmpInfo();            
             cln.SetPump(2,pmpInfo);
         }
+
+        private void btnQuit_Click(object sender, EventArgs e)
+        {
+            Close();
+        }
     }
 }
