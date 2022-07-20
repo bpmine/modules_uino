@@ -10,7 +10,7 @@
 #define TEMPS_TIMER_MS    		(60*60*1000UL)   	///< Une heure d'arrosage si timer presse
 #define TEMPS_BLINK_MS    		(800UL)
 #define TEMPS_AVANT_VEILLE_MS	(15*1000UL)			///< Entree en veille au bout d'une minute
-#define TEMPS_COMM_KO_MS		(5*1000UL)			///< Temps avant de détecter la perte de la comm
+#define TEMPS_COMM_KO_MS		  (5*1000UL)			///< Temps avant de dï¿½tecter la perte de la comm
 
 #define SEUIL_LOW_BATT_L  (90)
 #define SEUIL_LOW_BATT_H  (100)
@@ -20,10 +20,11 @@
 class Jard: public IJardCmd
 {
   private:
-	Timer tmrVeille=Timer(TEMPS_AVANT_VEILLE_MS,false);
-    Timer tmrComm=Timer(TEMPS_COMM_KO_MS,false);
+	  Timer tmrVeille=Timer(TEMPS_AVANT_VEILLE_MS);
+    Timer tmrComm=Timer(TEMPS_COMM_KO_MS);
     Timer tmrBlink;
     bool m_flgBlk;
+    bool m_flgBlk2;
   
     int m_batt_level_dxv;
     int m_sun_level_dxv;
@@ -37,17 +38,23 @@ class Jard: public IJardCmd
     unsigned char m_ucMinsSun;
 
     void aliveComm(void);
-    void setDate(int day,int month,int year);
-    void setHour(int hour,int minute);    
-    void getDate(unsigned short *o_pusYear,unsigned char *o_pucMonth,unsigned char *o_pucDay,unsigned char *o_pucHour,unsigned char *o_pucMin,unsigned char *o_pucSec);
-    void getHour(unsigned char *o_pucHour,unsigned char *o_pucMin,unsigned char *o_pucSec);
+    void setDateTime(int year,int month,int day,int hour,int minute,int second);
+    void getDateTime(unsigned short *o_pusYear,unsigned char *o_pucMonth,unsigned char *o_pucDay,unsigned char *o_pucHour,unsigned char *o_pucMin,unsigned char *o_pucSec);
+    void getTimeToSchedule(unsigned char *o_pucHour,unsigned char *o_pucMin,unsigned char *o_pucSec,unsigned char *o_pucDoW);
     void setSheduler(int num,unsigned char ucStartHour,unsigned char ucStartMin,unsigned char ucDuration_min,unsigned char ucDaysOfWeek);
     void getSheduler(int num,unsigned char *o_ucStartHour,unsigned char *o_ucStartMin,unsigned char *o_ucDuration_min,unsigned char *o_ucDaysOfWeek);
+    void setPmpTimer_min(int num,unsigned char ucTime_mins);
+    unsigned char getPmpTimer_min(int num);    
 
     unsigned short getBattLevel(void);
     unsigned short getSunLevel(void);
     int getTemp(void);
     unsigned char getHum(void);
+    
+    unsigned short getTmrVeille(void);
+    unsigned short getTmrComm(void);
+    unsigned short getTmrPmp1(void);
+    unsigned short getTmrPmp2(void);
     
     void load(void);
   
@@ -62,6 +69,7 @@ class Jard: public IJardCmd
     void setHum(int i_hum_dg);
 
     void getDateStr(char *o_strDate,int i_maxSize);
+    
 
     void loop(void);
 };

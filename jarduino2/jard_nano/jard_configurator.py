@@ -184,16 +184,16 @@ def config_serial_version(cln):
 
 config={
     1:{ # Paul
-        'pmp1':([False,True,True,False],[22,30,45,255]),
-        'pmp2':([False,False,False,False],[0,0,0,0])
+        'pmp1':([False,True,True,False],[22,30,45,255,60]),
+        'pmp2':([False,False,False,False],[0,0,0,0,0])
     },
     2:{ # Reduit
-        'pmp1':([False,True,True,False],[23,0,59,255]),
-        'pmp2':([False,True,True,False],[0,2,59,255])
+        'pmp1':([False,True,True,False],[23,0,59,255,60]),
+        'pmp2':([False,True,True,False],[0,2,59,255,60])
     },
     3:{ # Barbecue
-        'pmp1':([False,True,True,False],[22,30,89,255]),
-        'pmp2':([False,False,False,False],[0,0,0,0])
+        'pmp1':([False,True,True,False],[22,30,89,255,60]),
+        'pmp2':([False,False,False,False],[0,0,0,0,60])
     }
     }
 
@@ -202,6 +202,7 @@ def disp_pump_cfg(pmp_cfg,pmp_coils):
     print('Heure de début : %02d:%02d' % (pmp_cfg['hour'],pmp_cfg['minute']) )
     print('Durée          : %02d mins' % (pmp_cfg['duration']) )
     print('Masque jours   : %02xH' % (pmp_cfg['days']) )
+    print('Timer          : %d mins' % (pmp_cfg['timer']) )
     print('Forced         : %d' % (pmp_coils['forced']) )
     print('Enabled        : %d' % (pmp_coils['enabled']) )
     print('Auto           : %d' % (pmp_coils['auto']) )
@@ -209,15 +210,16 @@ def disp_pump_cfg(pmp_cfg,pmp_coils):
 
 def config_jarduino_read_sched(cln,addr):
     print('Read Holding Registers / Scheduler %d:' % (addr),end='')
-    result= cln.read_holding_registers(addr,4,unit= 4)
-    assert len(result.registers)==4    
+    result= cln.read_holding_registers(addr,5,unit= 4)
+    assert len(result.registers)==5    
     print('[OK]')
 
     cfg={
         'hour':result.registers[0],
         'minute':result.registers[1],
         'duration':result.registers[2],
-        'days':result.registers[3]        
+        'days':result.registers[3],
+        'timer':result.registers[4]
         }
 
     return cfg
@@ -325,7 +327,7 @@ def config_jarduino(cln):
     disp_pump_cfg(res_cfg,res_coils)
     
 
-client= ModbusClient(method = "rtu", port=r"\\.\COM13",stopbits = 1, bytesize = 8, parity='N',baudrate= 9600,timeout=2)
+client= ModbusClient(method = "rtu", port=r"\\.\COM13",stopbits = 1, bytesize = 8, parity='N',baudrate= 115200,timeout=2)
 
 print('Connection:',end='')
 res = client.connect()

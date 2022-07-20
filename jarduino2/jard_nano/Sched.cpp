@@ -44,6 +44,7 @@ void Sched::getSettings(unsigned char *o_ucStartHour,unsigned char *o_ucStartMin
 
 bool Sched::check(int hour,int minute,int doW)
 {
+  /// 0:Sunday ...  6:Saturday
   if ( (doW>6) || (doW<0) )
     return false;
 
@@ -55,8 +56,9 @@ bool Sched::check(int hour,int minute,int doW)
 
   bool isDay=true;
   if ( m_ucDaysOfWeek!=0xFF )
-  {
-    if (m_ucDaysOfWeek&(1<<doW)!=(1<<doW))
+  {  
+    unsigned char ucMask=(unsigned char)(1<<doW);
+    if ( (m_ucDaysOfWeek & ucMask) != ucMask )
       isDay=false;
   }
 

@@ -14,6 +14,7 @@ Pump pump2;
 Jard::Jard():tmrBlink(TEMPS_BLINK_MS,false)
 {  
   m_flgBlk=true;
+  m_flgBlk2=true;
   m_flgBattOk=false;
   m_flgSunOk=false;
   m_ucMinsSun=0;
@@ -48,10 +49,12 @@ void Jard::load(void)
     memoire_set(MEM_SETTINGS_ADDR_PUMP1_EN,0);
     memoire_set(MEM_SETTINGS_ADDR_PUMP1_AUTO,0);
     memoire_set(MEM_SETTINGS_ADDR_PUMP1_REMOTE,0);
+    memoire_set(MEM_SETTINGS_ADDR_PUMP1_TIMER,60);
     
     memoire_set(MEM_SETTINGS_ADDR_PUMP2_EN,0);
     memoire_set(MEM_SETTINGS_ADDR_PUMP2_AUTO,0);
     memoire_set(MEM_SETTINGS_ADDR_PUMP2_REMOTE,0);
+    memoire_set(MEM_SETTINGS_ADDR_PUMP2_TIMER,60);
   }
 
   unsigned char ucVal;
@@ -61,6 +64,8 @@ void Jard::load(void)
     mbs.fromBool(MB_PMP1_AUTO,ucVal==1?true:false);
   if (memoire_read(MEM_SETTINGS_ADDR_PUMP1_REMOTE,&ucVal)==true)
     pump1.setRemote(ucVal==1?true:false);
+  if (memoire_read(MEM_SETTINGS_ADDR_PUMP1_TIMER,&ucVal)==true)
+    pump1.setTimerDelay_min(ucVal);
 
   unsigned char ucHour=0xFF;
   unsigned char ucMin=0xFF;
@@ -71,6 +76,7 @@ void Jard::load(void)
   memoire_read(MEM_SETTINGS_ADDR_PUMP1_DURAT1,&ucDuration);
   memoire_read(MEM_SETTINGS_ADDR_PUMP1_DAYSW,&ucDaysWeek);  
   pump1.setSched(ucHour,ucMin,ucDuration,ucDaysWeek);
+
   
   if (memoire_read(MEM_SETTINGS_ADDR_PUMP2_EN,&ucVal)==true)
     mbs.fromBool(MB_PMP2_ENABLE,ucVal==1?true:false);
@@ -78,11 +84,13 @@ void Jard::load(void)
     mbs.fromBool(MB_PMP2_AUTO,ucVal==1?true:false);
   if (memoire_read(MEM_SETTINGS_ADDR_PUMP2_REMOTE,&ucVal)==true)
     pump2.setRemote(ucVal==1?true:false);  
+  if (memoire_read(MEM_SETTINGS_ADDR_PUMP2_TIMER,&ucVal)==true)
+    pump2.setTimerDelay_min(ucVal);
   
   memoire_read(MEM_SETTINGS_ADDR_PUMP2_STARTH1,&ucHour);
   memoire_read(MEM_SETTINGS_ADDR_PUMP2_STARTM1,&ucMin);
   memoire_read(MEM_SETTINGS_ADDR_PUMP2_DURAT1,&ucDuration);
-  memoire_read(MEM_SETTINGS_ADDR_PUMP2_DAYSW,&ucDaysWeek);  
+  memoire_read(MEM_SETTINGS_ADDR_PUMP2_DAYSW,&ucDaysWeek);
   pump2.setSched(ucHour,ucMin,ucDuration,ucDaysWeek);
 
   mbs.fromBool(MB_COMM_OK,false);
@@ -94,17 +102,10 @@ void Jard::aliveComm(void)
   mbs.fromBool(MB_COMM_OK,true);
 }
 
-void Jard::setDate(int day,int month,int year)
+void Jard::setDateTime(int year,int month,int day,int hour,int minute,int second)
 {
   DateTime now = rtc.now();
-  DateTime newDte(year,month,day,now.hour(),now.minute(),now.second());
-  rtc.adjust(newDte);  
-}
-
-void Jard::setHour(int hour,int minute)
-{
-  DateTime now = rtc.now();
-  DateTime newDte(now.year(),now.month(),now.day(),hour,minute,0);
+  DateTime newDte(year,month,day,hour,minute,second);
   rtc.adjust(newDte);  
 }
 
@@ -118,7 +119,7 @@ void Jard::getDateStr(char *o_strDate,int i_maxSize)
   sprintf(o_strDate, "%02d/%02d/%04d %02d:%02d:%02d",now.day() , now.month(), now.year(), now.hour(), now.minute(), now.second());  
 }
 
-void Jard::getDate(unsigned short *o_pusYear,unsigned char *o_pucMonth,unsigned char *o_pucDay,unsigned char *o_pucHour,unsigned char *o_pucMin,unsigned char *o_pucSec)
+void Jard::getDateTime(unsigned short *o_pusYear,unsigned char *o_pucMonth,unsigned char *o_pucDay,unsigned char *o_pucHour,unsigned char *o_pucMin,unsigned char *o_pucSec)
 {
     DateTime now = rtc.now();
     
@@ -131,13 +132,14 @@ void Jard::getDate(unsigned short *o_pusYear,unsigned char *o_pucMonth,unsigned 
     *o_pucSec=now.second();
 }
 
-void Jard::getHour(unsigned char *o_pucHour,unsigned char *o_pucMin,unsigned char *o_pucSec)
+void Jard::getTimeToSchedule(unsigned char *o_pucHour,unsigned char *o_pucMin,unsigned char *o_pucSec,unsigned char *o_pucDoW)
 {
-    DateTime now = rtc.now();
-    
-    *o_pucHour=now.hour();
-    *o_pucMin=now.minute();
-    *o_pucSec=now.second();  
+  DateTime now = rtc.now();
+  
+  *o_pucHour=now.hour();
+  *o_pucMin=now.minute();
+  *o_pucSec=now.second();
+  *o_pucDoW=now.dayOfWeek();
 }
 
 void Jard::setSheduler(int num,unsigned char ucStartHour,unsigned char ucStartMin,unsigned char ucDuration_min,unsigned char ucDaysOfWeek)
@@ -172,6 +174,34 @@ void Jard::getSheduler(int num,unsigned char *o_ucStartHour,unsigned char *o_ucS
   {
     pump2.getSched(o_ucStartHour,o_ucStartMin,o_ucDuration_min,o_ucDaysOfWeek);
   }  
+}
+
+void Jard::setPmpTimer_min(int num,unsigned char ucTime_mins)
+{
+  if (num==1)
+  {
+    pump1.setTimerDelay_min(ucTime_mins);
+    memoire_set(MEM_SETTINGS_ADDR_PUMP1_TIMER,ucTime_mins);
+  }  
+  else if (num==2)
+  {
+    pump2.setTimerDelay_min(ucTime_mins);
+    memoire_set(MEM_SETTINGS_ADDR_PUMP2_TIMER,ucTime_mins);
+  }  
+}
+
+unsigned char Jard::getPmpTimer_min(int num)
+{  
+  if (num==1)
+  {
+    return pump1.getTimerDelay_min();
+  }  
+  else if (num==2)
+  {
+    return pump2.getTimerDelay_min();
+  } 
+  
+  return 0;
 }
 
 void Jard::setBatLevel(int i_level_dxv)
@@ -209,6 +239,27 @@ int Jard::getTemp(void)
   return m_temp_deg;
 }
 
+unsigned short Jard::getTmrVeille(void)
+{
+  return tmrVeille.getRemaining_ms();
+}
+
+unsigned short Jard::getTmrComm(void)
+{
+  return tmrComm.getRemaining_ms();
+}
+
+unsigned short Jard::getTmrPmp1(void)
+{
+  return pump1.getRemaining_ms();
+}
+
+unsigned short Jard::getTmrPmp2(void)
+{
+  return pump2.getRemaining_ms();
+}
+
+
 unsigned char Jard::getHum(void)
 {
   return m_hum_pc; 
@@ -228,30 +279,35 @@ void Jard::loop(void)
 	unsigned char ucHour=0;
 	unsigned char ucMin=0;
 	unsigned char ucSec=0;
+  unsigned char DoW=0;
 
-	getHour(&ucHour,&ucMin,&ucSec);
+	getTimeToSchedule(&ucHour,&ucMin,&ucSec,&DoW);
 
 	if (tmrBlink.tick()==true)
+  {
 		m_flgBlk=!m_flgBlk;
+   
+    if (m_flgBlk==true)
+      m_flgBlk2=!m_flgBlk2;
+  }
 
 	if (m_batt_level_dxv>=SEUIL_LOW_BATT_H)
 		m_flgBattOk=true;
 	else if (m_batt_level_dxv<=SEUIL_LOW_BATT_L)
 		m_flgBattOk=false;
 
-	m_flgBattOk=true;
+	//m_flgBattOk=true;
 
 	if (m_sun_level_dxv>=SEUIL_LOW_SUN_H)
 		m_flgSunOk=true;
 	else if (m_sun_level_dxv<=SEUIL_LOW_SUN_L)
 		m_flgSunOk=false;
 
-	veille=tmrVeille.isRunning();
-	mbs.fromBool(MB_VEILLE,veille);
-
-	bool on=!mbs_inputs.get(IB_BTN_ON);
+  bool on=!mbs_inputs.get(IB_BTN_ON);  
+	
 	if (on==true)
 	{
+    veille=(tmrVeille.isRunning()?false:true);
 		if ( veille==true )
 		{
 			if (    (mbs_inputs.getFalling(IB_BTN_PMP1))
@@ -287,8 +343,8 @@ void Jard::loop(void)
 		pump2.setAuto(mbs.get(MB_PMP2_AUTO));
 		pump2.setRemote(mbs.get(MB_PMP2_REMOTE));
 
-		pump1.loop(ucHour,ucMin,m_flgBattOk,mbs.get(MB_PMP1_RM_CMD));
-		pump2.loop(ucHour,ucMin,m_flgBattOk,mbs.get(MB_PMP2_RM_CMD));
+		pump1.loop(ucHour,ucMin,DoW,m_flgBattOk,mbs.get(MB_PMP1_RM_CMD));
+		pump2.loop(ucHour,ucMin,DoW,m_flgBattOk,mbs.get(MB_PMP2_RM_CMD));
 
 		if ( (veille==true) && (m_flgSunOk==false) )
 			outBatt=m_flgBattOk?false:m_flgBlk;
@@ -312,8 +368,10 @@ void Jard::loop(void)
 		pump2.stopTimer();
 		pump2.setEnable(false);
 		pump2.setAuto(false);
-		tmrVeille.stop();
+		tmrVeille.start();
 	}
+
+  mbs.fromBool(MB_VEILLE,veille);
 
 	if (m_ucOldMin==0xFF)
 		m_ucOldMin=ucMin;
@@ -347,12 +405,14 @@ void Jard::loop(void)
 		mbs.fromBool(MB_PMP2_RM_CMD,false);
 	}
 
+  tmrVeille.tick();
+
 	if ( (mbs_outputs.get(OB_CMD_PMP1)==true) || (mbs_outputs.get(OB_CMD_PMP2)==true) )
 		tmrVeille.start();
 
 	if ( (veille==true) && (m_flgSunOk==false) )
 	{
-		on=m_flgBlk;
+		on=m_flgBlk2;
 		outLedPmp1=false;
 		outLedPmp2=false;
 	}

@@ -28,7 +28,7 @@ class Pump
   public:   
     Pump();
 
-    void loop(int hour,int min,bool batt_ok,bool cmd_remote);
+    void loop(int hour,int min,int DoW,bool batt_ok,bool cmd_remote);
 
     void setEnable(bool flgEnabled);
     void setForced(bool flgForced);
@@ -46,5 +46,9 @@ class Pump
     bool getError(void);
     bool getOut(void);
     bool incMins(void);
+
+    unsigned long getRemaining_ms(void);
+    unsigned char getTimerDelay_min(void);
+    void setTimerDelay_min(unsigned char ucDelay_min);
 };
 #endif

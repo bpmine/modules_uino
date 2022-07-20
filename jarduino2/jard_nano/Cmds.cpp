@@ -124,6 +124,12 @@ int user_mdbus_read_input_registers(unsigned short addr, unsigned short count, u
         case 1:usVal=cmds.m_pJardCmd->getSunLevel();break;
         case 2:usVal=cmds.m_pJardCmd->getTemp();break;
         case 3:usVal=cmds.m_pJardCmd->getHum();break;
+        case 4:usVal=cmds.m_pJardCmd->getTmrComm();break;
+        case 5:usVal=cmds.m_pJardCmd->getTmrVeille();break;
+
+        case 10:usVal=cmds.m_pJardCmd->getTmrPmp1();break;
+
+        case 20:usVal=cmds.m_pJardCmd->getTmrPmp2();break;
 
         case 100:memoire_stats_read(MEM_STATS_ADDR_TOT_BOOTS,&usVal);break;
         case 101:memoire_stats_read(MEM_STATS_ADDR_TOT_P1_H,&usVal);break;
@@ -188,7 +194,7 @@ int user_mdbus_read_holding_registers(unsigned short addr, unsigned short count,
 
   if ( (addr>=0) && (addr<=5) )
   {
-    cmds.m_pJardCmd->getDate(&usYear,&ucMonth,&ucDay,&ucHour,&ucMin,&ucSec);
+    cmds.m_pJardCmd->getDateTime(&usYear,&ucMonth,&ucDay,&ucHour,&ucMin,&ucSec);
   }
 
   cmds.m_pJardCmd->getSheduler(1,&ucHourStart1,&ucMinStart1,&ucDuration1,&ucDaysWeek1);
@@ -210,11 +216,13 @@ int user_mdbus_read_holding_registers(unsigned short addr, unsigned short count,
       case 11:usVal=ucMinStart1;break;
       case 12:usVal=ucDuration1;break;
       case 13:usVal=ucDaysWeek1;break;
+      case 14:usVal=cmds.m_pJardCmd->getPmpTimer_min(1);break;
       
       case 20:usVal=ucHourStart2;break;
       case 21:usVal=ucMinStart2;break;
       case 22:usVal=ucDuration2;break;
       case 23:usVal=ucDaysWeek2;break;
+      case 24:usVal=cmds.m_pJardCmd->getPmpTimer_min(2);break;
 
       default:return MDBUS_ERR;
     }
@@ -245,7 +253,7 @@ int user_mdbus_write_holding_registers(unsigned short addr, unsigned short count
 
   cmds.m_pJardCmd->aliveComm();
   
-  cmds.m_pJardCmd->getDate(&usYear,&ucMonth,&ucDay,&ucHour,&ucMin,&ucSec);
+  cmds.m_pJardCmd->getDateTime(&usYear,&ucMonth,&ucDay,&ucHour,&ucMin,&ucSec);
   cmds.m_pJardCmd->getSheduler(1,&ucHourStart1,&ucMinStart1,&ucDuration1,&ucDaysWeek1);
   cmds.m_pJardCmd->getSheduler(2,&ucHourStart2,&ucMinStart2,&ucDuration2,&ucDaysWeek2);
 
@@ -268,11 +276,13 @@ int user_mdbus_write_holding_registers(unsigned short addr, unsigned short count
       case 11:ucMinStart1=(usVal&0xFF);flgModifSch1=true;break;
       case 12:ucDuration1=(usVal&0xFF);flgModifSch1=true;break;
       case 13:ucDaysWeek1=(usVal&0xFF);flgModifSch1=true;break;
+      case 14:cmds.m_pJardCmd->setPmpTimer_min(1,(usVal&0xFF));break;
           
       case 20:ucHourStart2=(usVal&0xFF);flgModifSch2=true;break;
       case 21:ucMinStart2=(usVal&0xFF);flgModifSch2=true;break;
       case 22:ucDuration2=(usVal&0xFF);flgModifSch2=true;break;
       case 23:ucDaysWeek2=(usVal&0xFF);flgModifSch2=true;break;
+      case 24:cmds.m_pJardCmd->setPmpTimer_min(2,(usVal&0xFF));break;
 
         case 200:
         {
@@ -316,8 +326,7 @@ int user_mdbus_write_holding_registers(unsigned short addr, unsigned short count
 
   if (flgModifDtm)
   {
-    cmds.m_pJardCmd->setDate(usYear,ucMonth,ucDay);
-    cmds.m_pJardCmd->setHour(ucHour,ucMin);
+    cmds.m_pJardCmd->setDateTime(usYear,ucMonth,ucDay,ucHour,ucMin,ucSec);
   }
 
   return MDBUS_OK;

@@ -30,6 +30,8 @@ unsigned long Timer::getDuration_ms(void)
   return duration_ms;
 }
 
+
+
 bool Timer::tick(void)
 {
   unsigned long remain_ms=getRemaining_ms();
@@ -52,7 +54,7 @@ bool Timer::tick(void)
   return false;    
 }
 
-void Timer::setDuration(unsigned long duration_ms)
+void Timer::setDuration_ms(unsigned long duration_ms)
 {
   this->duration_ms=duration_ms;
 }

@@ -13,8 +13,7 @@ class Timer
     Timer(unsigned long duration_ms=1000,bool single=true);
 
     bool tick(void);
-    void reset(void);
-    void setDuration(unsigned long duration_ms); 
+    void setDuration_ms(unsigned long duration_ms); 
     void stop(void);
     void start(void);   
 
