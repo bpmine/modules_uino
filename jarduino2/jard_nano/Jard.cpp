@@ -322,13 +322,13 @@ void Jard::loop(void)
 		{
 			if (mbs_inputs.getFalling(IB_BTN_PMP1))
 			{
-				pump1.startTimer(TEMPS_TIMER_MS);
+				pump1.startTimer();
 				memoire_stats_inc(MEM_STATS_ADDR_TOT_BTN1);
 			}
 
 			if (mbs_inputs.getFalling(IB_BTN_PMP2))
 			{
-				pump2.startTimer(TEMPS_TIMER_MS);
+				pump2.startTimer();
 				memoire_stats_inc(MEM_STATS_ADDR_TOT_BTN2);
 			}
 		}

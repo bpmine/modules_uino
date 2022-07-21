@@ -46,9 +46,8 @@ void Pump::loop(int hour,int min,int DoW,bool batt_ok,bool cmd_remote)
   m_out=( m_cmd && batt_ok ) || ( m_forced );
 }
 
-void Pump::startTimer(long delay_ms)
+void Pump::startTimer(void)
 {
-  m_timer.setDuration_ms(delay_ms);
   m_timer.start();
 }
 

@@ -37,7 +37,7 @@ class Pump
     void setSched(unsigned char startHour,unsigned char startMin,unsigned char ucDuration_min,unsigned char ucDaysOfWeek);
     void getSched(unsigned char *o_startHour,unsigned char *o_startMin,unsigned char *o_ucDuration_min,unsigned char *o_ucDaysOfWeek);
 
-    void startTimer(long delay_ms);
+    void startTimer(void);
     void stopTimer(void);
 
     bool isEnabled(void);

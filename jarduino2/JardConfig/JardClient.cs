@@ -116,11 +116,12 @@ namespace JardConfig
                 flgs[4]=pmpInfo.cmd_remote;
                 m_client.WriteMultipleCoils(addr,flgs);
 
-                int[]vals=new int[4];
+                int[]vals=new int[5];
                 vals[0]=pmpInfo.hour;
                 vals[1]=pmpInfo.minute;
                 vals[2]=pmpInfo.duration;
                 vals[3]=pmpInfo.days;
+                vals[4]=pmpInfo.timer;
                 m_client.WriteMultipleRegisters(addr,vals);
 
                 m_client.Disconnect();

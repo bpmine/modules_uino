@@ -110,5 +110,23 @@ namespace JardConfig
             if (OnSet!=null)
                 OnSet(this);
         }
+
+        private void checkAuto_CheckedChanged(object sender, EventArgs e)
+        {
+            if (checkAuto.Checked==true)
+            {
+                checkedListDays.Enabled=true;
+                numHour.Enabled=true;
+                numMin.Enabled=true;
+                numDuration.Enabled=true;
+            }
+            else
+            {
+                checkedListDays.Enabled=false;
+                numHour.Enabled=false;
+                numMin.Enabled=false;
+                numDuration.Enabled=false;
+            }
+        }
     }
 }
