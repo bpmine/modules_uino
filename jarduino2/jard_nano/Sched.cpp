@@ -62,16 +62,25 @@ bool Sched::check(int hour,int minute,int doW)
       isDay=false;
   }
 
-  unsigned long minsSinceMidnightStart=m_ucStartHour*60+m_ucStartMin;
-  unsigned long minsSinceMidnightEnd=minsSinceMidnightStart+m_ucDuration;
-  unsigned long minsSinceMidnight=hour*60+minute;
+  unsigned long minsSinceMidnightStart=m_ucStartHour*60+m_ucStartMin;       ///< Debut du pompage (en mins depuis minuit)
+  unsigned long minsSinceMidnightEnd=minsSinceMidnightStart+m_ucDuration;   ///< Fin du pompage (mins depuis minuit. Peut dépasser 24h)
+  unsigned long minsSinceMidnight=hour*60+minute;                           ///< Heure courante (en mins depuis minuit)
 
+  /// @remark On calcule éventuellement le nombre de mins apres minuit (si a cheval sur minuit)
+  unsigned long minsSinceMidnightEndAfterMidnight=23*60+59;
   if (minsSinceMidnightEnd>23*60+59)
-	  minsSinceMidnight=minsSinceMidnight+23*60+59;
+	  minsSinceMidnightEndAfterMidnight=minsSinceMidnightEnd-(24*60);
 
-  if ( (isDay) && (minsSinceMidnight>=minsSinceMidnightStart) && (minsSinceMidnight<=minsSinceMidnightEnd) )
-    return true;
-  else
-    return false;  
+  if (isDay)
+  {
+    if (    ( (minsSinceMidnight>=minsSinceMidnightStart) && (minsSinceMidnight<=minsSinceMidnightEnd) )
+         || ( (minsSinceMidnight<=minsSinceMidnightEndAfterMidnight) )
+         )
+    {
+          return true;
+    }  
+  }
+  
+  return false;  
 }
   
