@@ -70,6 +70,8 @@ namespace JardConfig
                     checkedListDays.SetItemChecked(i,false);
             }
 
+            numTimer.Value=pmpInfo.timer;
+
             UpdateHMIState();
         }
 
@@ -92,6 +94,8 @@ namespace JardConfig
                 if (checkedListDays.GetItemChecked(i))
                     pmpInfo.days|=(1<<i);                
             }
+
+            pmpInfo.timer=(int)numTimer.Value;
 
             return pmpInfo;
         }

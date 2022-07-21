@@ -40,10 +40,11 @@ namespace JardConfig
             this.button5 = new System.Windows.Forms.Button();
             this.dateTimePicker1 = new System.Windows.Forms.DateTimePicker();
             this.btnRead = new System.Windows.Forms.Button();
-            this.ctrlPmp2 = new JardConfig.CtrlPmpInfo();
-            this.ctrlPmp1 = new JardConfig.CtrlPmpInfo();
             this.lblTitre = new System.Windows.Forms.Label();
             this.btnQuit = new System.Windows.Forms.Button();
+            this.ctrlMonitoring = new JardConfig.CtrlMonitoring();
+            this.ctrlPmp2 = new JardConfig.CtrlPmpInfo();
+            this.ctrlPmp1 = new JardConfig.CtrlPmpInfo();
             this.groupBox1.SuspendLayout();
             this.groupBox2.SuspendLayout();
             this.SuspendLayout();
@@ -171,22 +172,6 @@ namespace JardConfig
             this.btnRead.UseVisualStyleBackColor = true;
             this.btnRead.Click += new System.EventHandler(this.button1_Click_1);
             // 
-            // ctrlPmp2
-            // 
-            this.ctrlPmp2.Location = new System.Drawing.Point(270, 98);
-            this.ctrlPmp2.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
-            this.ctrlPmp2.Name = "ctrlPmp2";
-            this.ctrlPmp2.Size = new System.Drawing.Size(250, 248);
-            this.ctrlPmp2.TabIndex = 7;
-            // 
-            // ctrlPmp1
-            // 
-            this.ctrlPmp1.Location = new System.Drawing.Point(16, 98);
-            this.ctrlPmp1.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
-            this.ctrlPmp1.Name = "ctrlPmp1";
-            this.ctrlPmp1.Size = new System.Drawing.Size(250, 248);
-            this.ctrlPmp1.TabIndex = 6;
-            // 
             // lblTitre
             // 
             this.lblTitre.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
@@ -210,11 +195,36 @@ namespace JardConfig
             this.btnQuit.UseVisualStyleBackColor = true;
             this.btnQuit.Click += new System.EventHandler(this.btnQuit_Click);
             // 
+            // ctrlMonitoring
+            // 
+            this.ctrlMonitoring.Location = new System.Drawing.Point(11, 426);
+            this.ctrlMonitoring.Margin = new System.Windows.Forms.Padding(2);
+            this.ctrlMonitoring.Name = "ctrlMonitoring";
+            this.ctrlMonitoring.Size = new System.Drawing.Size(509, 93);
+            this.ctrlMonitoring.TabIndex = 10;
+            // 
+            // ctrlPmp2
+            // 
+            this.ctrlPmp2.Location = new System.Drawing.Point(268, 98);
+            this.ctrlPmp2.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.ctrlPmp2.Name = "ctrlPmp2";
+            this.ctrlPmp2.Size = new System.Drawing.Size(250, 324);
+            this.ctrlPmp2.TabIndex = 7;
+            // 
+            // ctrlPmp1
+            // 
+            this.ctrlPmp1.Location = new System.Drawing.Point(9, 98);
+            this.ctrlPmp1.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.ctrlPmp1.Name = "ctrlPmp1";
+            this.ctrlPmp1.Size = new System.Drawing.Size(230, 324);
+            this.ctrlPmp1.TabIndex = 6;
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(529, 353);
+            this.ClientSize = new System.Drawing.Size(529, 525);
+            this.Controls.Add(this.ctrlMonitoring);
             this.Controls.Add(this.btnQuit);
             this.Controls.Add(this.lblTitre);
             this.Controls.Add(this.ctrlPmp2);
@@ -249,6 +259,7 @@ namespace JardConfig
         private CtrlPmpInfo ctrlPmp2;
         private System.Windows.Forms.Label lblTitre;
         private System.Windows.Forms.Button btnQuit;
+        private CtrlMonitoring ctrlMonitoring;
     }
 }
 

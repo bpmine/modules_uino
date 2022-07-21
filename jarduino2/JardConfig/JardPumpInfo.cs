@@ -17,5 +17,7 @@ namespace JardConfig
         public int minute;
         public int duration;
         public int days;
+
+        public int timer;
     }
 }

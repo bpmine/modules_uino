@@ -65,6 +65,8 @@ namespace JardConfig
 
             ctrlPmp1.SetPmpInfo(inf.pmp1);
             ctrlPmp2.SetPmpInfo(inf.pmp2);
+
+            ctrlMonitoring.SetJardInfo(inf);
         }
 
         private void button5_Click(object sender, EventArgs e)

@@ -372,6 +372,8 @@ void Jard::loop(void)
 	}
 
   mbs.fromBool(MB_VEILLE,veille);
+  mbs.fromBool(MB_BATT_OK,m_flgBattOk);
+  mbs.fromBool(MB_SUN_OK,m_flgSunOk);
 
 	if (m_ucOldMin==0xFF)
 		m_ucOldMin=ucMin;

@@ -9,8 +9,8 @@
 
 #define TEMPS_TIMER_MS    		(60*60*1000UL)   	///< Une heure d'arrosage si timer presse
 #define TEMPS_BLINK_MS    		(800UL)
-#define TEMPS_AVANT_VEILLE_MS	(15*1000UL)			///< Entree en veille au bout d'une minute
-#define TEMPS_COMM_KO_MS		  (5*1000UL)			///< Temps avant de d�tecter la perte de la comm
+#define TEMPS_AVANT_VEILLE_MS	(60*1000UL)			///< Entree en veille au bout d'une minute
+#define TEMPS_COMM_KO_MS		  (5*1000UL)			///< Temps avant de detecter la perte de la comm
 
 #define SEUIL_LOW_BATT_L  (90)
 #define SEUIL_LOW_BATT_H  (100)

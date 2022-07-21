@@ -63,6 +63,7 @@ namespace JardConfig
             pmpInf.minute=res[1];
             pmpInf.duration=res[2];
             pmpInf.days=res[3];
+            pmpInf.timer=res[4];
         }
 
         public void SetDate(DateTime date)
@@ -181,9 +182,9 @@ namespace JardConfig
                 info.sunOK=resb[3];
                 info.veille=resb[4];
 
-                res=m_client.ReadHoldingRegisters(10,4);
+                res=m_client.ReadHoldingRegisters(10,5);
                 res2pmp_sched(info.pmp1,res);
-                res=m_client.ReadHoldingRegisters(20,4);
+                res=m_client.ReadHoldingRegisters(20,5);
                 res2pmp_sched(info.pmp2,res);
 
                 m_client.Disconnect();
