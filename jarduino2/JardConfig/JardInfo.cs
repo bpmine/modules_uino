@@ -28,7 +28,7 @@ namespace JardConfig
         {
             get
             {
-                return batt_dxV/10;
+                return (float)batt_dxV/(float)10;
             }
         }
         
@@ -36,7 +36,7 @@ namespace JardConfig
         {
             get
             {
-                return sun_dxV/10;
+                return (float)sun_dxV/(float)10;
             }
         }
     }

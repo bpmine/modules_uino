@@ -67,14 +67,14 @@ bool Sched::check(int hour,int minute,int doW)
   unsigned long minsSinceMidnight=hour*60+minute;                           ///< Heure courante (en mins depuis minuit)
 
   /// @remark On calcule éventuellement le nombre de mins apres minuit (si a cheval sur minuit)
-  unsigned long minsSinceMidnightEndAfterMidnight=23*60+59;
+  unsigned long minsSinceMidnightEndAfterMidnight=0;
   if (minsSinceMidnightEnd>23*60+59)
 	  minsSinceMidnightEndAfterMidnight=minsSinceMidnightEnd-(24*60);
 
   if (isDay)
   {
     if (    ( (minsSinceMidnight>=minsSinceMidnightStart) && (minsSinceMidnight<=minsSinceMidnightEnd) )
-         || ( (minsSinceMidnight<=minsSinceMidnightEndAfterMidnight) )
+         || ( (minsSinceMidnightEndAfterMidnight!=0) && (minsSinceMidnight<=minsSinceMidnightEndAfterMidnight) )
          )
     {
           return true;

@@ -12,8 +12,8 @@
 #define TEMPS_AVANT_VEILLE_MS	(60*1000UL)			///< Entree en veille au bout d'une minute
 #define TEMPS_COMM_KO_MS		  (5*1000UL)			///< Temps avant de detecter la perte de la comm
 
-#define SEUIL_LOW_BATT_L  (90)
-#define SEUIL_LOW_BATT_H  (100)
+#define SEUIL_LOW_BATT_L  (98)
+#define SEUIL_LOW_BATT_H  (108)
 #define SEUIL_LOW_SUN_L   (138)
 #define SEUIL_LOW_SUN_H   (142)
 
