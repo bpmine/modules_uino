@@ -327,7 +327,7 @@ def config_jarduino(cln):
     disp_pump_cfg(res_cfg,res_coils)
     
 
-client= ModbusClient(method = "rtu", port=r"\\.\COM13",stopbits = 1, bytesize = 8, parity='N',baudrate= 115200,timeout=2)
+client= ModbusClient(method = "rtu", port=r"\\.\COM5",stopbits = 1, bytesize = 8, parity='N',baudrate= 115200,timeout=2)
 
 print('Connection:',end='')
 res = client.connect()
@@ -344,7 +344,8 @@ time.sleep(4);
 
 #test_enable_pompes(client)  
 #test_statistics(client)
-#config_serial_version(client)
-config_jarduino(client)
+
+config_serial_version(client)
+#config_jarduino(client)
 
 client.close()

@@ -235,7 +235,7 @@ def run_server():
 
     # RTU:
     StartSerialServer(context, framer=ModbusRtuFramer, identity=identity,
-                       port="COM13", timeout=.005, baudrate=115200)
+                       port="COM5", timeout=.005, baudrate=115200)
 
     # Binary
     # StartSerialServer(context,
