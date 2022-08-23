@@ -7,6 +7,7 @@ ModbusRTU mb;
 
 
 JardInfo jarduino;
+JardInfo jarduino_latched;
 
 bool tmpBool[10];
 unsigned short tmpReg[10];
@@ -161,12 +162,16 @@ void setup()
 }
 
 void loop() 
-{    
+{
+  static bool state=true;
+      
   digitalWrite(LED_BUILTIN,LOW);
   readSlaveData();
   digitalWrite(LED_BUILTIN,HIGH);
-  
+
+  memcpy(&jarduino_latched,&jarduino,sizeof(jarduino));
   delay(4000);
 
-  writeCoil(10,true);
+  writeCoil(10,state);
+  state=!state;
 }

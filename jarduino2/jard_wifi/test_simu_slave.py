@@ -27,7 +27,7 @@ def test_coils(cln):
 
 
 
-client= ModbusClient(method = "rtu", port=r"\\.\COM3",stopbits = 1, bytesize = 8, parity='N',baudrate= 9600,timeout=2)
+client= ModbusClient(method = "rtu", port=r"\\.\COM13",stopbits = 1, bytesize = 8, parity='N',baudrate= 9600,timeout=2)
 
 print('Connection:',end='')
 res = client.connect()
