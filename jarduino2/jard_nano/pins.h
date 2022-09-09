@@ -37,7 +37,7 @@
 #define MB_SUN_OK     (1)
 #define MB_COMM_OK    (2)
 #define MB_VEILLE     (3)
-#define MB_RES1       (4)
+#define MB_SLEEP      (4)
 #define MB_RES2       (5)
 #define MB_RES3       (6)
 #define MB_RES4       (7)

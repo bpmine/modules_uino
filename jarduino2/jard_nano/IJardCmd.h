@@ -14,17 +14,15 @@ public:
 
   virtual void setSheduler(int num,unsigned char ucStartHour,unsigned char ucStartMin,unsigned char ucDuration_min,unsigned char ucDaysOfWeek)=0;
   virtual void getSheduler(int num,unsigned char *o_ucStartHour,unsigned char *o_ucStartMin,unsigned char *o_ucDuration_min,unsigned char *o_ucDaysOfWeek)=0;
-  virtual void setPmpTimer_min(int num,unsigned char ucTime_mins);
-  virtual unsigned char getPmpTimer_min(int num);
 
   virtual unsigned short getBattLevel(void)=0;
   virtual unsigned short getSunLevel(void)=0;
   virtual int getTemp(void)=0;
   virtual unsigned char getHum(void)=0;
-  virtual unsigned short getTmrVeille(void);
-  virtual unsigned short getTmrComm(void);
-  virtual unsigned short getTmrPmp1(void);
-  virtual unsigned short getTmrPmp2(void);
+  virtual unsigned short getTmrVeille_s(void);
+  virtual unsigned short getTmrComm_s(void);
+  virtual unsigned short getTmrPmp1_min(void);
+  virtual unsigned short getTmrPmp2_min(void);
 
   virtual void load(void)=0;
 };

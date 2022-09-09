@@ -4,6 +4,7 @@
 #include "pins.h"
 #include "autom.h"
 #include "memoire.h"
+#include "sleepmgt.hpp">
 
 #include <DHT.h>
 
@@ -68,15 +69,6 @@ void serialEvent()
 
 void setup()
 {
-  init_autom();
-  
-  jard.init();
-  cmds.init(&Serial,&jard);
-
-  char tmp[25];
-  jard.getDateStr(tmp,25);  
-  //Serial.println(tmp);
-
   pinMode(PIN_CMD_PMP1,OUTPUT);
   digitalWrite(PIN_CMD_PMP1,LOW);
   pinMode(PIN_CMD_PMP2,OUTPUT);
@@ -109,7 +101,14 @@ void setup()
   digitalWrite(PIN_LED_SUN,LOW);
   digitalWrite(PIN_LED_CPU,LOW);
 
+  Sleep::init();  
+
   dhtSensor.begin();
+
+  init_autom();
+  
+  jard.init();
+  cmds.init(&Serial,&jard);
 
   memoire_stats_inc(MEM_STATS_ADDR_TOT_BOOTS);
 }
@@ -154,20 +153,30 @@ void read_dht(void)
 
 
 void loop()
-{     
+{   
   latch_inputs();
   read_analog();
   read_dht();
-  
+    
   jard.setBatLevel(anBatt.get());
   jard.setSunLevel(anSun.get());
   jard.setTemp(anTemp.get());
   jard.setHum(anHum.get());
-  
+    
   mbs.start_latch();
   jard.loop();
   mbs.end_latch();
-  
+    
   apply_outputs();
-  delay(50);
+
+  if ( (mbs.get(MB_SLEEP)==false) )
+  {
+    Sleep::enter_idle_sleep();
+  }
+  else
+  {    
+    Sleep::enter_big_sleep();
+  }
+
+  Sleep::tick();
 }

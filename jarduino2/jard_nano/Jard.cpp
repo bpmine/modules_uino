@@ -176,34 +176,6 @@ void Jard::getSheduler(int num,unsigned char *o_ucStartHour,unsigned char *o_ucS
   }  
 }
 
-void Jard::setPmpTimer_min(int num,unsigned char ucTime_mins)
-{
-  if (num==1)
-  {
-    pump1.setTimerDelay_min(ucTime_mins);
-    memoire_set(MEM_SETTINGS_ADDR_PUMP1_TIMER,ucTime_mins);
-  }  
-  else if (num==2)
-  {
-    pump2.setTimerDelay_min(ucTime_mins);
-    memoire_set(MEM_SETTINGS_ADDR_PUMP2_TIMER,ucTime_mins);
-  }  
-}
-
-unsigned char Jard::getPmpTimer_min(int num)
-{  
-  if (num==1)
-  {
-    return pump1.getTimerDelay_min();
-  }  
-  else if (num==2)
-  {
-    return pump2.getTimerDelay_min();
-  } 
-  
-  return 0;
-}
-
 void Jard::setBatLevel(int i_level_dxv)
 {
   m_batt_level_dxv=i_level_dxv;
@@ -239,24 +211,24 @@ int Jard::getTemp(void)
   return m_temp_deg;
 }
 
-unsigned short Jard::getTmrVeille(void)
+unsigned short Jard::getTmrVeille_s(void)
 {
-  return tmrVeille.getRemaining_ms();
+  return tmrVeille.getRemaining_ms()/(1000UL);
 }
 
-unsigned short Jard::getTmrComm(void)
+unsigned short Jard::getTmrComm_s(void)
 {
-  return tmrComm.getRemaining_ms();
+  return tmrComm.getRemaining_ms()/(1000UL);
 }
 
-unsigned short Jard::getTmrPmp1(void)
+unsigned short Jard::getTmrPmp1_min(void)
 {
-  return pump1.getRemaining_ms();
+  return pump1.getRemaining_ms()/(60000UL);
 }
 
-unsigned short Jard::getTmrPmp2(void)
+unsigned short Jard::getTmrPmp2_min(void)
 {
-  return pump2.getRemaining_ms();
+  return pump2.getRemaining_ms()/(60000UL);
 }
 
 
@@ -274,7 +246,6 @@ void Jard::loop(void)
 	bool outCpu=false;
 	bool outSun=false;
 	bool outBatt=false;
-	bool veille=false;
 
 	unsigned char ucHour=0;
 	unsigned char ucMin=0;
@@ -296,18 +267,16 @@ void Jard::loop(void)
 	else if (m_batt_level_dxv<=SEUIL_LOW_BATT_L)
 		m_flgBattOk=false;
 
-	//m_flgBattOk=true;
-
 	if (m_sun_level_dxv>=SEUIL_LOW_SUN_H)
 		m_flgSunOk=true;
 	else if (m_sun_level_dxv<=SEUIL_LOW_SUN_L)
 		m_flgSunOk=false;
 
-  bool on=!mbs_inputs.get(IB_BTN_ON);  
+  bool on=!mbs_inputs.get(IB_BTN_ON); 
+  bool veille=mbs.get(MB_VEILLE);   
 	
 	if (on==true)
-	{
-    veille=(tmrVeille.isRunning()?false:true);
+	{    
 		if ( veille==true )
 		{
 			if (    (mbs_inputs.getFalling(IB_BTN_PMP1))
@@ -319,7 +288,7 @@ void Jard::loop(void)
 			}
 		}
 		else
-		{
+		{    
 			if (mbs_inputs.getFalling(IB_BTN_PMP1))
 			{
 				pump1.startTimer();
@@ -370,8 +339,7 @@ void Jard::loop(void)
 		pump2.setAuto(false);
 		tmrVeille.start();
 	}
-
-  mbs.fromBool(MB_VEILLE,veille);
+  
   mbs.fromBool(MB_BATT_OK,m_flgBattOk);
   mbs.fromBool(MB_SUN_OK,m_flgSunOk);
 
@@ -405,22 +373,31 @@ void Jard::loop(void)
 		mbs.fromBool(MB_COMM_OK,false);
 		mbs.fromBool(MB_PMP1_RM_CMD,false);
 		mbs.fromBool(MB_PMP2_RM_CMD,false);
-	}
-
-  tmrVeille.tick();
+	}  
 
 	if ( (mbs_outputs.get(OB_CMD_PMP1)==true) || (mbs_outputs.get(OB_CMD_PMP2)==true) )
-		tmrVeille.start();
+		tmrVeille.start();    
 
+  bool outLedOn=on;
 	if ( (veille==true) && (m_flgSunOk==false) )
 	{
-		on=m_flgBlk2;
+		outLedOn=m_flgBlk2&m_flgBlk;
 		outLedPmp1=false;
 		outLedPmp2=false;
 	}
 
+  tmrVeille.tick();
+  veille=(tmrVeille.isRunning()?false:true);
+  mbs.fromBool(MB_VEILLE,veille);
+
+  /// @remark Sleep bascule a true quand la veille arrive
+  bool slp=mbs.get(MB_SLEEP); 
+  slp=!on;
+  //slp=(veille) || (!on) || ( (slp) && (!outCmdPmp1) && (!outCmdPmp2) && (!m_flgSunOk) && (!on) );  
+  mbs.fromBool(MB_SLEEP,slp);
+
 	mbs_outputs.start_latch();
-	mbs_outputs.fromBool(OB_LED_CPU,on);
+	mbs_outputs.fromBool(OB_LED_CPU,outLedOn);
 	mbs_outputs.fromBool(OB_LED_BATT,outBatt);
 	mbs_outputs.fromBool(OB_LED_SUN,outSun);
 	mbs_outputs.fromBool(OB_CMD_PMP1,outCmdPmp1);

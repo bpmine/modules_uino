@@ -8,7 +8,7 @@ import time
 import logging
 logging.basicConfig()
 log = logging.getLogger()
-#log.setLevel(logging.DEBUG)
+log.setLevel(logging.DEBUG)
 
 def test_coils(cln):
     result= client.read_coils(0,13,unit= 4)

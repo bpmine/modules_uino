@@ -42,19 +42,17 @@ class Jard: public IJardCmd
     void getDateTime(unsigned short *o_pusYear,unsigned char *o_pucMonth,unsigned char *o_pucDay,unsigned char *o_pucHour,unsigned char *o_pucMin,unsigned char *o_pucSec);
     void getTimeToSchedule(unsigned char *o_pucHour,unsigned char *o_pucMin,unsigned char *o_pucSec,unsigned char *o_pucDoW);
     void setSheduler(int num,unsigned char ucStartHour,unsigned char ucStartMin,unsigned char ucDuration_min,unsigned char ucDaysOfWeek);
-    void getSheduler(int num,unsigned char *o_ucStartHour,unsigned char *o_ucStartMin,unsigned char *o_ucDuration_min,unsigned char *o_ucDaysOfWeek);
-    void setPmpTimer_min(int num,unsigned char ucTime_mins);
-    unsigned char getPmpTimer_min(int num);    
+    void getSheduler(int num,unsigned char *o_ucStartHour,unsigned char *o_ucStartMin,unsigned char *o_ucDuration_min,unsigned char *o_ucDaysOfWeek); 
 
     unsigned short getBattLevel(void);
     unsigned short getSunLevel(void);
     int getTemp(void);
     unsigned char getHum(void);
     
-    unsigned short getTmrVeille(void);
-    unsigned short getTmrComm(void);
-    unsigned short getTmrPmp1(void);
-    unsigned short getTmrPmp2(void);
+    unsigned short getTmrVeille_s(void);
+    unsigned short getTmrComm_s(void);
+    unsigned short getTmrPmp1_min(void);
+    unsigned short getTmrPmp2_min(void);
     
     void load(void);
   
