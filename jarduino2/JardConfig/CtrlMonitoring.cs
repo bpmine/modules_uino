@@ -52,8 +52,8 @@ namespace JardConfig
             lblHum.Text=jardInfo.hum_pc.ToString()+" %";
             lblTmr1.Text=jardInfo.pmp1.timer+" min";
             lblTmr2.Text=jardInfo.pmp2.timer+" min";
-            lblTmrComm.Text=jardInfo.tmrComm+" min";
-            lblTmrVeille.Text=jardInfo.tmrVeille+" min";
+            lblTmrComm.Text=jardInfo.tmrComm+" s";
+            lblTmrVeille.Text=jardInfo.tmrVeille+" s";
 
             SetLblColorGreen(lblBatt,jardInfo.batOK);
             SetLblColorGreen(lblSun,jardInfo.sunOK);
