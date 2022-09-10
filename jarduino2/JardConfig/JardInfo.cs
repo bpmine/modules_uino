@@ -24,6 +24,17 @@ namespace JardConfig
         public int serial;
         public int soft;
 
+        public int tmrComm;
+        public int tmrVeille;
+
+        public int statTotBoots;
+        public int statTotP1;
+        public int statTotP2;
+        public int statTotSun;
+        public int statTotBtn1;
+        public int statTotBtn2;
+
+
         public float VBatt
         {
             get

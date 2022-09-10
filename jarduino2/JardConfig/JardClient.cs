@@ -27,7 +27,7 @@ namespace JardConfig
 
                 return true;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 return false;
             }
@@ -63,7 +63,7 @@ namespace JardConfig
             pmpInf.minute=res[1];
             pmpInf.duration=res[2];
             pmpInf.days=res[3];
-            pmpInf.timer=res[4];
+            //pmpInf.timer=res[4];
         }
 
         public void SetDate(DateTime date)
@@ -159,11 +159,27 @@ namespace JardConfig
                     info.date=DateTime.MinValue;
                 }
 
-                res=m_client.ReadInputRegisters(0,4);
+                res=m_client.ReadInputRegisters(0,6);
                 info.batt_dxV=res[0];
                 info.sun_dxV=res[1];
                 info.temp_dg=res[2];
                 info.hum_pc=res[3];
+                info.tmrComm=res[4];
+                info.tmrVeille=res[5];
+
+                res=m_client.ReadInputRegisters(10,1);
+                info.pmp1.timer=res[0];
+
+                res=m_client.ReadInputRegisters(20,1);
+                info.pmp2.timer=res[0];
+
+                res=m_client.ReadInputRegisters(100,6);
+                info.statTotBoots=res[0];
+                info.statTotP1=res[1];
+                info.statTotP2=res[2];
+                info.statTotSun=res[3];
+                info.statTotBtn1=res[4];
+                info.statTotBtn2=res[5];
 
                 res=m_client.ReadInputRegisters(200,3);
                 info.version=res[0];
@@ -183,9 +199,9 @@ namespace JardConfig
                 info.sunOK=resb[3];
                 info.veille=resb[4];
 
-                res=m_client.ReadHoldingRegisters(10,5);
+                res=m_client.ReadHoldingRegisters(10,4);
                 res2pmp_sched(info.pmp1,res);
-                res=m_client.ReadHoldingRegisters(20,5);
+                res=m_client.ReadHoldingRegisters(20,4);
                 res2pmp_sched(info.pmp2,res);
 
                 m_client.Disconnect();

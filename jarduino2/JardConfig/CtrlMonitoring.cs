@@ -50,8 +50,10 @@ namespace JardConfig
             lblSunVoltage.Text=string.Format("{0:0.0} V",jardInfo.VSun);
             lblTemp.Text=jardInfo.temp_dg.ToString()+" °C";
             lblHum.Text=jardInfo.hum_pc.ToString()+" %";
-            lblTmr1.Text="? min";
-            lblTmr2.Text="? min";
+            lblTmr1.Text=jardInfo.pmp1.timer+" min";
+            lblTmr2.Text=jardInfo.pmp2.timer+" min";
+            lblTmrComm.Text=jardInfo.tmrComm+" min";
+            lblTmrVeille.Text=jardInfo.tmrVeille+" min";
 
             SetLblColorGreen(lblBatt,jardInfo.batOK);
             SetLblColorGreen(lblSun,jardInfo.sunOK);

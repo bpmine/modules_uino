@@ -54,7 +54,7 @@ namespace JardConfig
             {
                 dateTimePicker1.Value=inf.date;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 dateTimePicker1.Value=DateTime.Now;
             }
@@ -109,6 +109,16 @@ namespace JardConfig
         private void btnQuit_Click(object sender, EventArgs e)
         {
             Close();
+        }
+
+        private void button1_Click_2(object sender, EventArgs e)
+        {
+            if (m_cln!=null)
+            { 
+                StatisticsDlg dlg=new StatisticsDlg();
+                dlg.SetJardInfo(m_cln.ReadAllFromSlave());
+                dlg.ShowDialog();
+            }
         }
     }
 }
