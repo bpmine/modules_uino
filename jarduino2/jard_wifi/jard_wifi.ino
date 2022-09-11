@@ -9,7 +9,7 @@
 #include "jardinfo.hpp"
 #include "credentials.h"
 
-#define MODBUS_SLAVE_ADDRESS  1
+#define MODBUS_SLAVE_ADDRESS  4
 
 ModbusRTU mb;
 
@@ -94,7 +94,7 @@ void waitReadSlaveInfo(void)
     jarduino.version_soft=tmp[2];
     digitalWrite(LED_BUILTIN,HIGH);
     
-    if (jarduino.version_jarduino==2)
+    if (jarduino.version_jarduino==1)
       break;
 
     for (int i=0;i<4;i++)
@@ -228,9 +228,7 @@ void setup()
 }
 
 void loop() 
-{
-  //static bool state=true;
-      
+{     
   digitalWrite(LED_BUILTIN,LOW);
   readSlaveData();
   digitalWrite(LED_BUILTIN,HIGH);
@@ -241,9 +239,6 @@ void loop()
     delay(40);
     server.handleClient();
   }
-
-  //writeCoil(10,state);
-  //state=!state;
 
   server.handleClient();  
 }
