@@ -9,9 +9,13 @@
 #include "jardinfo.hpp"
 #include "credentials.h"
 
+#define ENABLE_MQTT
+//#define BYPASS_MODBUS
 #define MODBUS_SLAVE_ADDRESS  4
 
 ModbusRTU mb;
+
+bool g_flgHttpMode=true;
 
 JardInfo jarduino;
 JardInfo jarduino_latched;
@@ -23,6 +27,97 @@ ESP8266WebServer server(80);
 const char* ssid = STASSID;
 const char* password = STAPSK;
 
+#define DEEPSLEEP_US  (30 * 1000000UL)
+#define NBRE_MB_NOK_MAX   (4)
+bool g_flgMbOK=false;
+int g_nbreMbNok=0;
+
+#define DELAY_BEFORE_SLEEP_MS (4*60*1000UL)
+unsigned long g_t0Start_ms;
+
+#ifdef ENABLE_MQTT
+  #include <EspMQTTClient.h>
+
+  //#define MQTT_TRACE_ON
+  
+  #define TOPIC_PREFIX  "/jarduino"
+  #define TOPIC_CMD     "cmd"
+  #define TOPIC_DATA    "data"
+  #define TOPIC_LOG     "log"
+  
+  #define DELAY_TASK_REPORT_COMM  (3600*1000UL)
+  #define DELAY_TASK_REPORT_DATA  (5*60*1000UL)
+  #define DELAY_TASK_MQTT_OK      (800UL)
+  
+  EspMQTTClient mqttClient(
+    STASSID,
+    STAPSK,
+    MQTT_IP,
+    MQTT_LOGIN,
+    MQTT_PASS,
+    "jarduino_xxx"
+  );
+  
+  int g_id=0;
+  bool g_flgProduce=true;
+  
+  void sendLog(char *strMsg)
+  {
+    char strTopicLog[50];
+    sprintf(strTopicLog,"%s/%s/%03d",TOPIC_PREFIX,TOPIC_LOG,g_id);
+    mqttClient.publish(strTopicLog, strMsg);
+  }
+  
+  void sendData(char *strMsg)
+  {
+    char strTopicData[50];
+    sprintf(strTopicData,"%s/%s/%03d",TOPIC_PREFIX,TOPIC_DATA,g_id);
+    mqttClient.publish(strTopicData, strMsg);
+  }
+  
+  void sendMqttDataInfo()
+  { 
+    static char strJson[1000];
+  
+    jarduino_latched.makeJson(strJson);
+    sendData(strJson);
+  }
+ 
+  void setup_mqtt(void)
+  {
+    g_id=jarduino_latched.serial;
+    static char strName[15];
+    sprintf(strName,"jarduino_%03d",g_id);
+    mqttClient.setMqttClientName(strName);
+    //Serial.print("Start Mqtt ");
+    //Serial.print(strName);
+    //Serial.println("...");
+  
+    mqttClient.enableMQTTPersistence();
+  
+    #ifdef MQTT_TRACE_ON
+      mqttClient.enableDebuggingMessages();
+    #endif
+  }
+  
+  void onReceiveCmd(const String &payload)
+  {
+    //Serial.println(payload);
+  }
+  
+  void onConnectionEstablished()
+  {
+    //Serial.println("Connection Mqtt.");
+  
+    char strTopicCmd[50];
+    sprintf(strTopicCmd,"%s/%s/%03d",TOPIC_PREFIX,TOPIC_CMD,g_id);
+    mqttClient.subscribe(strTopicCmd,onReceiveCmd);  
+    sendLog("MQTT Connected");
+  }
+  
+#endif
+
+
 bool cbModbus_ReadCoils_pmp1(Modbus::ResultCode event, uint16_t transactionId, void* data)
 {  
   if (event==Modbus::EX_SUCCESS)
@@ -30,7 +125,8 @@ bool cbModbus_ReadCoils_pmp1(Modbus::ResultCode event, uint16_t transactionId, v
     jarduino.pump1.flgForce=tmpBool[0];
     jarduino.pump1.flgEnabled=tmpBool[1];
     jarduino.pump1.flgAuto=tmpBool[2];
-    jarduino.pump1.flgRemote=tmpBool[3];    
+    jarduino.pump1.flgRemote=tmpBool[3];
+    g_flgMbOK=true;
   }
   return true;
 }
@@ -42,7 +138,8 @@ bool cbModbus_ReadCoils_pmp2(Modbus::ResultCode event, uint16_t transactionId, v
     jarduino.pump2.flgForce=tmpBool[0];
     jarduino.pump2.flgEnabled=tmpBool[1];
     jarduino.pump2.flgAuto=tmpBool[2];
-    jarduino.pump2.flgRemote=tmpBool[3];    
+    jarduino.pump2.flgRemote=tmpBool[3];
+    g_flgMbOK=true;
   }
   
   return true;
@@ -58,7 +155,8 @@ bool cbModbus_ReadHoldingReg_Hour(Modbus::ResultCode event, uint16_t transaction
 
     jarduino.hour=tmpReg[3];
     jarduino.minute=tmpReg[4];
-    jarduino.second=tmpReg[5];
+    jarduino.second=tmpReg[5];    
+    g_flgMbOK=true;
   }
   
   return true;
@@ -72,6 +170,7 @@ bool cbModbus_ReadInputReg_Measures(Modbus::ResultCode event, uint16_t transacti
     jarduino.sun_dxV=tmpReg[1];
     jarduino.temp_deg=tmpReg[2];
     jarduino.hum_pc=tmpReg[3];
+    g_flgMbOK=true;
   }
   
   return true;
@@ -80,6 +179,7 @@ bool cbModbus_ReadInputReg_Measures(Modbus::ResultCode event, uint16_t transacti
 
 void waitReadSlaveInfo(void)
 {
+  g_nbreMbNok=0;
   while (1)
   {
     digitalWrite(LED_BUILTIN,LOW);
@@ -97,12 +197,23 @@ void waitReadSlaveInfo(void)
     if (jarduino.version_jarduino==1)
       break;
 
+    #ifdef BYPASS_MODBUS
+      break;
+    #endif
+
     for (int i=0;i<4;i++)
     {
       digitalWrite(LED_BUILTIN,LOW);
       delay(100);
       digitalWrite(LED_BUILTIN,HIGH);
       delay(100);      
+    }
+
+    g_nbreMbNok++;
+    if (g_nbreMbNok>NBRE_MB_NOK_MAX)
+    {
+      g_flgMbOK=0;
+      ESP.deepSleep(DEEPSLEEP_US);
     }
     
     delay(2000);
@@ -189,15 +300,55 @@ void handleInfo()
   server.send(200, "text/plain", strJson);
 }
 
+
 void setup() 
 {
+  g_flgProduce=true;
+  g_nbreMbNok=0;
+  g_flgMbOK=false;
   Serial.begin(115200);
+  
+  WiFi.disconnect();
+  WiFi.mode(WIFI_OFF);
+  WiFi.forceSleepBegin();
+  delay(1);  
 
   pinMode(LED_BUILTIN,OUTPUT);
   digitalWrite(LED_BUILTIN,LOW);
   delay(500);
   digitalWrite(LED_BUILTIN,HIGH);
   delay(500);    
+
+  mb.begin(&Serial);
+  
+  mb.master();
+  waitReadSlaveInfo();
+
+  #ifndef BYPASS_MODBUS
+    g_flgMbOK=false;
+    readSlaveData();  
+    if (g_flgMbOK==false)
+    {    
+    }
+  #else
+    g_flgMbOK=true;
+    
+    jarduino.version_jarduino=1;
+    jarduino.serial=0;
+    jarduino.version_soft=7;
+
+    jarduino.hour=19;
+    jarduino.minute=45;
+    jarduino.second=0;
+  #endif
+
+  memcpy(&jarduino_latched,&jarduino,sizeof(jarduino));
+  
+  // Chaque quart d'heure, on poste un message
+  if ( ( (jarduino_latched.minute % 15) != 0 ) || (g_flgMbOK==false) )
+  {
+    ESP.deepSleep(DEEPSLEEP_US);
+  }
 
   WiFi.mode(WIFI_STA);
   WiFi.hostname("Jarduino");
@@ -216,29 +367,66 @@ void setup()
   Serial.print("IP address: ");
   Serial.println(WiFi.localIP());  
 
-  server.on(UriBraces("/test"), handleTest);
-  server.on(UriBraces("/info"), handleInfo);
-  server.onNotFound(handleNotFound);
-  server.begin();
+  if (g_flgHttpMode==true)
+  {
+    server.on(UriBraces("/test"), handleTest);
+    server.on(UriBraces("/info"), handleInfo);
+    server.onNotFound(handleNotFound);
+    server.begin();
+  }
 
-  mb.begin(&Serial);
-  
-  mb.master();
-  waitReadSlaveInfo();
+  #ifdef ENABLE_MQTT
+    setup_mqtt();   
+  #endif
+
+  g_t0Start_ms=millis();  
 }
 
 void loop() 
 {     
   digitalWrite(LED_BUILTIN,LOW);
+  g_flgMbOK=false;
   readSlaveData();
   digitalWrite(LED_BUILTIN,HIGH);
 
+  #ifndef BYPASS_MODBUS
+    if (g_flgMbOK==false)
+      g_nbreMbNok++;
+  #else
+    g_nbreMbNok=0;
+  #endif
+
+  if (g_nbreMbNok>NBRE_MB_NOK_MAX)
+  {
+    g_nbreMbNok=0;
+    ESP.deepSleep(DEEPSLEEP_US);
+  }
+
   memcpy(&jarduino_latched,&jarduino,sizeof(jarduino));
+  
   for (int i=0;i<100;i++)
   {
     delay(40);
-    server.handleClient();
+    if (g_flgHttpMode==true)
+      server.handleClient();
+      
+    #ifdef ENABLE_MQTT
+      mqttClient.loop();
+    #endif
+      
   }
 
-  server.handleClient();  
+  #ifdef ENABLE_MQTT
+    if ( (g_flgProduce==true) && (mqttClient.isConnected()) )
+    {
+      sendMqttDataInfo();
+      g_flgProduce=false;
+    }
+  #endif
+
+  unsigned long ul=millis();
+  if (ul-g_t0Start_ms>DELAY_BEFORE_SLEEP_MS)
+  {
+    ESP.deepSleep(DEEPSLEEP_US);
+  }
 }

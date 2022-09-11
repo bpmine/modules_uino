@@ -53,7 +53,7 @@ for i in range(0,300):
 #mem_coils[11]=True
 #mem_coils[12]=True
 
-mem_input_registers[200]=2
+mem_input_registers[200]=1
 mem_input_registers[201]=1
 mem_input_registers[202]=4
 
@@ -66,7 +66,7 @@ mem_holding_registers[0]=2022
 mem_holding_registers[1]=7
 mem_holding_registers[2]=17
 mem_holding_registers[3]=18
-mem_holding_registers[4]=37
+mem_holding_registers[4]=45
 mem_holding_registers[5]=5
 
 
@@ -235,7 +235,7 @@ def run_server():
 
     # RTU:
     StartSerialServer(context, framer=ModbusRtuFramer, identity=identity,
-                       port="COM11", timeout=.005, baudrate=115200)
+                       port="COM7", timeout=.005, baudrate=115200)
 
     # Binary
     # StartSerialServer(context,
