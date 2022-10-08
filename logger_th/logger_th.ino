@@ -4,19 +4,39 @@
 #include <Wire.h>
 #include <RTClib.h>
 
+/**
+ * 
+ * A4: RTC SDA
+ * A5: RTC_SCL
+ * 
+ * D10: SD_CS
+ * D11: SD_MOSI
+ * D12: SD_MISO
+ * D13: SD_SCK
+ * 
+ * D5: DHT11
+ * A1: BATT
+ * A2: VCC
+*/
+
 #define PIN_SDCARD_CS     10
 
 #define DHT11_PIN         5
+#define BATT_PIN          A1
+#define VCC_PIN           A2
 
-#define DELAY_S           (5*60U)
+#define DELAY_MS           (60UL*1000UL)
 
 #define SB_FIRST_CYCLE    (0x01)
 #define SB_NOSD           (0x02)
 byte g_bitsSystem=0;
 
-byte g_temp=0;
-byte g_hum=0;
-unsigned long tick0_ms;
+int g_temp=0;
+int g_hum=0;
+int g_batt=0;
+int g_vcc=0;
+unsigned long g_tick0_ms;
+char strLine[120];
 
 DHTesp dht;
 DS1307 RTC;
@@ -51,26 +71,6 @@ void initFileName()
   Serial.println(fn);
 }
 
-void logBoot()
-{
-      File file=SD.open("bt.log", FILE_WRITE);
-      if (file) 
-      {
-        char tmp[15];
-        DateTime now = RTC.now();
-        sprintf(tmp, "%02d/%02d/%04d",now.day() , now.month(), now.year());
-        file.print(tmp);
-        file.print(" ");
-
-        sprintf(tmp, "%02d:%02d:%02d",now.hour() , now.minute(), now.second()); 
-        file.print(tmp);
-        file.println("> Boot");          
-
-        file.close();
-      }  
-}
-
-
 void printHeader()
 {
     bool flg=SD.exists(fn);
@@ -92,7 +92,7 @@ void printHeader()
 void logLine(char *strLine)
 {
   DateTime now = RTC.now();
-  sprintf(strLine,"%02d/%02d/%04d;%02d:%02d:%02d;%d;%d;",
+  sprintf(strLine,"%02d/%02d/%04d;%02d:%02d:%02d;%d;%d;%d;%d;",
     now.day() ,
     now.month(), 
     now.year(),
@@ -100,8 +100,26 @@ void logLine(char *strLine)
     now.minute(),
     now.second(),
     g_temp,
-    g_hum
+    g_hum,
+    g_batt,
+    g_vcc
     );  
+}
+
+void logBoot()
+{
+  if ((g_bitsSystem&SB_NOSD)==SB_NOSD)
+    return;
+
+  Serial.println("Log boot");
+  
+  File file=SD.open("boot.log", FILE_WRITE);
+  if (file) 
+  {
+    logLine(strLine);
+    file.println(strLine);
+    file.close();
+  }  
 }
 
 void writeToSD(char *strLine)
@@ -152,44 +170,49 @@ void setup()
   {
     Serial.println("[OK]");
   }
+
+  pinMode(BATT_PIN,INPUT);
+  pinMode(VCC_PIN,INPUT);
+
+  logBoot();
   
   g_bitsSystem=SB_FIRST_CYCLE;
   if (flgNOSD)
     g_bitsSystem|=SB_NOSD;
 
   initFileName();
-  tick0_ms=millis();
-}
-
-void latch_value(byte *i_pOutVal,byte i_iNewValue)
-{
-  byte old=(*i_pOutVal);
-  if ( (old!=i_iNewValue) && ( (i_iNewValue!=0) || (abs(i_iNewValue-old)<2) ) )
-  {
-    (*i_pOutVal)=i_iNewValue;
-  }
+  g_tick0_ms=millis();
 }
 
 void cycle_inputs()
 {
   TempAndHumidity newValues = dht.getTempAndHumidity();
-  latch_value(&g_hum,(byte)newValues.humidity);
-  latch_value(&g_temp,(byte)newValues.temperature);    
+  if (dht.getStatus()==DHTesp::ERROR_NONE)
+  {
+    g_hum=newValues.humidity;
+    g_temp=newValues.temperature;
+  }
+  else
+  {
+    g_hum=-100;
+    g_temp=-100;
+  }
+
+  g_batt=analogRead(BATT_PIN);
+  g_vcc=analogRead(VCC_PIN);
 }
   
 void loop() 
-{
-  char strLine[200];
-  
+{   
   cycle_inputs();
   if (    ((g_bitsSystem&SB_FIRST_CYCLE)==SB_FIRST_CYCLE)
-       || (getElapsedTimeFrom_ms(tick0_ms)>(DELAY_S*1000U))
+       || (getElapsedTimeFrom_ms(g_tick0_ms)>DELAY_MS)
        )
   {
     logLine(strLine);
     Serial.println(strLine);
     writeToSD(strLine);
-    tick0_ms=millis();
+    g_tick0_ms=millis();
   }
 
   delay(100);  
