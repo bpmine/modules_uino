@@ -1,7 +1,7 @@
 /**
- * @file cabane_minou.ino
+ * @file oisuino.ino
  * 
- * @brief Gestion de l'éclairage de la tour de Minou
+ * @brief Gestion de l'éclairage de la cabane de minou
 */
 #include <ESP8266WiFi.h>
 #include <WiFiClient.h>
@@ -38,11 +38,13 @@
   #include <EspMQTTClient.h>
 
 #define MQTT_TRACE_ON
+#define ENABLE_MOVE_EVENT
 
-#define TOPIC_PREFIX  "/minou"
+#define TOPIC_PREFIX  "/oiso"
 #define TOPIC_CMD     "cmd"
 #define TOPIC_DATA    "data"
 #define TOPIC_LOG     "log"
+#define TOPIC_EVENT   "event"
 
 #define DELAY_TASK_REPORT_COMM  (3600*1000UL)
 #define DELAY_TASK_REPORT_DATA  (5*60*1000UL)
@@ -65,6 +67,7 @@ int g_id=0;
 #define PIN_MOVE          D1
 #define PIN_DATA_LED      D2 
 #define PIN_DHT11         D7
+#define PIN_BATT          A0
 
 const char* ssid = STASSID;
 const char* password = STAPSK;
@@ -94,8 +97,9 @@ CRGB leds[NUM_LEDS];
 DHTesp dht;
 int g_hum=0;
 int g_temp=0;
+int g_batt=0;
 
-Move mv=Move();
+Move mv=Move(false);
 
 #define SIZE_PROG (500)
 char prog[SIZE_PROG] = "S26E33LrOS1E23X200LgOWLrOWLbOWLgOWLrOWLbOWS26E33LgOS1E23X200LgOWLrOWLbOWLgOWLrOWLbOWS26E33LbOS1E23X200LgOWLrOWLbOWLgOWLrOWLbOW*";
@@ -124,8 +128,11 @@ void makeJsonSensors(char *strJson)
   strcat(strJson,",");
   addJsonVarInt(strJson,"hum",g_hum);
   strcat(strJson,",");
-  addJsonVarInt(strJson,"move",mv.getCount());
+  addJsonVarInt(strJson,"moves",mv.getCount());
   strcat(strJson,",");
+  addJsonVarInt(strJson,"batt",g_batt);
+  strcat(strJson,",");  
+  addJsonVarInt(strJson,"ticks",millis());  
   strcat(strJson,"}");
   
   server.send(200, "text/plain", strJson);  
@@ -145,6 +152,20 @@ void sendData(char *strMsg)
   char strTopicData[50];
   sprintf(strTopicData,"%s/%s/%03d",TOPIC_PREFIX,TOPIC_DATA,g_id);
   mqttClient.publish(strTopicData, strMsg);
+}
+
+void sendMoveEvent(void)
+{
+  char strTopic[50];
+  sprintf(strTopic,"%s/%s/%03d",TOPIC_PREFIX,TOPIC_EVENT,g_id);
+  char strMsg[80];
+  sprintf(strMsg,"{\"type\":\"event\",\"name\":\"move\",\"moves\":%ld,\"ticks\":%ld}",mv.getCount(),millis());
+
+  Serial.print(strTopic);
+  Serial.print(": ");
+  Serial.println(strMsg);
+  
+  mqttClient.publish(strTopic, strMsg);
 }
 
 void taskReportComm(void)
@@ -240,13 +261,13 @@ void clearAll(CRGB *pLeds)
 */
 void handleWdgInfo()
 { 
-  String s="{\"enabled\"=\"";
-  s+=wdg.isRunning();
-  s+="\", \"duration\"=\"";
+  String s="{\"enabled\":\"";
+  s+=wdg.isRunning()==true?"true":"false";
+  s+="\", \"duration\":";
   s+=wdg.getDuration_ms()/1000U;
-  s+="\", \"remaining\"=\"";
+  s+=", \"remaining\":";
   s+=wdg.getRemaining_ms()/1000U;  
-  s+="\"}";
+  s+="}";
   
   server.send(200, "text/plain", s);
 }
@@ -341,7 +362,9 @@ void handleInfo()
   char strJson[500];
   strcpy(strJson,"[{");
   addJsonVarStr(strJson,"name","leds");
+  strcpy(strJson,",");
   addJsonVarStr(strJson,"description","Gestion des LEDs cabane oiseaux");
+  strcpy(strJson,",");
   addJsonVarInt(strJson,"num_leds",NUM_LEDS);
   strcat(strJson,"}]");
   
@@ -407,6 +430,7 @@ void measureTempHum(DHTesp &dht,int *temp_dg,int *hum_pc,Timer *tmr)
       *temp_dg=newValues.temperature;
       *hum_pc=newValues.humidity;  
       tmr->start();
+      break;
     }
 
     delay(20);
@@ -429,13 +453,17 @@ void setup(void)
   Serial.begin(115200);
   Serial.println("BOOT");
 
+  pinMode(LED_BUILTIN, OUTPUT);
+  digitalWrite(LED_BUILTIN, LOW);
+  
   pinMode(PIN_DATA_LED, OUTPUT);
   digitalWrite(PIN_DATA_LED, LOW);
 
   pinMode(PIN_MOVE, INPUT);
   mv.begin(PIN_MOVE);
 
-  pinMode(PIN_DHT11, INPUT);
+  pinMode(PIN_DHT11, INPUT_PULLUP);
+  pinMode(PIN_BATT, INPUT);  
   
   dht.setup(PIN_DHT11, DHTesp::DHT11);
 
@@ -577,21 +605,22 @@ void wdgSwitchAllOff()
 void loop_app()
 {
   measureTempHum(dht,&g_temp,&g_hum,&tmrTemp);
+  g_batt=analogRead(PIN_BATT);
 
   //if (wdg.isRunning()==false)
-  {
+  { 
     if (mv.tick()==true)
     {
-      mvtmr.start();
-      setAll(leds,CRGB::Green);
-      Serial.println("Move");
-    }
-  
-    if (mv.tick()==true)
-    {
-      mvtmr.start();
       setAll(leds,CRGB::Red);
+      
       Serial.println("Move");
+      
+      #ifdef ENABLE_MOVE_EVENT
+        if (mvtmr.isRunning()==false)        
+          sendMoveEvent();
+      #endif
+      
+      mvtmr.start();
     }
   }    
 
@@ -620,6 +649,16 @@ void loop_app()
   #ifdef ENABLE_MQTT
     mqttClient.loop();
   #endif
+
+  digitalWrite(LED_BUILTIN, !digitalRead(PIN_MOVE));
+  
+  unsigned long ul=millis();
+  if ( (ul % 1000) == 0 )
+  {
+    //Serial.println(g_batt);
+    //digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
+    delay(2);
+  }
 }
 
 void loop()
