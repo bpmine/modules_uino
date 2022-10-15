@@ -19,9 +19,14 @@
 */
 #include <ESP8266WiFi.h>
 #include <WiFiClient.h>
-#include <ArduinoMqttClient.h>
+#include <EspMQTTClient.h>
 
 #include "credentials.h"
+
+#define VERSION "V2.0"
+
+#define MQTT_TRACE_ON
+//#define NO_SOUND
 
 #define PIN_BUZZER    5   ///< D1
 #define PIN_BOUTON    4   ///< D2
@@ -31,13 +36,15 @@
 #define PIN_SELECTOR  12  ///< D6
 #define PIN_SILENT    13  ///< D7
 
-//#define NO_SOUND
 
+bool flgBoot=true;
 bool flgMouvement=false;
 bool flgBouton=false;
 bool flgMouvement_prev=false;
 bool flgSelector=false;
 bool flgSilent=false;
+bool flgMoveSilent=false;
+bool flgDringByCmd=false;
 
 bool flgLedVerte=false;
 bool flgLedRouge=false;
@@ -49,6 +56,8 @@ long lTickStartMove=0;
 bool flgMouvementEnCours=false;
 int iCtrMouvement=0;
 int iCtrSonnette=0;
+bool flgLongPressDetection=false;
+long lTickStartLongPress=0;
 
 bool flgAsonne=false;
 bool flgAbouge=false;
@@ -65,40 +74,16 @@ bool flgTick5s_prev=false;
 bool flgTick5sUpFront=false;
 
 
-WiFiClient espClient;
-MqttClient client(espClient);
+//WiFiClient espClient;
 
-// Don't change the function below. This functions connects your ESP8266 to your router
-void setup_wifi()
-{
-  delay(10);
-  // We start by connecting to a WiFi network
-  Serial.println();
-  Serial.print("Connecting to ");
-  Serial.println(ssid);
-  WiFi.begin(ssid, password);
-
-  for (int i=0;i<20;i++)
-  {
-    if (WiFi.status() != WL_CONNECTED) 
-    {
-      delay(500);
-      Serial.print(".");
-    }
-  }
-
-  if (WiFi.status() == WL_CONNECTED)
-  {
-    Serial.println("");
-    Serial.print("WiFi connected - ESP IP address: ");
-    Serial.println(WiFi.localIP());
-    flgPasDeReseau=false;
-  }
-  else
-  {
-    flgPasDeReseau=true;
-  }
-}
+EspMQTTClient mqttClient(
+  STASSID,
+  STAPSK,
+  MQTT_IP,
+  MQTT_LOGIN,
+  MQTT_PASS,
+  "sonnette"
+);
 
 void shortMelodie()
 {
@@ -113,6 +98,35 @@ void shortMelodie()
   delay(50);
   noTone(PIN_BUZZER);
 }
+
+void toneMoveOn()
+{
+  #ifdef NO_SOUND
+    delay(100);
+    return;
+  #endif
+
+  tone(PIN_BUZZER, 440*4);
+  delay(20);
+  noTone(PIN_BUZZER);
+}
+
+void toneMoveOff()
+{
+  #ifdef NO_SOUND
+    delay(100);
+    return;
+  #endif
+
+  tone(PIN_BUZZER, 440);
+  delay(20);
+  noTone(PIN_BUZZER);
+  delay(100);
+  tone(PIN_BUZZER, 440);
+  delay(20);
+  noTone(PIN_BUZZER);
+}
+
 
 int LONG=200;
 int SHORT=100;
@@ -216,26 +230,6 @@ void flgTicks()
   flgTick5s_prev=flgTick5s;
 }
 
-void tryReconnect()
-{
-  if ( (flgPasDeReseau==true) && (flgTick5sUpFront==true) )
-  {
-    Serial.print("Tentative reconnexion: ");
-    
-    if (!client.connect(mqtt_server,1883))
-    {
-      flgPasDeReseau=true;
-      Serial.println("[NOK]");
-      return;
-    }
-
-    client.stop();
-    Serial.println("[OK]");
-
-    sendEvent("Reconnect");
-  }  
-}
-
 void sendEvent(char *strEvent)
 {
   Serial.print("Send ");
@@ -244,23 +238,54 @@ void sendEvent(char *strEvent)
   
   long lTicks=millis();
   char strMsg[100];
-  sprintf(strMsg,"{\"event\":\"%s\",\"moves\":\"%d\",\"drings\":\"%d\",\"ticks\":\"%ld\"}",strEvent,iCtrMouvement,iCtrSonnette,lTicks);  
-  
-  if (!client.connect(mqtt_server,1883))
-  {
-     flgPasDeReseau=true;
-     Serial.println("[ERROR COMM.]");
-     return;
-  }
+  sprintf(strMsg,"{\"event\":\"%s\",\"moves\":\"%d\",\"drings\":\"%d\",\"ticks\":\"%ld\",\"version\":\"%s\"}",strEvent,iCtrMouvement,iCtrSonnette,lTicks,VERSION);
 
-  client.beginMessage("/maison/sonnette/events", true,1,false);
-  client.write((uint8_t *)strMsg,strlen(strMsg));
-  client.endMessage();
-  client.stop();
+  mqttClient.publish("/maison/sonnette/events", strMsg);
 
   Serial.println("[OK]");
   
   flgPasDeReseau=false;
+}
+
+void setup_mqtt(void)
+{
+  //static char strName[15]="sonnette2";
+  //mqttClient.setMqttClientName("sonnette2");
+  Serial.print("Start Mqtt");
+  ///Serial.print(strName);
+  Serial.println("...");
+
+  mqttClient.enableMQTTPersistence();
+
+  #ifdef MQTT_TRACE_ON
+    mqttClient.enableDebuggingMessages();
+  #endif
+}
+
+void onReceiveCmd(const String &payload)
+{
+  Serial.print("Received: ");
+  Serial.println(payload);
+  
+  if (payload=="dring")
+    flgDringByCmd=true;
+}
+
+void onConnectionEstablished()
+{
+  Serial.println("Connection Mqtt.");
+
+  mqttClient.subscribe("/maison/sonnette/cmd",onReceiveCmd);
+
+  if (flgBoot==true)
+  {
+    flgBoot=false;
+    sendEvent("boot");
+  }
+  else
+  {
+    sendEvent("connect");
+  }
 }
 
 void setup() 
@@ -282,29 +307,19 @@ void setup()
   flgMouvement=digitalRead(PIN_MOVE);
   flgMouvement_prev=flgMouvement;
 
-  setup_wifi();
-  client.setId(mqtt_id);
-  client.setUsernamePassword(mqtt_login, mqtt_pass);
-  client.setCleanSession(true);
-
-  sendEvent("boot");
+  flgBoot=true;
+  flgDringByCmd=false;
+  setup_mqtt();  
 
   lTick250ms=millis();
   lTick500ms=millis();
   lTick1s=millis();
-  lTick5s=millis();
+  lTick5s=millis();  
 }
 
 
 void loop() 
-{
-  /// ******************* SURVEILLANCE COMM *********************
-
-  client.poll();
-  tryReconnect();
-    
-  /// ******************* PROCESS ENTREES *********************
-  
+{  
   /// Lire les entrees (en filtrant)
   flgBouton=readFiltered(PIN_BOUTON,LOW) ;
   flgMouvement=readFiltered(PIN_MOVE,HIGH) ;
@@ -337,10 +352,11 @@ void loop()
   {
     if (flgMouvement==true)
     {
-      if (getElapsedTimeFrom(lTickStartMove)>10200)
+      if (getElapsedTimeFrom(lTickStartMove)>5000)
       {
-        if (flgSilent==false)
+        if ( (flgSilent==false) && (flgMoveSilent==false) )
           shortMelodie();
+          
         flgAbouge=true;
 
         flgMouvementEnCours=false;
@@ -355,32 +371,27 @@ void loop()
       Serial.println(" ms");
       
       flgMouvementEnCours=false;
-
-      /*char strMsg[50];
-      long lDelta=getElapsedTimeFrom(lTickStartMove);
-      sprintf(strMsg,"Fin move: %ld",lDelta);
-      sendEvent("/maison/sonnette/logs", strMsg,true);*/
     }
   }
 
   /// Appui sur le bouton de la sonnette...
-  if ( flgBouton==true )
+  if ( ( flgBouton==true ) || (flgDringByCmd==true) )
   {
     iCtrSonnette++;
+    flgDringByCmd=false;
 
     if (flgSilent==false)
     {
       melodie();
     }
+    else
+    {
+      /// Timing pour filtrer si pas de melodie
+      delay(2000);            
+    }
     
     sendEvent("dring");
     flgAsonne=true;
-
-    if (flgSilent==true)
-    {
-      /// Timing pour filtrer si pas de melodie
-      delay(2000);      
-    }
   }
 
   /// Reset des evenements
@@ -388,9 +399,40 @@ void loop()
   {
     flgAsonne=false;
     flgAbouge=false;
+
+    if (flgLongPressDetection==false)
+    {
+      flgLongPressDetection=true;
+      lTickStartLongPress=millis();
+    }
+    else
+    {
+      if (getElapsedTimeFrom(lTickStartLongPress)>4000)
+      {
+        flgLongPressDetection=false;
+        lTickStartLongPress=millis();
+        
+        if (flgMoveSilent==true)
+        {
+          toneMoveOn();
+          flgMoveSilent=false;
+        }
+        else
+        {
+          toneMoveOff();
+          flgMoveSilent=true;
+        }        
+      }
+    }
+  }
+  else
+  {
+    lTickStartLongPress=millis();
+    if (flgLongPressDetection==true)
+      flgLongPressDetection=false;      
   }
 
-  delay(100);
+  delay(10);
 
   /// ******************* DETERMINER ETAT DES LEDS *********************
 
@@ -400,12 +442,12 @@ void loop()
   else
     flgLedRouge=false;
 
-  /// Si quelqu'un a sonne, Verte a 500ms
+  /// Si quelqu'un a sonne, Verte a 250ms
   if (flgAsonne)
   {
     flgLedVerte=flgTick250ms;
   }
-  /// Si quelqu'un a sonne, Rouge a 250ms
+  /// Si quelqu'un a bouge, Rouge a 1s
   else if (flgAbouge)
   {
     flgLedVerte=flgTick1s;    
@@ -428,4 +470,6 @@ void loop()
   digitalWrite(PIN_LED_GREEN,(flgLedVerte==true)?HIGH:LOW);
 
   flgMouvement_prev=flgMouvement;
+
+  mqttClient.loop();
 }
