@@ -381,7 +381,7 @@ void Jard::loop(void)
   bool outLedOn=on;
 	if ( (veille==true) && (m_flgSunOk==false) )
 	{
-		outLedOn=m_flgBlk2&m_flgBlk;
+		outLedOn=m_flgBlk2 && m_flgBlk && outLedOn;
 		outLedPmp1=false;
 		outLedPmp2=false;
 	}

@@ -4,9 +4,17 @@
 #include <avr/sleep.h>
 #include <avr/power.h>
 #include <avr/wdt.h>
+#include <avr/interrupt.h>
 
 volatile uint8_t g_ticks_1s=0;
 volatile uint8_t g_wdt=0;
+
+
+ISR (PCINT3_vect)
+{
+  PCIFR  |= bit (PCIF0);
+}
+
 
 class Sleep
 {
@@ -52,11 +60,20 @@ class Sleep
       WDTCSR |= _BV(WDIE);
     }
 
+    static init_pin_change(void)
+    {
+      attachInterrupt (digitalPinToInterrupt(11), PCINT3_vect, FALLING);
+      PCIFR  |= bit (PCIF0);
+      PCICR  |= bit (PCIE0);
+      PCMSK0 |= bit (PCINT3);
+    }
+
   public:
     static void init(void)
     {
       init_timer1_50ms();
       init_wdg();
+      init_pin_change();
     }
 
     static void enter_idle_sleep(void)
