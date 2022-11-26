@@ -31,8 +31,8 @@ void setup()
   pinMode(PIN_CMD_EV,OUTPUT);
   digitalWrite(PIN_CMD_EV,LOW);
 
-  pinMode(PIN_CPT_LV1,INPUT);
-  pinMode(PIN_CPT_LV1,INPUT);
+  pinMode(PIN_CPT_LV1,INPUT_PULLUP);
+  pinMode(PIN_CPT_LV2,INPUT_PULLUP);
 
   unsigned char bMagic1=EEPROM.read(0);
   g_bAddr=EEPROM.read(1);
@@ -64,8 +64,8 @@ void serialEvent()
 
 void loop() 
 {
-  g_cpt_low=digitalRead(PIN_CPT_LV1)==HIGH?true:false;
-  g_cpt_high=digitalRead(PIN_CPT_LV2)==HIGH?true:false;
+  g_cpt_low=digitalRead(PIN_CPT_LV1)==HIGH?false:true;
+  g_cpt_high=digitalRead(PIN_CPT_LV2)==HIGH?false:true;
   delay(10);
   digitalWrite(PIN_CMD_EV,g_cmd_ev==true?HIGH:LOW);
 }
