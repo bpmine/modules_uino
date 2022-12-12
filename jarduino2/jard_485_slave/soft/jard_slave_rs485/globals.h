@@ -9,5 +9,6 @@ extern bool g_cpt_low;
 extern bool g_cpt_high;
 
 extern bool set_slave_addr(unsigned char bNewAddr);
+extern void resetWdg(void);
 
 #endif

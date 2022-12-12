@@ -46,7 +46,7 @@ int user_mdbus_write_coils(unsigned short addr, unsigned short count, unsigned c
     switch (addr+i)
     {
 
-      case 0:g_cmd_ev=(val==1)?true:false;break;
+      case 0:g_cmd_ev=(val==1)?true:false;resetWdg();break;
       
       default:return MDBUS_ERR;
     }
