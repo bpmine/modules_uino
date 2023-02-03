@@ -1,0 +1,3 @@
+[submodule "jarduino2/jard_485_slave/soft/jard_slave_rs485/libraries/mdbus"]
+	path = jarduino2/jard_485_slave/soft/jard_slave_rs485/libraries/mdbus
+	url = https://github.com/bpmine/mdbus.git
