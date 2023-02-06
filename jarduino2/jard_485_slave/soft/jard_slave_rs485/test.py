@@ -93,7 +93,7 @@ def test_slave_rs485_asserv(cln,addr=0):
         
     
 
-client= ModbusClient(method = "rtu", port=r"\\.\COM7",stopbits = 1, bytesize = 8, parity='N',baudrate= 115200,timeout=2)
+client= ModbusClient(method = "rtu", port=r"\\.\COM14",stopbits = 1, bytesize = 8, parity='N',baudrate= 115200,timeout=2)
 
 print('Connection:',end='')
 res = client.connect()

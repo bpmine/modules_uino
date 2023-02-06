@@ -1,7 +1,6 @@
-/*
-   client.cpp
-
-    Created on: 26 novembre 2022
+/**
+ * @file client.cpp
+ * @brief Created on: 26 novembre 2022
 */
 
 #include "client.h"
@@ -12,12 +11,18 @@ extern "C"{
 #include <mdbus.h>
 }
 
+int g_pinEnTx=0;
+
 void user_mdbus_send(void *back,unsigned char* pbuff, int sz)
 {
   if (back!=NULL)
   {
     HardwareSerial *pSerial=(HardwareSerial*)back;
+    
+    digitalWrite(g_pinEnTx,HIGH);
     pSerial->write(pbuff,sz);
+    while ((UCSR0A & _BV (TXC0)) == 0) {}
+    digitalWrite(g_pinEnTx,LOW);
   }
 }
 
@@ -105,11 +110,15 @@ int user_mdbus_write_holding_registers(unsigned short addr, unsigned short count
 T_MDBUS_CTX ctx;
 unsigned char md_buffer[150];
 
-void client_init(void *pSerial,unsigned char addr)
+void client_init(void *pSerial,unsigned char addr,int pinTxEn)
 {
   HardwareSerial *pSer=(HardwareSerial *)pSerial;
   if ( pSer == NULL )
     return;
+
+  g_pinEnTx=pinTxEn;
+  pinMode(g_pinEnTx,OUTPUT);
+  digitalWrite(g_pinEnTx,LOW);
 
   pSer->begin(115200);
 

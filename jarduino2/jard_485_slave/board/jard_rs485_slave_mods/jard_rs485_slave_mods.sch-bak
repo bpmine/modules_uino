@@ -408,12 +408,12 @@ F 3 "https://www.centralsemi.com/get_document.php?cmp=1&mergetype=pd&mergepath=p
 $EndComp
 Connection ~ 9350 3300
 $Comp
-L bpc_scm:BPC_Mod485 U?
+L bpc_scm:BPC_Mod485 U1
 U 1 1 63E332DA
 P 2600 3700
-F 0 "U?" H 3100 4265 50  0000 C CNN
-F 1 "BPC_Mod485" H 3100 4174 50  0000 C CNN
-F 2 "" H 3000 3700 50  0001 C CNN
+F 0 "U1" H 3100 4355 50  0000 C CNN
+F 1 "BPC_Mod485" H 3100 4264 50  0000 C CNN
+F 2 "bpc:BPC_Mod485" H 3100 4173 50  0000 C CNN
 F 3 "" H 3000 3700 50  0001 C CNN
 	1    2600 3700
 	1    0    0    -1  
@@ -421,10 +421,10 @@ $EndComp
 Wire Wire Line
 	2500 3600 2100 3600
 $Comp
-L power:GND #PWR?
+L power:GND #PWR01
 U 1 1 63E36370
 P 2650 3000
-F 0 "#PWR?" H 2650 2750 50  0001 C CNN
+F 0 "#PWR01" H 2650 2750 50  0001 C CNN
 F 1 "GND" H 2655 2827 50  0000 C CNN
 F 2 "" H 2650 3000 50  0001 C CNN
 F 3 "" H 2650 3000 50  0001 C CNN
@@ -436,10 +436,10 @@ Vcc
 Wire Wire Line
 	2500 3700 2400 3700
 $Comp
-L power:GND #PWR?
+L power:GND #PWR02
 U 1 1 63E40FB6
 P 5050 6150
-F 0 "#PWR?" H 5050 5900 50  0001 C CNN
+F 0 "#PWR02" H 5050 5900 50  0001 C CNN
 F 1 "GND" H 5055 5977 50  0000 C CNN
 F 2 "" H 5050 6150 50  0001 C CNN
 F 3 "" H 5050 6150 50  0001 C CNN
@@ -477,7 +477,7 @@ Text GLabel 4050 3400 2    50   Input ~ 0
 TX
 Text GLabel 4050 3700 2    50   Output ~ 0
 RX
-Text GLabel 4050 3550 2    50   Input ~ 0
+Text GLabel 4550 3550 2    50   Input ~ 0
 TXEN
 Wire Wire Line
 	4050 3400 3700 3400
@@ -487,8 +487,6 @@ Wire Wire Line
 	3800 3500 3800 3550
 Wire Wire Line
 	3800 3600 3700 3600
-Wire Wire Line
-	3800 3550 4050 3550
 Connection ~ 3800 3550
 Wire Wire Line
 	3800 3550 3800 3600
@@ -540,12 +538,12 @@ Wire Wire Line
 Wire Wire Line
 	3600 5550 3200 5550
 $Comp
-L MCU_Module:Arduino_Nano_v2.x A?
+L MCU_Module:Arduino_Nano_v2.x A1
 U 1 1 63E31F27
 P 5000 4950
-F 0 "A?" H 4550 3900 50  0000 C CNN
+F 0 "A1" H 4550 3900 50  0000 C CNN
 F 1 "Arduino_Nano_v2.x" H 4400 3750 50  0000 C CNN
-F 2 "Module:Arduino_Nano" H 5000 4950 50  0001 C CIN
+F 2 "bpc:BPC_Arduino_Nano" H 5000 4950 50  0001 C CIN
 F 3 "https://www.arduino.cc/en/uploads/Main/ArduinoNanoManual23.pdf" H 5000 4950 50  0001 C CNN
 	1    5000 4950
 	1    0    0    -1  
@@ -566,4 +564,35 @@ Text GLabel 4250 4750 0    50   Output ~ 0
 CMD_EV
 Wire Wire Line
 	4500 4750 4250 4750
+$Comp
+L Device:R R1
+U 1 1 63EB8273
+P 4400 3750
+F 0 "R1" H 4470 3796 50  0000 L CNN
+F 1 "100k" H 4470 3705 50  0000 L CNN
+F 2 "Resistor_THT:R_Axial_DIN0309_L9.0mm_D3.2mm_P2.54mm_Vertical" V 4330 3750 50  0001 C CNN
+F 3 "~" H 4400 3750 50  0001 C CNN
+	1    4400 3750
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:GND #PWR03
+U 1 1 63EB915D
+P 4400 3950
+F 0 "#PWR03" H 4400 3700 50  0001 C CNN
+F 1 "GND" H 4405 3777 50  0000 C CNN
+F 2 "" H 4400 3950 50  0001 C CNN
+F 3 "" H 4400 3950 50  0001 C CNN
+	1    4400 3950
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	4400 3550 4400 3600
+Wire Wire Line
+	3800 3550 4400 3550
+Wire Wire Line
+	4550 3550 4400 3550
+Connection ~ 4400 3550
+Wire Wire Line
+	4400 3900 4400 3950
 $EndSCHEMATC

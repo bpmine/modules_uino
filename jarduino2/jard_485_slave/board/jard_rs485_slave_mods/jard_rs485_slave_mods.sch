@@ -9,7 +9,7 @@ Date "2023-02-05"
 Rev "A0"
 Comp "BPC"
 Comment1 "Module de contrôle d'un oya"
-Comment2 "Technologie traversante"
+Comment2 "Technologie avec modules Arduino"
 Comment3 ""
 Comment4 ""
 $EndDescr

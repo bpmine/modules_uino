@@ -7,6 +7,7 @@
 #define PIN_CPT_LV1       (3)
 #define PIN_CPT_LV2       (4)
 #define PIN_BUS_ALIVE     (6)
+#define PIN_TX_EN         (7)
 
 #define DELTA_ALIVE_MS    (2000UL)
 
@@ -90,7 +91,7 @@ void setup()
 
   g_tick0_ms=millis()-DELTA_ALIVE_MS-10;
 
-  client_init(&Serial,g_bAddr);  
+  client_init(&Serial,g_bAddr,PIN_TX_EN);  
 }
 
 void serialEvent()
