@@ -58,7 +58,7 @@ Wire Wire Line
 Wire Wire Line
 	1900 1700 1900 2600
 Wire Wire Line
-	1900 2600 1200 2600
+	1900 2600 1800 2600
 Wire Wire Line
 	1800 2500 1800 1500
 Wire Wire Line
@@ -595,4 +595,20 @@ Wire Wire Line
 Connection ~ 4400 3550
 Wire Wire Line
 	4400 3900 4400 3950
+$Comp
+L power:GND #PWR?
+U 1 1 63E899D1
+P 1800 2800
+F 0 "#PWR?" H 1800 2550 50  0001 C CNN
+F 1 "GND" H 1805 2627 50  0000 C CNN
+F 2 "" H 1800 2800 50  0001 C CNN
+F 3 "" H 1800 2800 50  0001 C CNN
+	1    1800 2800
+	1    0    0    -1  
+$EndComp
+Connection ~ 1800 2600
+Wire Wire Line
+	1800 2600 1200 2600
+Wire Wire Line
+	1800 2600 1800 2800
 $EndSCHEMATC
