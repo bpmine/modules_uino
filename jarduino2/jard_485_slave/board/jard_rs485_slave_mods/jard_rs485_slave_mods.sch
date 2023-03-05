@@ -5,7 +5,7 @@ $Descr A4 11693 8268
 encoding utf-8
 Sheet 1 1
 Title "Module RS485 Oya"
-Date "2023-02-05"
+Date "2023-03-05"
 Rev "A0"
 Comp "BPC"
 Comment1 "Module de contrôle d'un oya"
