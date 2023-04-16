@@ -1,18 +1,19 @@
 #include <ESP8266WiFi.h>
 #include <ModbusIP_ESP8266.h>
-//#include <EEPROM.h>
 
 #include "timer.h"
 
-#define NODE_POMPE_MAIN
-//#define NODE_LVL_PAUL
+//#define NODE_MAIN
+//#define NODE_PAUL
+#define NODE_REDUIT
+//#define NODE_BARBEC
 
-
-#define PIN_IN_N1     14
-#define PIN_IN_N2     12
-#define PIN_IN_N3     13
-#define PIN_OUT_CMD   15
-#define PIN_LED       2
+#define PIN_IN_N1       14
+#define PIN_IN_N2       12
+#define PIN_IN_N3       13
+#define PIN_OUT_CMD     15
+#define PIN_LED         2
+#define PIN_ANALOG_POW  A0
 
 char ssid[] = "Domotique";
 char password[] = "94582604";
@@ -28,27 +29,30 @@ ModbusIP mb;
 #define STS_LVL3      3
 
 #define IREG_RSSI     1
+#define IREG_PWR      2
 
 bool g_comm_ok=false;
 Timer tmrComm(2000,false);
+Timer tmrAnalog(500);
 
-#ifdef NODE_POMPE_MAIN
+#ifdef NODE_MAIN
   IPAddress local_IP(192, 168, 3, 201);
 #endif
-#ifdef NODE_LVL_PAUL
+#ifdef NODE_PAUL
   IPAddress local_IP(192, 168, 3, 202);
 #endif
-  
+#ifdef NODE_REDUIT
+  IPAddress local_IP(192, 168, 3, 203);
+#endif
+#ifdef NODE_BARBEC
+  IPAddress local_IP(192, 168, 3, 204);
+#endif
+
 IPAddress gateway(192, 168, 3, 1);
 IPAddress subnet(255, 255, 255, 0);
 
 void setup() 
 {
-  //EEPROM.begin(512);
-  //EEPROM.write(0,456);
-  //EEPROM.commit();
-  //int rd=EEPROM.read(0);
-  
   pinMode(PIN_OUT_CMD,OUTPUT);
   digitalWrite(PIN_OUT_CMD,LOW);
   pinMode(PIN_LED,OUTPUT);
@@ -57,6 +61,8 @@ void setup()
   pinMode(PIN_IN_N1,INPUT_PULLUP);
   pinMode(PIN_IN_N2,INPUT_PULLUP);
   pinMode(PIN_IN_N3,INPUT_PULLUP);
+
+  pinMode(PIN_ANALOG_POW,INPUT);
   
   Serial.begin(115200);
   delay(50);
@@ -98,13 +104,22 @@ void setup()
   mb.addIsts(STS_LVL3,false);
 
   mb.addIreg(IREG_RSSI,WiFi.RSSI());
+  mb.addIreg(IREG_PWR,0);
+  
   
   tmrComm.start();
+  tmrAnalog.start();
 }
  
 void loop() 
 {  
-   mb.task();   
+   mb.task();
+
+   if (tmrAnalog.tick())
+   {
+     int val=analogRead(PIN_ANALOG_POW);
+     mb.Ireg(IREG_PWR,val);
+   }
 
    if (digitalRead(PIN_IN_N1)==LOW)
       mb.Ists(STS_LVL1,true);
