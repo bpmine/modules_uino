@@ -3,10 +3,11 @@
 
 #include "timer.h"
 
-//#define NODE_MAIN
+#define NODE_MAIN
 //#define NODE_PAUL
-#define NODE_REDUIT
+//#define NODE_REDUIT
 //#define NODE_BARBEC
+//#define NODE_TEST
 
 #define PIN_IN_N1       14
 #define PIN_IN_N2       12
@@ -32,11 +33,11 @@ ModbusIP mb;
 #define IREG_PWR      2
 
 bool g_comm_ok=false;
-Timer tmrComm(2000,false);
+Timer tmrComm(3000,false);
 Timer tmrAnalog(500);
 
 #ifdef NODE_MAIN
-  IPAddress local_IP(192, 168, 3, 201);
+  IPAddress local_IP(192, 168, 3, 210);
 #endif
 #ifdef NODE_PAUL
   IPAddress local_IP(192, 168, 3, 202);
@@ -46,6 +47,9 @@ Timer tmrAnalog(500);
 #endif
 #ifdef NODE_BARBEC
   IPAddress local_IP(192, 168, 3, 204);
+#endif
+#ifdef NODE_TEST
+  IPAddress local_IP(192, 168, 3, 205);
 #endif
 
 IPAddress gateway(192, 168, 3, 1);

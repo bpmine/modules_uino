@@ -3,7 +3,7 @@ from pymodbus.client.sync import ModbusTcpClient as ModbusClient
 import time
 
  
-client = ModbusClient(host="192.168.3.201", port=502, auto_open=True, auto_close=True, timeout=10)
+client = ModbusClient(host="192.168.3.210", port=502, auto_open=True, auto_close=True, timeout=10)
 
 while True:
     try:
@@ -11,7 +11,8 @@ while True:
         cmd=data.bits[1]
         print('Cmd: %d' % (cmd))
 
-        data = client.read_discrete_inputs(1, 3,unit=1)
+        data = client.read_discrete_inputs(1, 1,unit=1)
+        print(data)
         N1=data.bits[0]
         N2=data.bits[1]
         N3=data.bits[2]
@@ -24,12 +25,12 @@ while True:
                 
         client.write_coil(1,True,unit=1)
 
-        client.write_coil(2,True,unit=1)
+        client.write_coil(2,False,unit=1)
     except Exception as ex:
         print(ex)
         pass
     
-    time.sleep(0.3)    
+    time.sleep(1)    
 
 
     
