@@ -11,11 +11,27 @@ log = logging.getLogger()
 #log.setLevel(logging.DEBUG)
 
 def test_slave_rs485_set_address(cln,addr,newAddr):
-    print('Lecture etat electrovanne:')
-    result= client.read_coils(0,1,unit= addr)
-    print(result.bits[0])
+    print('_'*40)
+    print('MODIFICATION ADRESSE MODBUS')
+    print('')    
+    print('Lecture etat electrovanne: ', end='')
+    try:
+        result= client.read_coils(0,1,unit= addr)
+        print(result.bits[0])
+    except:
+        print("[NOK] - Echec du changement d'adresse")
+        return False
 
-    client.write_registers(0,[newAddr],unit= addr)
+    print('Programmation adresse %s -> %s' % (addr,newAddr))
+    try:
+        client.write_registers(0,[newAddr],unit= addr)
+        print('programmation réussie')
+        print('Redemarrer pour prise en compte de la nouvelle adresse..')
+        return True
+    except:
+        print("[NOK] - Echec du changement d'adresse")
+        return False
+
 
 
 def test_slave_rs485(cln,addr=0):
@@ -91,9 +107,48 @@ def test_slave_rs485_asserv(cln,addr=0):
             client.write_coils(0,[False],unit= addr)
             #break
         
-    
 
-client= ModbusClient(method = "rtu", port=r"\\.\COM14",stopbits = 1, bytesize = 8, parity='N',baudrate= 115200,timeout=2)
+def test_find_slaves(client,rng=None):    
+    print('_'*40)
+    print('RECHERCHE DES MODULES (env. 12s)...')
+    print('')
+    if rng==None:
+        (a,b)=(0,127)
+    else:
+        (a,b)=rng
+
+    if b<a:
+        return []
+
+    before_tmt=client.timeout
+    client.timeout=0.05
+    lst=[]
+    for i in range(a,b+1):
+        try:
+            result= client.read_coils(0,1,unit= i)
+            res=result.bits[0]
+            print('  - Module @%d trouvé' % (i) )
+            lst.append(i)
+        except Exception as e:
+            pass
+
+    client.timeout=before_tmt
+
+    s='' if len(lst)==1 else 's'
+    
+    print('_'*40)
+    print('%d module%s trouvé%s. ' % (len(lst),s,s),end='')
+    print('Liste des adresses: %s' % (lst))
+
+    return lst
+        
+class ObjCmd:
+    def __init__(self):
+        self.value=False
+
+
+
+client= ModbusClient(method = "rtu", port=r"\\.\COM8",stopbits = 1, bytesize = 8, parity='N',baudrate= 115200,timeout=2)
 
 print('Connection:',end='')
 res = client.connect()
@@ -105,9 +160,9 @@ else:
 
 time.sleep(4);
 
-#test_slave_rs485_set_address(client,0,5)
+#test_slave_rs485_set_address(client,0,1)
 #test_slave_rs485_wdg(client,5)
-test_slave_rs485_asserv(client,5)
-
+#test_slave_rs485_asserv(client,10)
+#lst=test_find_slaves(client)
 
 client.close()

@@ -2,23 +2,37 @@
 
 #include "client.h"
 #include "globals.h"
+#include "analog.hpp" 
 
-#define PIN_CMD_EV        (2)
-#define PIN_CPT_LV1       (3)
-#define PIN_CPT_LV2       (4)
-#define PIN_BUS_ALIVE     (6)
-#define PIN_TX_EN         (7)
+#define PIN_CPT_LV1       (2)
+#define PIN_CPT_LV2       (3)
+#define PIN_CPT_FLOW      (4)
+#define PIN_TX_EN         (6)
+#define PIN_CMD_EV        (7)
+#define PIN_LED1          (8)
+#define PIN_LED2          (9)
+#define PIN_DHT20         (10)
+
+#define PIN_MES_I         (A0)
+#define PIN_MES_V         (A1)
 
 #define DELTA_ALIVE_MS    (2000UL)
 
-extern bool g_cmd_ev=false;
-extern bool g_cpt_low=false;
-extern bool g_cpt_high=false;
+bool g_cmd_ev=false;
+bool g_cpt_low=false;
+bool g_cpt_high=false;
+unsigned short g_mes_v;
+unsigned short g_mes_i;
+bool g_enabled=false;
+unsigned short g_defaults=false;
 
 unsigned char g_bAddr=0;
 unsigned long g_tick0_ms;
 
-void resetWdg(void)
+Analog anMesI;
+Analog anMesV;
+
+void reset_comm_alive_timer(void)
 {
   g_tick0_ms=millis();
 }
@@ -62,17 +76,23 @@ void setup()
 {
   pinMode(PIN_CMD_EV,OUTPUT);
   digitalWrite(PIN_CMD_EV,LOW);
+  pinMode(PIN_LED1,OUTPUT);
+  digitalWrite(PIN_LED1,LOW);
+  pinMode(PIN_LED2,OUTPUT);
+  digitalWrite(PIN_LED1,LOW);
+  pinMode(PIN_DHT20,OUTPUT);
 
-  pinMode(PIN_BUS_ALIVE,OUTPUT);
-  digitalWrite(PIN_BUS_ALIVE,LOW);
+  pinMode(PIN_CPT_LV1,INPUT);
+  pinMode(PIN_CPT_LV2,INPUT);
+  pinMode(PIN_CPT_FLOW,INPUT);
 
-  pinMode(PIN_CPT_LV1,INPUT_PULLUP);
-  pinMode(PIN_CPT_LV2,INPUT_PULLUP);  
+  pinMode(PIN_MES_I,INPUT);
+  pinMode(PIN_MES_V,INPUT);
 
   unsigned char bMagic1=EEPROM.read(0);
   g_bAddr=EEPROM.read(1);
   unsigned char bMagic2=EEPROM.read(2);
-  
+
   if ( (bMagic1!=0xAA) || (bMagic2!=0x55) )
   {
     EEPROM.write(0,0xAA);
@@ -86,11 +106,16 @@ void setup()
     {
       g_bAddr=0;
       EEPROM.write(1,0);
-    }
+    }    
   }  
 
+  g_cpt_low=false;
+  g_cpt_high=false;
+  g_enabled=false;
+  g_cmd_ev=false;
+  g_defaults=0;
+  
   g_tick0_ms=millis()-DELTA_ALIVE_MS-10;
-
   client_init(&Serial,g_bAddr,PIN_TX_EN);  
 }
 
@@ -101,18 +126,23 @@ void serialEvent()
 
 void loop() 
 {
+  bool flgEv;
+  bool flgBusAlive;
+  
   g_cpt_low=digitalRead(PIN_CPT_LV1)==HIGH?false:true;
   g_cpt_high=digitalRead(PIN_CPT_LV2)==HIGH?false:true;
-  delay(10);
-  digitalWrite(PIN_CMD_EV,g_cmd_ev==true?HIGH:LOW);
+  anMesI.latch((unsigned short)analogRead(PIN_MES_I));
+  anMesV.latch((unsigned short)analogRead(PIN_MES_V));
+  flgBusAlive=isBusAlive();
+
+  flgEv=flgBusAlive && g_cmd_ev && g_enabled;
+  g_mes_v=anMesV.get();
+  g_mes_i=anMesI.get();
   
-  if (isBusAlive()==false)
-  {
-    digitalWrite(PIN_BUS_ALIVE,LOW);
+  delay(1);
+    
+  digitalWrite(PIN_CMD_EV,flgEv==true?HIGH:LOW);
+  
+  if (flgBusAlive==false)
     g_cmd_ev=false;    
-  }
-  else
-  {
-    digitalWrite(PIN_BUS_ALIVE,HIGH);
-  }
 }

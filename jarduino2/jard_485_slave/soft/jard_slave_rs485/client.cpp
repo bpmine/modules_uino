@@ -19,6 +19,8 @@ void user_mdbus_send(void *back,unsigned char* pbuff, int sz)
   {
     HardwareSerial *pSerial=(HardwareSerial*)back;
     
+    delay(1);
+    
     digitalWrite(g_pinEnTx,HIGH);
     pSerial->write(pbuff,sz);
     while ((UCSR0A & _BV (TXC0)) == 0) {}
@@ -34,6 +36,7 @@ int user_mdbus_read_coils(unsigned short addr, unsigned short count, unsigned ch
     switch (addr+i)
     {
       case 0:ucVal=(g_cmd_ev==true)?1:0;break;
+      case 1:ucVal=(g_enabled==true)?1:0;break;      
       default:return MDBUS_ERR;
     }
           
@@ -51,7 +54,11 @@ int user_mdbus_write_coils(unsigned short addr, unsigned short count, unsigned c
     switch (addr+i)
     {
 
-      case 0:g_cmd_ev=(val==1)?true:false;resetWdg();break;
+      case 0:g_cmd_ev=(val==1)?true:false;reset_comm_alive_timer();break;
+      case 1:g_enabled=(val==1)?true:false;break;
+
+      case 10:g_defaults=0;break;
+      case 11:g_defaults|=DEF_TIMEOUT;break;
       
       default:return MDBUS_ERR;
     }
@@ -80,8 +87,21 @@ int user_mdbus_read_inputs(unsigned short addr, unsigned short count, unsigned c
 }
 
 int user_mdbus_read_input_registers(unsigned short addr, unsigned short count, unsigned char* o_pBuffer)
-{
-  return MDBUS_ERR;
+{  
+  for (int i=0;i<count;i++)
+  {
+    unsigned int iVal;
+    switch (addr+i)
+    {
+      case 0:iVal=g_defaults;break;
+
+      default:return MDBUS_ERR;
+    }
+          
+    mdbus_fill_register_data(o_pBuffer, i, iVal);
+  }
+  
+  return MDBUS_OK; 
 }
 
 int user_mdbus_read_holding_registers(unsigned short addr, unsigned short count, unsigned char* o_pBuffer)
@@ -119,7 +139,7 @@ void client_init(void *pSerial,unsigned char addr,int pinTxEn)
   g_pinEnTx=pinTxEn;
   pinMode(g_pinEnTx,OUTPUT);
   digitalWrite(g_pinEnTx,LOW);
-
+  
   pSer->begin(115200);
 
   mdbus_init(&ctx,md_buffer, sizeof(md_buffer),addr);
