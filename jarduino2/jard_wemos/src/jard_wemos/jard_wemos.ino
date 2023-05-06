@@ -3,9 +3,9 @@
 
 #include "timer.h"
 
-#define NODE_MAIN
+//#define NODE_MAIN
 //#define NODE_PAUL
-//#define NODE_REDUIT
+#define NODE_REDUIT
 //#define NODE_BARBEC
 //#define NODE_TEST
 
@@ -34,7 +34,7 @@ ModbusIP mb;
 
 bool g_comm_ok=false;
 Timer tmrComm(3000,false);
-Timer tmrAnalog(500);
+Timer tmrCycle(100,false);
 
 #ifdef NODE_MAIN
   IPAddress local_IP(192, 168, 3, 210);
@@ -112,61 +112,61 @@ void setup()
   
   
   tmrComm.start();
-  tmrAnalog.start();
+  tmrCycle.start();
 }
  
 void loop() 
 {  
    mb.task();
 
-   if (tmrAnalog.tick())
-   {
-     int val=analogRead(PIN_ANALOG_POW);
-     mb.Ireg(IREG_PWR,val);
-   }
-
-   if (digitalRead(PIN_IN_N1)==LOW)
-      mb.Ists(STS_LVL1,true);
-   else
-      mb.Ists(STS_LVL1,false);
-
-   if (digitalRead(PIN_IN_N2)==LOW)
-      mb.Ists(STS_LVL2,true);
-   else
-      mb.Ists(STS_LVL2,false);
-
-      if (digitalRead(PIN_IN_N3)==LOW)
-      mb.Ists(STS_LVL3,true);
-   else
-      mb.Ists(STS_LVL3,false);
-
-   if (mb.Coil(COIL_HEART)==true)
-   {
-      g_comm_ok=true;
-      tmrComm.start();
-      mb.Coil(COIL_HEART,false);
-   }
-
-   mb.Ireg(IREG_RSSI,WiFi.RSSI());
-   
    if (tmrComm.tick()==true)
    {
       g_comm_ok=false;            
    }
 
-   if (g_comm_ok==false)
+   if (tmrCycle.tick())
    {
-    mb.Coil(COIL_CMD_PMP,false);
-   }
+     int val=analogRead(PIN_ANALOG_POW);     
+     mb.Ireg(IREG_PWR,val);
 
-   if ( mb.Coil(COIL_CMD_PMP) )
-   {
-    digitalWrite(PIN_OUT_CMD,HIGH);
-    digitalWrite(PIN_LED,LOW);
-   }
-   else
-   {
-    digitalWrite(PIN_OUT_CMD,LOW);
-    digitalWrite(PIN_LED,HIGH);
+     if (digitalRead(PIN_IN_N1)==LOW)
+        mb.Ists(STS_LVL1,true);
+     else
+        mb.Ists(STS_LVL1,false);
+  
+     if (digitalRead(PIN_IN_N2)==LOW)
+        mb.Ists(STS_LVL2,true);
+     else
+        mb.Ists(STS_LVL2,false);
+  
+     if (digitalRead(PIN_IN_N3)==LOW)
+        mb.Ists(STS_LVL3,true);
+     else
+        mb.Ists(STS_LVL3,false);
+  
+     if (mb.Coil(COIL_HEART)==true)
+     {
+        g_comm_ok=true;
+        tmrComm.start();
+        mb.Coil(COIL_HEART,false);
+     }
+  
+     mb.Ireg(IREG_RSSI,WiFi.RSSI());   
+
+     if (g_comm_ok==false)
+     {
+      mb.Coil(COIL_CMD_PMP,false);
+     }
+  
+     if ( mb.Coil(COIL_CMD_PMP) )
+     {
+      digitalWrite(PIN_OUT_CMD,HIGH);
+      digitalWrite(PIN_LED,LOW);
+     }
+     else
+     {
+      digitalWrite(PIN_OUT_CMD,LOW);
+      digitalWrite(PIN_LED,HIGH);
+     }
    }
 }
