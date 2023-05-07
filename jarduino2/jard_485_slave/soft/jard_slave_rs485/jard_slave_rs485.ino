@@ -27,6 +27,7 @@ bool g_enabled=false;
 unsigned short g_defaults=false;
 
 unsigned char g_bAddr=0;
+unsigned char g_bFct=0;
 unsigned long g_tick0_ms;
 
 Analog anMesI;
@@ -60,12 +61,14 @@ bool isBusAlive(void)
     return true;
 }
 
-bool set_slave_addr(unsigned char bNewAddr)
+bool set_slave_addr(unsigned char bNewAddr,unsigned char bNewFct)
 {
   g_bAddr=bNewAddr;
+  g_bFct=bNewFct;
   
   EEPROM.write(0,0xAA);
   EEPROM.write(1,bNewAddr);
+  EEPROM.write(1,bNewFct);
   EEPROM.write(2,0x55);  
 
   return true;
@@ -91,20 +94,24 @@ void setup()
 
   unsigned char bMagic1=EEPROM.read(0);
   g_bAddr=EEPROM.read(1);
-  unsigned char bMagic2=EEPROM.read(2);
+  unsigned char bMagic2=EEPROM.read(3);
 
+bMagic1=0;
   if ( (bMagic1!=0xAA) || (bMagic2!=0x55) )
   {
     EEPROM.write(0,0xAA);
-    EEPROM.write(1,0);
-    EEPROM.write(2,0x55);
-    g_bAddr=0;
+    EEPROM.write(1,'B');
+    EEPROM.write(2,'2');
+    EEPROM.write(3,0x55);
+    g_bAddr='B';
+    g_bFct='2';
   }
   else
   {
     if (g_bAddr==0xFF)
     {
-      g_bAddr=0;
+      g_bAddr='B';
+      g_bFct='2';
       EEPROM.write(1,0);
     }    
   }  
@@ -116,12 +123,20 @@ void setup()
   g_defaults=0;
   
   g_tick0_ms=millis()-DELTA_ALIVE_MS-10;
-  client_init(&Serial,g_bAddr,PIN_TX_EN);  
+
+  Serial.begin(9600);
+  Serial.print("BOOT:");
+  Serial.print(g_bAddr);
+  Serial.print(" ");
+  Serial.println(g_bFct);
+  
+
+  client_init(g_bAddr,PIN_TX_EN);
 }
 
 void serialEvent()
 {
-  client_onSerialEvent(&Serial);
+  client_onSerialEvent();
 }
 
 void loop() 
@@ -144,5 +159,5 @@ void loop()
   digitalWrite(PIN_CMD_EV,flgEv==true?HIGH:LOW);
   
   if (flgBusAlive==false)
-    g_cmd_ev=false;    
+    g_cmd_ev=false;  
 }

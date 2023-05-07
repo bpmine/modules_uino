@@ -2,160 +2,218 @@
  * @file client.cpp
  * @brief Created on: 26 novembre 2022
 */
-
 #include "client.h"
 #include "globals.h"
 #include <arduino.h>
 
-extern "C"{
-#include <mdbus.h>
-}
+int _pinTxEn;
 
-int g_pinEnTx=0;
 
-void user_mdbus_send(void *back,unsigned char* pbuff, int sz)
-{
-  if (back!=NULL)
-  {
-    HardwareSerial *pSerial=(HardwareSerial*)back;
-    
-    delay(1);
-    
-    digitalWrite(g_pinEnTx,HIGH);
-    pSerial->write(pbuff,sz);
-    while ((UCSR0A & _BV (TXC0)) == 0) {}
-    digitalWrite(g_pinEnTx,LOW);
-  }
-}
-
-int user_mdbus_read_coils(unsigned short addr, unsigned short count, unsigned char* o_pBuffer)
-{
-  for (int i=0;i<count;i++)
-  {
-    unsigned char ucVal;
-    switch (addr+i)
-    {
-      case 0:ucVal=(g_cmd_ev==true)?1:0;break;
-      case 1:ucVal=(g_enabled==true)?1:0;break;      
-      default:return MDBUS_ERR;
-    }
-          
-    mdbus_fill_coil_data(o_pBuffer, i, ucVal);
-  }
-  
-  return MDBUS_OK; 
-}
-
-int user_mdbus_write_coils(unsigned short addr, unsigned short count, unsigned char* i_pBuffer)
-{
-  for (int i = 0; i < count; i++)
-  {
-    unsigned char val = mdbus_get_coil_data(i_pBuffer, i);
-    switch (addr+i)
-    {
-
-      case 0:g_cmd_ev=(val==1)?true:false;reset_comm_alive_timer();break;
-      case 1:g_enabled=(val==1)?true:false;break;
-
-      case 10:g_defaults=0;break;
-      case 11:g_defaults|=DEF_TIMEOUT;break;
-      
-      default:return MDBUS_ERR;
-    }
-  }
-
-  return MDBUS_OK;  
-}
-
-int user_mdbus_read_inputs(unsigned short addr, unsigned short count, unsigned char* o_pBuffer)
-{
-  for (int i=0;i<count;i++)
-  {
-    unsigned char ucVal;
-    switch (addr+i)
-    {
-      case 0:ucVal=(g_cpt_low==true)?1:0;break;
-      case 1:ucVal=(g_cpt_high==true)?1:0;break;
-
-      default:return MDBUS_ERR;
-    }
-          
-    mdbus_fill_coil_data(o_pBuffer, i, ucVal);
-  }
-  
-  return MDBUS_OK; 
-}
-
-int user_mdbus_read_input_registers(unsigned short addr, unsigned short count, unsigned char* o_pBuffer)
+void client_init(unsigned char addr,int pinTxEn)
 {  
-  for (int i=0;i<count;i++)
-  {
-    unsigned int iVal;
-    switch (addr+i)
-    {
-      case 0:iVal=g_defaults;break;
+  pinMode(pinTxEn,OUTPUT);
+  digitalWrite(pinTxEn,LOW);
+  _pinTxEn=pinTxEn;  
+}
 
-      default:return MDBUS_ERR;
-    }
-          
-    mdbus_fill_register_data(o_pBuffer, i, iVal);
+
+#define SOF (0x01)
+#define EOF (0x02)
+
+//uint8_t g_addr='A';
+
+uint8_t pos=0;
+uint8_t addr=0;
+uint8_t fct=0;
+uint8_t cmd=0;
+uint8_t cs=0;
+uint8_t cs_calc=0;
+
+
+char tohexchar(uint8_t b)
+{
+  b=b&0xF;
+  if ( (b>=0) && (b<=9) )
+  {
+    return '0'+b;
+  }
+  else if ( (b>=0x0A) && (b<=0x0F) )
+  {
+    return 'A'+(b-10);
+  }
+  else
+  {
+    return '0';
+  }  
+}
+
+void _client_putchar(uint8_t b, uint8_t * cs)
+{
+  Serial.write(b);
+  if (cs!=NULL)
+    *cs=*cs+b;
+}
+
+void _client_puthex(uint8_t b, uint8_t * cs)
+{
+  _client_putchar(tohexchar(b),cs);
+  _client_putchar(tohexchar(b>>4),cs);
+}
+
+void _client_exec_cmd(void)
+{
+  if (cmd==1)
+    g_cmd_ev=true;
+  else
+    g_cmd_ev=false;
+  
+  uint8_t cs=0;  
+  _client_putchar(SOF,NULL);
+  _client_putchar(g_bAddr,&cs);
+  
+  if ( (g_bFct=='1') && (g_bFct=='1') )
+  {
+    _client_putchar('1',&cs);
+    _client_puthex(0,&cs);
+  }
+  else if ( (g_bFct=='2') && (g_bFct=='2') )
+  {
+    uint8_t status=0;
+    if (g_cpt_low==true)
+      status|=0x01;
+    if (g_cpt_high==true)
+      status|=0x02;
+      
+    _client_putchar('2',&cs);
+    _client_puthex(status,&cs);    
   }
   
-  return MDBUS_OK; 
+  _client_puthex(cs,NULL);
+  _client_putchar(EOF,NULL);  
 }
 
-int user_mdbus_read_holding_registers(unsigned short addr, unsigned short count, unsigned char* o_pBuffer)
-{
-  return MDBUS_ERR;
-}
 
-int user_mdbus_write_holding_registers(unsigned short addr, unsigned short count, unsigned char* i_pBuffer)
-{
-  for (int i = 0; i < count; i++)
+int fromhexchar(char c)
+{  
+  if ( (c>='0') && (c<='9') )
   {
-    unsigned short usVal = mdbus_get_register_data(i_pBuffer, i);
-    switch (addr+i)
+    return c-'0';
+  }
+  else if ( (c>='A') && (c<='F') )
+  {
+    return (c-'A')+10;
+  }
+  else
+  {
+    return -1;
+  }
+}
+
+void addLow(uint8_t *val,char c)
+{  
+  int res=fromhexchar(c);
+  if (res!=-1)
+  {
+    *val=*val+res;
+  }
+}
+
+void setHigh(uint8_t *val,char c)
+{
+  *val=0;
+  int res=fromhexchar(c);
+  if (res!=-1)
+  {
+    *val=*val+(res*16);
+  }
+}
+
+void _client_recv(uint8_t b)
+{
+  if ( (pos==0) && (b!=SOF))
+    return;
+
+  if (b==SOF)
+    pos=0;
+
+  switch (pos)
+  {
+    case 0:
     {
-      case 0:
+      cs_calc=0;
+      break;
+    }
+    case 1:
+    {
+      addr=b;
+      cs_calc+=b;
+      break;
+    }    
+    case 2:
+    {
+      fct=b;
+      cs_calc+=b;
+      break;
+    }
+    case 3:
+    {
+      setHigh(&cmd,b);
+      cs_calc+=b;
+      break;
+    }
+    case 4:
+    {
+      addLow(&cmd,b);
+      cs_calc+=b;
+      break;
+    }
+    case 5:
+    {
+      setHigh(&cs,b);
+      break;
+    }
+    case 6:
+    {
+      addLow(&cs,b);
+      break;
+    }
+    case 7:
+    {
+      if ( (b==EOF) && (cs==cs_calc) && (addr==g_bAddr) )
       {
-        if (set_slave_addr((unsigned char)(usVal&0xFF))==true)
-          return MDBUS_OK;
+        _client_exec_cmd();
+        reset_comm_alive_timer();
       }
+      else
+      {
+        /*Serial.print("Refusee: b=");
+        Serial.print(b);
+        Serial.print(" cs=");
+        Serial.print(cs);
+        Serial.print(" cs_calc=");
+        Serial.print(cs_calc);
+        Serial.print(" @ recue=");
+        Serial.print(addr);
+        Serial.print(" @=");
+        Serial.print(g_bAddr);
+        Serial.print(" cmd=");
+        Serial.println(cmd);*/
+      }
+      
+      pos=0;
+      return;
     }
   }
-  
-  return MDBUS_ERR;
+
+  pos++;
 }
 
-T_MDBUS_CTX ctx;
-unsigned char md_buffer[150];
-
-void client_init(void *pSerial,unsigned char addr,int pinTxEn)
-{
-  HardwareSerial *pSer=(HardwareSerial *)pSerial;
-  if ( pSer == NULL )
-    return;
-
-  g_pinEnTx=pinTxEn;
-  pinMode(g_pinEnTx,OUTPUT);
-  digitalWrite(g_pinEnTx,LOW);
-  
-  pSer->begin(115200);
-
-  mdbus_init(&ctx,md_buffer, sizeof(md_buffer),addr);
-  ctx.back=pSerial;
-}
-
-void client_onSerialEvent(void *pSerial)
-{
-  HardwareSerial *pSer=(HardwareSerial *)pSerial;
-  if (pSer == NULL)
-    return;
-
-  while (pSer->available() > 0) 
+void client_onSerialEvent(void)
+{ 
+  while (Serial.available()>0)
   {
-    int incomingByte = pSer->read();
-    if ( (incomingByte>=0) && (incomingByte<=255) )
-      mdbus_receive(&ctx, (unsigned char)incomingByte);
-  } 
+    int b=Serial.read();
+    if ( (b>0) && (b<255) )
+      _client_recv((uint8_t)b);
+  }
 }

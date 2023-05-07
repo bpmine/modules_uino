@@ -8,7 +8,7 @@ import time
 import logging
 logging.basicConfig()
 log = logging.getLogger()
-#log.setLevel(logging.DEBUG)
+log.setLevel(logging.DEBUG)
 
 def test_slave_rs485_set_address(cln,addr,newAddr):
     print('_'*40)
@@ -148,7 +148,7 @@ class ObjCmd:
 
 
 
-client= ModbusClient(method = "rtu", port=r"\\.\COM8",stopbits = 1, bytesize = 8, parity='N',baudrate= 115200,timeout=2)
+client= ModbusClient(method = "rtu", port=r"\\.\COM8",stopbits = 1, bytesize = 8, parity='N',baudrate= 9600,timeout=2)
 
 print('Connection:',end='')
 res = client.connect()
@@ -158,9 +158,10 @@ else:
     print('[NOK]')
 
 
-time.sleep(4);
+time.sleep(2);
 
-#test_slave_rs485_set_address(client,0,1)
+test_slave_rs485_set_address(client,0,1)
+
 #test_slave_rs485_wdg(client,5)
 #test_slave_rs485_asserv(client,10)
 #lst=test_find_slaves(client)
