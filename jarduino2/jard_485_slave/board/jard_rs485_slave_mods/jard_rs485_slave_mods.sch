@@ -216,17 +216,6 @@ Wire Wire Line
 Wire Wire Line
 	1600 950  1600 1300
 Connection ~ 1600 1300
-$Comp
-L bpc_scm:BPC_Mod485 U1
-U 1 1 63E332DA
-P 2600 3700
-F 0 "U1" H 3100 4355 50  0000 C CNN
-F 1 "BPC_Mod485" H 3100 4264 50  0000 C CNN
-F 2 "bpc:BPC_Mod485" H 3100 4173 50  0000 C CNN
-F 3 "" H 3000 3700 50  0001 C CNN
-	1    2600 3700
-	1    0    0    -1  
-$EndComp
 Wire Wire Line
 	2500 3600 2100 3600
 $Comp
@@ -1170,4 +1159,16 @@ Wire Wire Line
 Connection ~ 10500 5400
 Wire Wire Line
 	10500 5400 10500 5350
+$Comp
+L bpc:BPC_Mod485 U?
+U 1 1 645989A1
+P 2600 3700
+F 0 "U?" H 3100 4355 50  0000 C CNN
+F 1 "BPC_Mod485" H 3100 4264 50  0000 C CNN
+F 2 "bpc:BPC_Mod485" H 3000 3700 50  0001 C CNN
+F 3 "" H 3000 3700 50  0001 C CNN
+F 4 "1" H 3100 4173 50  0000 C CNN "Bpcref"
+	1    2600 3700
+	1    0    0    -1  
+$EndComp
 $EndSCHEMATC
