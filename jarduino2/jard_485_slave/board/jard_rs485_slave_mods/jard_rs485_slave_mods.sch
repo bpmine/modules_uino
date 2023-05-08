@@ -5,8 +5,8 @@ $Descr A4 11693 8268
 encoding utf-8
 Sheet 1 1
 Title "Carte de commande d'un Oya par RS485"
-Date "2023-03-06"
-Rev "A0"
+Date "2023-05-08"
+Rev "B0"
 Comp "BPC"
 Comment1 ""
 Comment2 "Technologie avec modules Arduino"
@@ -1160,10 +1160,10 @@ Connection ~ 10500 5400
 Wire Wire Line
 	10500 5400 10500 5350
 $Comp
-L bpc:BPC_Mod485 U?
+L bpc:BPC_Mod485 U1
 U 1 1 645989A1
 P 2600 3700
-F 0 "U?" H 3100 4355 50  0000 C CNN
+F 0 "U1" H 3100 4355 50  0000 C CNN
 F 1 "BPC_Mod485" H 3100 4264 50  0000 C CNN
 F 2 "bpc:BPC_Mod485" H 3000 3700 50  0001 C CNN
 F 3 "" H 3000 3700 50  0001 C CNN
