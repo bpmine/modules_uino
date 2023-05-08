@@ -4,6 +4,23 @@
 #include "globals.h"
 #include "analog.hpp" 
 
+//#define FORCE_INIT
+
+//#define INIT_PMP
+#define INIT_SLAVE
+
+#ifdef INIT_PMP
+  #define INIT_ADDR 'A'
+  #define INIT_FCT  '1'
+#endif
+
+#ifndef INIT_PMP
+  #ifdef INIT_SLAVE
+    #define INIT_ADDR 'B'
+    #define INIT_FCT  '2'    
+  #endif
+#endif
+
 #define PIN_CPT_LV1       (2)
 #define PIN_CPT_LV2       (3)
 #define PIN_CPT_FLOW      (4)
@@ -41,7 +58,7 @@ void reset_comm_alive_timer(void)
 bool isBusAlive(void)
 {
   unsigned long t=millis();
-  unsigned delta_ms=0;
+  unsigned long delta_ms=0;
   
   if (t>g_tick0_ms)
   {
@@ -49,12 +66,12 @@ bool isBusAlive(void)
   }
   else
   {
-    delta_ms=t-0xFFFFFFFF+g_tick0_ms;
+    delta_ms=0xFFFFFFFF-g_tick0_ms+t;
   }
 
   if (delta_ms>DELTA_ALIVE_MS)
   {
-    g_tick0_ms=millis()-DELTA_ALIVE_MS-10;
+    //g_tick0_ms=millis()+DELTA_ALIVE_MS+10UL;
     return false;
   }
   else
@@ -92,26 +109,33 @@ void setup()
   pinMode(PIN_MES_I,INPUT);
   pinMode(PIN_MES_V,INPUT);
 
+  pinMode(LED_BUILTIN,OUTPUT);
+  digitalWrite(LED_BUILTIN,LOW);
+
   unsigned char bMagic1=EEPROM.read(0);
   g_bAddr=EEPROM.read(1);
+  g_bFct=EEPROM.read(2);
   unsigned char bMagic2=EEPROM.read(3);
 
-bMagic1=0;
+  #ifdef FORCE_INIT
+    bMagic1=0;
+  #endif
+
   if ( (bMagic1!=0xAA) || (bMagic2!=0x55) )
   {
     EEPROM.write(0,0xAA);
-    EEPROM.write(1,'B');
-    EEPROM.write(2,'2');
+    EEPROM.write(1,INIT_ADDR);
+    EEPROM.write(2,INIT_FCT);
     EEPROM.write(3,0x55);
-    g_bAddr='B';
-    g_bFct='2';
+    g_bAddr=INIT_ADDR;
+    g_bFct=INIT_FCT;
   }
   else
   {
     if (g_bAddr==0xFF)
     {
-      g_bAddr='B';
-      g_bFct='2';
+      g_bAddr=INIT_ADDR;
+      g_bFct=INIT_FCT;
       EEPROM.write(1,0);
     }    
   }  
@@ -150,14 +174,15 @@ void loop()
   anMesV.latch((unsigned short)analogRead(PIN_MES_V));
   flgBusAlive=isBusAlive();
 
-  flgEv=flgBusAlive && g_cmd_ev && g_enabled;
+  flgEv=flgBusAlive && g_cmd_ev; // && g_enabled;
   g_mes_v=anMesV.get();
   g_mes_i=anMesI.get();
   
   delay(1);
     
   digitalWrite(PIN_CMD_EV,flgEv==true?HIGH:LOW);
+  digitalWrite(LED_BUILTIN,flgBusAlive?HIGH:LOW);
   
-  if (flgBusAlive==false)
-    g_cmd_ev=false;  
+  //if (flgBusAlive==false)
+  //  g_cmd_ev=false;  
 }

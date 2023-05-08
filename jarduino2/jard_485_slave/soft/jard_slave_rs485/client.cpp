@@ -68,28 +68,32 @@ void _client_exec_cmd(void)
     g_cmd_ev=false;
   
   uint8_t cs=0;  
+
+  digitalWrite(_pinTxEn,HIGH);
   _client_putchar(SOF,NULL);
   _client_putchar(g_bAddr,&cs);
   
   if ( (g_bFct=='1') && (g_bFct=='1') )
   {
     _client_putchar('1',&cs);
-    _client_puthex(0,&cs);
+    _client_puthex(g_cmd_ev,&cs);
   }
   else if ( (g_bFct=='2') && (g_bFct=='2') )
   {
-    uint8_t status=0;
+    uint8_t stat=0;
     if (g_cpt_low==true)
-      status|=0x01;
+      stat|=0x01;
     if (g_cpt_high==true)
-      status|=0x02;
+      stat|=0x02;
       
     _client_putchar('2',&cs);
-    _client_puthex(status,&cs);    
+    _client_puthex(stat,&cs);    
   }
   
   _client_puthex(cs,NULL);
-  _client_putchar(EOF,NULL);  
+  _client_putchar(EOF,NULL); 
+  while ((UCSR0A & _BV (TXC0)) == 0) {} 
+  digitalWrite(_pinTxEn,LOW);
 }
 
 
