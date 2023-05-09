@@ -1,7 +1,15 @@
-from flask import Flask
+from flask import Flask,request
 import json
 import pymodbus
-from pymodbus.client.sync import ModbusTcpClient as ModbusClient
+
+try:
+    from pymodbus.client import ModbusTcpClient as ModbusClient
+except:
+    try:
+        from pymodbus.client.sync import ModbusTcpClient as ModbusClient
+    except:
+        pass
+    
 import time
 from threading import Thread
 
@@ -90,16 +98,21 @@ class Rempli:
 
             # Sinon, on cherche a atteindre la consigne
             if src_too_low==False:
-                if self.lvl_tgt.valid==False:
-                    self.pmp.cmd=False                
-                if self.cons_tgt==1:
-                    self.pmp.cmd=not self.lvl_tgt.N1
-                elif self.cons_tgt==2:
-                    self.pmp.cmd=not self.lvl_tgt.N2
-                elif self.cons_tgt==3:
-                    self.pmp.cmd=not self.lvl_tgt.N3
+                if self.lvl_tgt!=None:
+                    if self.lvl_tgt.valid==False:
+                        self.pmp.cmd=False
+                        
+                    if self.cons_tgt==1:
+                        self.pmp.cmd=not self.lvl_tgt.N1
+                    elif self.cons_tgt==2:
+                        self.pmp.cmd=not self.lvl_tgt.N2
+                    elif self.cons_tgt==3:
+                        self.pmp.cmd=not self.lvl_tgt.N3
+                    else:
+                        self.pmp.cmd=False
                 else:
-                    self.pmp.cmd=False
+                    self.pmp.cmd=True
+                    
             else:
                 self.pmp.cmd=False
 
@@ -113,17 +126,17 @@ reduit=WifiIoMgr('Reduit','192.168.3.203')
 mgrs=[principal,paul,reduit]
 
 
-rempli_reduit=Rempli('main->reduit',principal,reduit,principal)
-rempli_paul=Rempli('main->paul',paul,paul,principal)
-rempli_barbec=Rempli('reduit->barbec',reduit,reduit,reduit)
+rempli_reduit=Rempli('main_reduit',principal,reduit,principal)
+rempli_paul=Rempli('main_paul',paul,paul,principal)
+rempli_barbec=Rempli('reduit_barbec',reduit,None,reduit)
 remplissages=[rempli_reduit,rempli_paul,rempli_barbec]
 
         
 def process_remplissage():
     print('Start tache de fond des remplissages');
     
-    rempli_reduit.start(2,3)
-    rempli_barbec.start(2,3)
+    #rempli_reduit.start(2,3)
+    #rempli_barbec.start(2,3)
 
     while True:
         time.sleep(2)
@@ -139,6 +152,41 @@ app = Flask(__name__)
 def test():
     return 'ok'
 
+@app.route('/rempli/<name>', methods=['GET'])
+def rempli_set_on(name):
+    if name==None:
+        return "no name"
+
+    rr=None
+    for r in remplissages:
+        if r.name==name:
+            rr=r
+            break
+
+    if rr==None:
+        return "Pas de remplissage trouve"
+    
+    on=request.args.get('on',default=None)    
+    if on!=None:        
+        if on=='1':
+            rr.on=True
+        else: 
+            rr.stop()
+
+        print('Change le ON de %s en %s' % (name,rr.on) )
+        
+    limit_src=request.args.get('limit_src',default=None)    
+    if limit_src!=None:        
+        rr.limit_src=int(limit_src)
+        print('Change la limite de la source %s en %s' % (name,rr.limit_src) )
+
+    cons_tgt=request.args.get('cons_tgt',default=None)    
+    if cons_tgt!=None:        
+        rr.cons_tgt=int(cons_tgt)
+        print('Change la consigne de la destination %s en %s' % (name,rr.cons_tgt) )
+        
+
+    return "OK"
 
 @app.route('/states', methods=['GET'])
 def states():
