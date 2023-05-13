@@ -1,13 +1,15 @@
 #include <EEPROM.h>
+#include <DHT.h>
 
 #include "client.h"
 #include "globals.h"
 #include "analog.hpp" 
+#include "flow.hpp" 
 
 //#define FORCE_INIT
 
 //#define INIT_PMP
-#define INIT_SLAVE
+#define INIT_OYA
 
 #ifdef INIT_PMP
   #define INIT_ADDR 'A'
@@ -15,7 +17,7 @@
 #endif
 
 #ifndef INIT_PMP
-  #ifdef INIT_SLAVE
+  #ifdef INIT_OYA
     #define INIT_ADDR 'B'
     #define INIT_FCT  '2'    
   #endif
@@ -28,7 +30,7 @@
 #define PIN_CMD_EV        (7)
 #define PIN_LED1          (8)
 #define PIN_LED2          (9)
-#define PIN_DHT20         (10)
+#define PIN_DHT22         (10)
 
 #define PIN_MES_I         (A0)
 #define PIN_MES_V         (A1)
@@ -47,8 +49,14 @@ unsigned char g_bAddr=0;
 unsigned char g_bFct=0;
 unsigned long g_tick0_ms;
 
+int g_flow_mLpMin=-1;
+uint8_t g_temp=0;
+uint8_t g_hum=0;
+
 Analog anMesI;
 Analog anMesV;
+
+DHT dht(PIN_DHT22, DHT22);
 
 void reset_comm_alive_timer(void)
 {
@@ -100,7 +108,7 @@ void setup()
   digitalWrite(PIN_LED1,LOW);
   pinMode(PIN_LED2,OUTPUT);
   digitalWrite(PIN_LED1,LOW);
-  pinMode(PIN_DHT20,OUTPUT);
+  //pinMode(PIN_DHT22,OUTPUT);
 
   pinMode(PIN_CPT_LV1,INPUT);
   pinMode(PIN_CPT_LV2,INPUT);
@@ -145,6 +153,7 @@ void setup()
   g_enabled=false;
   g_cmd_ev=false;
   g_defaults=0;
+  g_flow_mLpMin=-1;
   
   g_tick0_ms=millis()-DELTA_ALIVE_MS-10;
 
@@ -153,7 +162,9 @@ void setup()
   Serial.print(g_bAddr);
   Serial.print(" ");
   Serial.println(g_bFct);
-  
+
+  dht.begin();
+  Flow.begin(PIN_CPT_FLOW);
 
   client_init(g_bAddr,PIN_TX_EN);
 }
@@ -167,21 +178,36 @@ void loop()
 {
   bool flgEv;
   bool flgBusAlive;
-  
+
+  g_flow_mLpMin=Flow.getFlow();
   g_cpt_low=digitalRead(PIN_CPT_LV1)==HIGH?false:true;
   g_cpt_high=digitalRead(PIN_CPT_LV2)==HIGH?false:true;
   anMesI.latch((unsigned short)analogRead(PIN_MES_I));
   anMesV.latch((unsigned short)analogRead(PIN_MES_V));
   flgBusAlive=isBusAlive();
 
+   float tmp = dht.readHumidity(); 
+   if (isnan(tmp))
+     g_hum=-1;
+   else
+     g_hum=(uint8_t)trunc(tmp);
+
+   tmp = dht.readTemperature(); 
+   if (isnan(tmp))
+     g_temp=-127;
+   else
+     g_temp=(uint8_t)trunc(tmp);
+    
   flgEv=flgBusAlive && g_cmd_ev; // && g_enabled;
   g_mes_v=anMesV.get();
   g_mes_i=anMesI.get();
   
-  delay(1);
+  //delay(1);
     
   digitalWrite(PIN_CMD_EV,flgEv==true?HIGH:LOW);
   digitalWrite(LED_BUILTIN,flgBusAlive?HIGH:LOW);
+
+  Flow.tick();
   
   //if (flgBusAlive==false)
   //  g_cmd_ev=false;  

@@ -19,6 +19,10 @@ extern unsigned short g_defaults;
 
 extern unsigned short g_mes_v;
 extern unsigned short g_mes_i;
+extern int g_flow_mLpMin;
+extern unsigned char g_temp;
+extern unsigned char g_hum;
+
 
 extern bool set_slave_addr(unsigned char bNewAddr,unsigned char bNewFct);
 extern void reset_comm_alive_timer(void);

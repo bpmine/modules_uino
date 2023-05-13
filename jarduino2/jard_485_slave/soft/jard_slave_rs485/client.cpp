@@ -56,8 +56,9 @@ void _client_putchar(uint8_t b, uint8_t * cs)
 
 void _client_puthex(uint8_t b, uint8_t * cs)
 {
-  _client_putchar(tohexchar(b),cs);
   _client_putchar(tohexchar(b>>4),cs);
+  _client_putchar(tohexchar(b),cs);
+  
 }
 
 void _client_exec_cmd(void)
@@ -75,8 +76,13 @@ void _client_exec_cmd(void)
   
   if ( (g_bFct=='1') && (g_bFct=='1') )
   {
-    _client_putchar('1',&cs);
-    _client_puthex(g_cmd_ev,&cs);
+    int val=g_flow_mLpMin;
+    
+    _client_putchar('1',&cs);        
+    _client_puthex(((val>>8)&0xFF),&cs);
+    _client_puthex((val&0xFF),&cs);
+    _client_puthex(g_temp,&cs);
+    _client_puthex(g_hum,&cs);
   }
   else if ( (g_bFct=='2') && (g_bFct=='2') )
   {
@@ -88,6 +94,8 @@ void _client_exec_cmd(void)
       
     _client_putchar('2',&cs);
     _client_puthex(stat,&cs);    
+    _client_puthex(g_temp,&cs);
+    _client_puthex(g_hum,&cs);
   }
   
   _client_puthex(cs,NULL);
