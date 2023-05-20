@@ -22,9 +22,12 @@ extern unsigned short g_mes_i;
 extern int g_flow_mLpMin;
 extern unsigned char g_temp;
 extern unsigned char g_hum;
+extern unsigned long g_pump_s;
 
 
-extern bool set_slave_addr(unsigned char bNewAddr,unsigned char bNewFct);
+extern bool set_slave_addr(unsigned char bNewAddr);
+extern bool set_slave_function(unsigned char bNewFunction);
 extern void reset_comm_alive_timer(void);
-
+extern void reset_stats(void);
+extern void set_enabled(bool enabled);
 #endif

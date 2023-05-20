@@ -1,10 +1,10 @@
-#include <EEPROM.h>
 #include <DHT.h>
 
 #include "client.h"
 #include "globals.h"
 #include "analog.hpp" 
 #include "flow.hpp" 
+#include "eep_slave.hpp" 
 
 //#define FORCE_INIT
 
@@ -18,7 +18,7 @@
 
 #ifndef INIT_PMP
   #ifdef INIT_OYA
-    #define INIT_ADDR 'B'
+    #define INIT_ADDR 'Z'
     #define INIT_FCT  '2'    
   #endif
 #endif
@@ -35,7 +35,7 @@
 #define PIN_MES_I         (A0)
 #define PIN_MES_V         (A1)
 
-#define DELTA_ALIVE_MS    (2000UL)
+#define DELTA_ALIVE_MS    (4000UL)
 
 bool g_cmd_ev=false;
 bool g_cpt_low=false;
@@ -47,35 +47,48 @@ unsigned short g_defaults=false;
 
 unsigned char g_bAddr=0;
 unsigned char g_bFct=0;
-unsigned long g_tick0_ms;
+unsigned long g_comm_t0_ms;
+unsigned long g_second_t0_ms;
 
 int g_flow_mLpMin=-1;
 uint8_t g_temp=0;
 uint8_t g_hum=0;
+unsigned long g_pump_s=0;
 
 Analog anMesI;
 Analog anMesV;
 
 DHT dht(PIN_DHT22, DHT22);
 
+
+
+unsigned long getTickCount_ms()
+{
+  return millis();
+}
+
+unsigned long getElapsedTime_ms(unsigned long t0_ms)
+{
+  unsigned long t=millis();
+  if (t>t0_ms)
+  {
+    return t-t0_ms;
+  }
+  else
+  {
+    return 0xFFFFFFFF-t0_ms+t;
+  }
+}
+
 void reset_comm_alive_timer(void)
 {
-  g_tick0_ms=millis();
+  g_comm_t0_ms=getTickCount_ms();
 }
 
 bool isBusAlive(void)
 {
   unsigned long t=millis();
-  unsigned long delta_ms=0;
-  
-  if (t>g_tick0_ms)
-  {
-    delta_ms=t-g_tick0_ms;
-  }
-  else
-  {
-    delta_ms=0xFFFFFFFF-g_tick0_ms+t;
-  }
+  unsigned long delta_ms=getElapsedTime_ms(g_comm_t0_ms);
 
   if (delta_ms>DELTA_ALIVE_MS)
   {
@@ -86,19 +99,43 @@ bool isBusAlive(void)
     return true;
 }
 
-bool set_slave_addr(unsigned char bNewAddr,unsigned char bNewFct)
+bool set_slave_addr(unsigned char bNewAddr)
 {
-  g_bAddr=bNewAddr;
-  g_bFct=bNewFct;
+  uint8_t a;
+  uint8_t b;
   
-  EEPROM.write(0,0xAA);
-  EEPROM.write(1,bNewAddr);
-  EEPROM.write(1,bNewFct);
-  EEPROM.write(2,0x55);  
+  g_bAddr=bNewAddr;
+
+  if (Eep::readID(&a,&b)==false)
+  {
+    Eep::writeID(bNewAddr,g_bFct);
+  }
+  else
+  {
+    Eep::writeAddr(g_bAddr);
+  }  
 
   return true;
 }
 
+bool set_slave_function(unsigned char bNewFunction)
+{
+  uint8_t a;
+  uint8_t b;
+
+  g_bFct=bNewFunction;
+  
+  if (Eep::readID(&a,&b)==false)
+  {
+    Eep::writeID(g_bAddr,g_bFct);
+  }
+  else
+  {
+    Eep::writeAddr(g_bAddr);
+  }  
+
+  return true;
+}
 
 void setup() 
 {
@@ -107,7 +144,7 @@ void setup()
   pinMode(PIN_LED1,OUTPUT);
   digitalWrite(PIN_LED1,LOW);
   pinMode(PIN_LED2,OUTPUT);
-  digitalWrite(PIN_LED1,LOW);
+  digitalWrite(PIN_LED2,LOW);
   //pinMode(PIN_DHT22,OUTPUT);
 
   pinMode(PIN_CPT_LV1,INPUT);
@@ -120,33 +157,27 @@ void setup()
   pinMode(LED_BUILTIN,OUTPUT);
   digitalWrite(LED_BUILTIN,LOW);
 
-  unsigned char bMagic1=EEPROM.read(0);
-  g_bAddr=EEPROM.read(1);
-  g_bFct=EEPROM.read(2);
-  unsigned char bMagic2=EEPROM.read(3);
-
+  bool force_init=false;
   #ifdef FORCE_INIT
-    bMagic1=0;
+    force_init=true;
   #endif
 
-  if ( (bMagic1!=0xAA) || (bMagic2!=0x55) )
+  if ( (Eep::readID(&g_bAddr,&g_bFct)==false) || (force_init==true) )
   {
-    EEPROM.write(0,0xAA);
-    EEPROM.write(1,INIT_ADDR);
-    EEPROM.write(2,INIT_FCT);
-    EEPROM.write(3,0x55);
     g_bAddr=INIT_ADDR;
     g_bFct=INIT_FCT;
+    g_enabled=false;
+    g_pump_s=0;
+
+    Eep::writeID(g_bAddr,g_bFct);
+    Eep::writeEnabled(g_enabled);
+    Eep::writeCounter(g_pump_s);    
   }
   else
   {
-    if (g_bAddr==0xFF)
-    {
-      g_bAddr=INIT_ADDR;
-      g_bFct=INIT_FCT;
-      EEPROM.write(1,0);
-    }    
-  }  
+    g_enabled=Eep::readEnabled();
+    g_pump_s=Eep::readCounter();
+  }
 
   g_cpt_low=false;
   g_cpt_high=false;
@@ -155,7 +186,8 @@ void setup()
   g_defaults=0;
   g_flow_mLpMin=-1;
   
-  g_tick0_ms=millis()-DELTA_ALIVE_MS-10;
+  g_comm_t0_ms=millis()-DELTA_ALIVE_MS-10;
+  g_second_t0_ms=getTickCount_ms();
 
   Serial.begin(9600);
   Serial.print("BOOT:");
@@ -198,7 +230,7 @@ void loop()
    else
      g_temp=(uint8_t)trunc(tmp);
     
-  flgEv=flgBusAlive && g_cmd_ev; // && g_enabled;
+  flgEv=flgBusAlive && g_cmd_ev && g_enabled;
   g_mes_v=anMesV.get();
   g_mes_i=anMesI.get();
   
@@ -208,7 +240,30 @@ void loop()
   digitalWrite(LED_BUILTIN,flgBusAlive?HIGH:LOW);
 
   Flow.tick();
+
+  if (getElapsedTime_ms(g_second_t0_ms)>=1000)
+  {
+    g_second_t0_ms=getTickCount_ms();
+
+    if (flgEv==true)
+    {
+      g_pump_s++;
+      Eep::writeCounter(g_pump_s);
+    }
+  }
   
   //if (flgBusAlive==false)
   //  g_cmd_ev=false;  
+}
+
+void reset_stats(void)
+{
+  g_pump_s=0;
+  Eep::writeCounter(g_pump_s);
+}
+
+void set_enabled(bool enabled)
+{
+  g_enabled=enabled;
+  Eep::writeEnabled(g_enabled);
 }

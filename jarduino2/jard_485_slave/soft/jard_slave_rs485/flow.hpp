@@ -45,7 +45,7 @@ class Flow
       {
         int count=_count;
         double flow=(double)count*1000000/ulDelta_us;
-        flow=flow/7.5;
+        //flow=flow/7.5;
         m_flow_mLpMin=trunc(flow);
         _count=0;
         m_t0=micros();        
