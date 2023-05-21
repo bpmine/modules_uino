@@ -21,7 +21,6 @@ void client_init(unsigned char addr,int pinTxEn)
 #define SOF (0x01)
 #define EOF (0x02)
 
-//uint8_t g_addr='A';
 
 uint8_t pos=0;
 uint8_t addr=0;
@@ -201,6 +200,10 @@ void _client_exec_cmd(void)
     _client_putchar('p',&cs);
     _client_puthex(cmd,&cs);
   }
+  else
+  {
+    _client_putchar('-',&cs);
+  }
   
   _client_puthex(cs,NULL);
   _client_putchar(EOF,NULL); 
@@ -298,8 +301,10 @@ void _client_recv(uint8_t b)
     {
       if ( (b==EOF) && (cs==cs_calc) && ( (addr==g_bAddr) || (addr=='*') ) )
       {
+        digitalWrite(LED_BUILTIN,HIGH);
         _client_exec_cmd();
         reset_comm_alive_timer();
+        digitalWrite(LED_BUILTIN,LOW);
       }
       else
       {

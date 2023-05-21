@@ -158,16 +158,20 @@ def thread_func():
                 else:
                     pompe.comm=False
 
+                for s in oyas:
+                    if s.comm==True and s.low==False and s.high==False:
+                        s.cmd=False
+
                 oneoya=False
                 oneneed=False
                 for s in oyas:
                     res=sendRequest(ser,s.addr,s.fct,1 if s.cmd==True else 0)
                     if res!=None:                        
                         s.parse_resp(res)
-                        if s.st!=None and s.st&0x04==0x04:
-                            oneoya=True
+                        if s.st!=None and s.st&0x04==0x04:                            
                             if s.low==True or s.high==True:
                                 oneneed=True
+                                oneoya=True
                         
                         s.comm=True
                         
@@ -209,18 +213,18 @@ def thread_func():
 time.sleep(2)
 res=sendRequest(ser,pompe.addr,'1',0)
 print(res)
-#res=sendRequest(ser,pompe.addr,'e',1)
-#print(res)
+res=sendRequest(ser,pompe.addr,'e',1)
+print(res)
 
 res=sendRequest(ser,'C','1',0)
 print(res)
-#res=sendRequest(ser,'C','e',1)
-#print(res)
+res=sendRequest(ser,'C','e',1)
+print(res)
 
 res=sendRequest(ser,'B','1',0)
 print(res)
-#res=sendRequest(ser,'C','e',1)
-#print(res)
+res=sendRequest(ser,'B','e',1)
+print(res)
 
 t=threading.Thread(target=thread_func)
 t.start()
@@ -230,6 +234,7 @@ while True:
     print('1) Statut')
     print('2) Pompe 1')
     print('3) Oya 1')
+    print('4) Oya 2')
     print('0) Quitter')
 
     res=input('>')
@@ -259,6 +264,23 @@ while True:
                 oyas[0].cmd=False
                 
             print('Oya 1: %s' % (oyas[0].cmd))
+            
+        oy=False
+        for s in oyas:
+            if s.cmd==True:
+                oy=True
+                break
+            
+        if oy==False:
+            pompe.cmd=False
+    elif res=='4':
+        if len(oyas)>1:
+            if oyas[1].cmd==False:
+                oyas[1].cmd=True
+            else:
+                oyas[1].cmd=False
+                
+            print('Oya 2: %s' % (oyas[0].cmd))
             
         oy=False
         for s in oyas:

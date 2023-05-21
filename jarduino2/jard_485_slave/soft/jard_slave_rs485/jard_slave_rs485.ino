@@ -191,9 +191,16 @@ void setup()
 
   Serial.begin(9600);
   Serial.print("BOOT:");
-  Serial.print(g_bAddr);
+  char str[5]="";
+  sprintf(str,"%c",g_bAddr);
+  Serial.print(str);
   Serial.print(" ");
-  Serial.println(g_bFct);
+  sprintf(str,"%c",g_bFct);
+  Serial.println(str);
+
+  #ifdef FORCE_INIT
+  Serial.println("FORCE INIT!");
+  #endif
 
   dht.begin();
   Flow.begin(PIN_CPT_FLOW);
@@ -208,6 +215,13 @@ void serialEvent()
 
 void loop() 
 {
+  #ifdef FORCE_INIT
+    digitalWrite(PIN_LED1,HIGH);
+    digitalWrite(PIN_LED2,HIGH);
+    digitalWrite(LED_BUILTIN,HIGH);
+    return;
+  #endif
+  
   bool flgEv;
   bool flgBusAlive;
 
@@ -231,6 +245,9 @@ void loop()
      g_temp=(uint8_t)trunc(tmp);
     
   flgEv=flgBusAlive && g_cmd_ev && g_enabled;
+  if (g_bAddr=='Z')
+    flgEv=false;
+    
   g_mes_v=anMesV.get();
   g_mes_i=anMesI.get();
   

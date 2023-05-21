@@ -45,12 +45,13 @@ def sendRequest(ser,addr,fct,val):
     #print(resp)
     try:
         res=decodeResp(str(resp,'ascii'))
-    except:
+    except Exception as ex:
         res=None
+        print(ex)
         
     if res!=None:
         (raddr,rfct,datas)=res
-        if (raddr==addr) and (rfct==fct):
+        if ((raddr==addr) and (rfct==fct)) or fct=='@':
             return datas
     
     return None
@@ -206,7 +207,7 @@ def test_basic_oya(ser):
         
         if nbre % 10 == 0:
             print(res)
-            res=sendRequest(ser,'C','r',0)
+            res=sendRequest(ser,'A','r',0)
             print(res)
             
         time.sleep(0.05)
@@ -227,7 +228,7 @@ def test_basic_oya(ser):
 
 #test_addr_fct(ser)
 #test_enable_disable(ser,'C')
-test_full(ser,'A')
+test_full(ser,'B')
 #test_basic_pump(ser)
 #test_basic_oya(ser)
 
