@@ -54,6 +54,7 @@ class Slv:
         self.fct=fct
         self.enabled=None
         self.comm=False
+        self.errs=0
 
 pRespPmp=re.compile('^([0-9A-F]{2})([0-9A-F]{4})([0-9A-F]{2})([0-9A-F]{2}).*')
 class SlvPmp(Slv):
@@ -85,7 +86,7 @@ class SlvPmp(Slv):
         if self.comm==False:
             return 'Pompe %c: OFF' % (self.addr)
         else:
-            return 'Pompe %c: st=%02x cmd=%s flow=%sL/H temp=%s°C hum=%s%%' % (self.addr,self.st if self.st!=None else 0,self.cmd,self.flow,self.temp,self.hum) 
+            return 'Pompe %c: st=%02x cmd=%s flow=%sL/H temp=%s°C hum=%s%% errs=%s' % (self.addr,self.st if self.st!=None else 0,self.cmd,self.flow,self.temp,self.hum,self.errs) 
         
 
 pRespOya=re.compile('^([0-9A-F]{2})([0-9A-F]{2})([0-9A-F]{2}).*')
@@ -124,7 +125,7 @@ class SlvOya(Slv):
             else:
                 simu_str=""
                 
-            return 'Oya %c: st=%02x cmd=%s Low=%s High=%s Temp=%s Hum=%s %s' % (self.addr,self.st if self.st!=None else 0,self.cmd,self.low,self.high,self.temp,self.hum,simu_str) 
+            return 'Oya %c: st=%02x cmd=%s Low=%s High=%s Temp=%s Hum=%s errs=%s %s' % (self.addr,self.st if self.st!=None else 0,self.cmd,self.low,self.high,self.temp,self.hum,self.errs,simu_str) 
 
 
 pompe=SlvPmp('A')
@@ -148,6 +149,21 @@ cyclesMiniPompeOff=0
 
 def thread_func():
     while quit==False:
+        oneneed=False
+        for s in oyas:
+            if s.comm==True:
+                if s.low==False and s.high==False:
+                    s.cmd=False
+                    
+                if s.st!=None and s.st&0x04==0x04:                            
+                    if s.low==True or s.high==True:
+                        oneneed=True
+
+        if oneneed==True:
+            pompe.cmd=True
+        else:
+            pompe.cmd=False
+
         if SIMU==0:
             try:
                 res=sendRequest(ser,pompe.addr,pompe.fct,1 if pompe.cmd==True else 0)
@@ -159,32 +175,13 @@ def thread_func():
                     pompe.comm=False
 
                 for s in oyas:
-                    if s.comm==True and s.low==False and s.high==False:
-                        s.cmd=False
-
-                oneoya=False
-                oneneed=False
-                for s in oyas:
                     res=sendRequest(ser,s.addr,s.fct,1 if s.cmd==True else 0)
                     if res!=None:                        
-                        s.parse_resp(res)
-                        if s.st!=None and s.st&0x04==0x04:                            
-                            if s.low==True or s.high==True:
-                                oneneed=True
-                                oneoya=True
-                        
+                        s.parse_resp(res)                        
                         s.comm=True
                         
                     else:
                         s.comm=False
-
-                if oneoya==False:
-                    pompe.cmd=False
-                else:
-                    if oneneed==True:
-                        pompe.cmd=True
-                    else:
-                        pompe.cmd=False
                 
                 time.sleep(0.05)
             except Exception as ex:
