@@ -3,6 +3,7 @@ import time
 import re
 import threading
 
+PORT='COM12'
 SIMU=False
 
 def calcCS(buff):
@@ -132,11 +133,13 @@ pompe=SlvPmp('A')
 
 oyas=[
     SlvOya('B'),
-    SlvOya('C')
+    SlvOya('C'),
+    SlvOya('D'),
+    SlvOya('E'),
     ]
 
 if SIMU==False:
-    ser= serial.Serial(port=r"\\.\COM10",stopbits = 1, bytesize = 8, parity='N',baudrate= 9600,timeout=0.2)
+    ser= serial.Serial(port=r"\\.\%s" % PORT,stopbits = 1, bytesize = 8, parity='N',baudrate= 9600,timeout=0.1)
     txt=ser.read_until('\n')
     print(txt)
     ser.flush()
@@ -213,15 +216,12 @@ print(res)
 res=sendRequest(ser,pompe.addr,'e',1)
 print(res)
 
-res=sendRequest(ser,'C','1',0)
-print(res)
-res=sendRequest(ser,'C','e',1)
-print(res)
+for o in oyas:
+    res=sendRequest(ser,o.addr,'1',0)
+    print(res)
+    res=sendRequest(ser,o.addr,'e',1)
+    print(res)
 
-res=sendRequest(ser,'B','1',0)
-print(res)
-res=sendRequest(ser,'B','e',1)
-print(res)
 
 t=threading.Thread(target=thread_func)
 t.start()
@@ -232,6 +232,8 @@ while True:
     print('2) Pompe 1')
     print('3) Oya 1')
     print('4) Oya 2')
+    print('5) Oya 3')
+    print('6) Oya 4')
     print('0) Quitter')
 
     res=input('>')
@@ -277,7 +279,42 @@ while True:
             else:
                 oyas[1].cmd=False
                 
-            print('Oya 2: %s' % (oyas[0].cmd))
+            print('Oya 2: %s' % (oyas[1].cmd))
+
+        oy=False
+        for s in oyas:
+            if s.cmd==True:
+                oy=True
+                break
+            
+        if oy==False:
+            pompe.cmd=False
+
+    elif res=='5':
+        if len(oyas)>2:
+            if oyas[2].cmd==False:
+                oyas[2].cmd=True
+            else:
+                oyas[2].cmd=False
+                
+            print('Oya 3: %s' % (oyas[2].cmd))
+            
+        oy=False
+        for s in oyas:
+            if s.cmd==True:
+                oy=True
+                break
+            
+        if oy==False:
+            pompe.cmd=False
+    elif res=='6':
+        if len(oyas)>3:
+            if oyas[3].cmd==False:
+                oyas[3].cmd=True
+            else:
+                oyas[3].cmd=False
+                
+            print('Oya 4: %s' % (oyas[3].cmd))
             
         oy=False
         for s in oyas:

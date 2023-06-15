@@ -6,6 +6,8 @@
 #include "globals.h"
 #include <arduino.h>
 
+#include "prot.h"
+
 int _pinTxEn;
 uint32_t _nb_err_frame=0;
 uint32_t _nb_err_cs=0;
@@ -16,10 +18,6 @@ void client_init(unsigned char addr,int pinTxEn)
   digitalWrite(pinTxEn,LOW);
   _pinTxEn=pinTxEn;  
 }
-
-
-#define SOF (0x01)
-#define EOF (0x02)
 
 
 uint8_t pos=0;
@@ -118,46 +116,46 @@ void _client_exec_cmd(void)
   delay(10);
   
   digitalWrite(_pinTxEn,HIGH);
-  _client_putchar(SOF,NULL);
+  _client_putchar(SOH,NULL);
   _client_putchar(g_bAddr,&cs);
   
-  if ( (g_bFct=='1') && (fct=='1') )
+  if ( (g_bFct==FCT_PUMP) && (fct==FCT_PUMP) )
   {
     uint8_t stat=0;
     if (g_cmd_ev==true)
-      stat|=0x04;
+      stat|=ST_CMD_ON;
     if (g_enabled==true)
-      stat|=0x08;
+      stat|=ST_ENABLED;
 
     int val=g_flow_mLpMin;
     
-    _client_putchar('1',&cs);        
+    _client_putchar(FCT_PUMP,&cs);        
     _client_puthex(stat,&cs);    
     _client_puthex(((val>>8)&0xFF),&cs);
     _client_puthex((val&0xFF),&cs);
     _client_puthex(g_temp,&cs);
     _client_puthex(g_hum,&cs);
   }
-  else if ( (g_bFct=='2') && (fct=='2') )
+  else if ( (g_bFct==FCT_OYA) && (fct==FCT_OYA) )
   {
     uint8_t stat=0;
     if (g_cpt_low==true)
-      stat|=0x01;
+      stat|=ST_LVL_LOW;
     if (g_cpt_high==true)
-      stat|=0x02;
+      stat|=ST_LVL_HIGH;
     if (g_cmd_ev==true)
-      stat|=0x04;
+      stat|=ST_CMD_ON;
     if (g_enabled==true)
-      stat|=0x08;
+      stat|=ST_ENABLED;
       
-    _client_putchar('2',&cs);
+    _client_putchar(FCT_OYA,&cs);
     _client_puthex(stat,&cs);    
     _client_puthex(g_temp,&cs);
     _client_puthex(g_hum,&cs);
   }
-  else if ( fct=='@' )
+  else if ( fct==FCT_ADDR )
   {
-    _client_putchar('@',&cs);
+    _client_putchar(FCT_ADDR,&cs);
     _client_puthex(g_bAddr,&cs);   
   }
   else if ( fct=='f' )
@@ -165,39 +163,39 @@ void _client_exec_cmd(void)
     _client_putchar('f',&cs);
     _client_puthex(g_bFct,&cs);   
   }
-  else if (fct=='e')
+  else if (fct==FCT_ENABLE)
   {
-    _client_putchar('e',&cs);
+    _client_putchar(FCT_ENABLE,&cs);
     _client_puthex(g_enabled==true?1:0,&cs);   
   }
-  else if (fct=='s')
+  else if (fct==FCT_READ_TIME)
   {
-    _client_putchar('s',&cs);
+    _client_putchar(FCT_READ_TIME,&cs);
     _client_puthex_u32(g_pump_s,&cs);
   }
-  else if (fct=='S')
+  else if (fct==FCT_RAZ_TIME)
   {
     reset_stats();
-    _client_putchar('S',&cs);
+    _client_putchar(FCT_RAZ_TIME,&cs);
     _client_puthex_u32(0,&cs);
   }
-  else if (fct=='r')
+  else if (fct==FCT_READ_ERR)
   {
-    _client_putchar('r',&cs);
+    _client_putchar(FCT_READ_ERR,&cs);
     _client_puthex_u32(_nb_err_cs,&cs);
     _client_puthex_u32(_nb_err_frame,&cs);
   }
-  else if (fct=='R')
+  else if (fct==FCT_RAZ_ERR)
   {
     _nb_err_frame=0;
     _nb_err_cs=0;
-    _client_putchar('r',&cs);
+    _client_putchar(FCT_RAZ_ERR,&cs);
     _client_puthex_u32(0,&cs);
     _client_puthex_u32(0,&cs);
   }
-  else if (fct=='p')
+  else if (fct==FCT_PING)
   {
-    _client_putchar('p',&cs);
+    _client_putchar(FCT_PING,&cs);
     _client_puthex(cmd,&cs);
   }
   else
@@ -206,7 +204,7 @@ void _client_exec_cmd(void)
   }
   
   _client_puthex(cs,NULL);
-  _client_putchar(EOF,NULL); 
+  _client_putchar(STX,NULL); 
   while ((UCSR0A & _BV (TXC0)) == 0) {} 
   delay(2); // Au cas où
   digitalWrite(_pinTxEn,LOW);
@@ -250,10 +248,10 @@ void setHigh(uint8_t *val,char c)
 
 void _client_recv(uint8_t b)
 {
-  if ( (pos==0) && (b!=SOF))
+  if ( (pos==0) && (b!=SOH))
     return;
 
-  if (b==SOF)
+  if (b==SOH)
     pos=0;
 
   switch (pos)
@@ -299,7 +297,7 @@ void _client_recv(uint8_t b)
     }
     case 7:
     {
-      if ( (b==EOF) && (cs==cs_calc) && ( (addr==g_bAddr) || (addr=='*') ) )
+      if ( (b==STX) && (cs==cs_calc) && ( (addr==g_bAddr) || (addr=='*') ) )
       {
         digitalWrite(LED_BUILTIN,HIGH);
         _client_exec_cmd();
@@ -310,7 +308,7 @@ void _client_recv(uint8_t b)
       {
         if (cs!=cs_calc)
           _nb_err_cs++;
-        if (b!=EOF)
+        if (b!=STX)
           _nb_err_frame++;
           
         /*Serial.print("Refusee: b=");

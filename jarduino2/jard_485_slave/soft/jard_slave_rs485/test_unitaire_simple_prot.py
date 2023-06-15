@@ -3,7 +3,7 @@ import time
 import re
 import threading
 
-PORT='COM10'
+PORT='COM12'
 
 def calcCS(buff):
     cs=0
@@ -57,7 +57,7 @@ def sendRequest(ser,addr,fct,val):
     return None
 
 
-ser= serial.Serial(port=r"\\.\%s" % PORT,stopbits = 1, bytesize = 8, parity='N',baudrate= 9600,timeout=0.1)
+ser= serial.Serial(port=r"\\.\%s" % PORT,stopbits = 1, bytesize = 8, parity='N',baudrate= 9600,timeout=0.5)
 time.sleep(2)
 txt=ser.read_until('\n')
 print(txt)
@@ -75,10 +75,17 @@ def test_addr_fct(ser):
     print(res)
     assert res=='31'
 
+def cfg_ping(ser,addr):
+    print('_'*60)
+    print('PING %s' % (addr))
+          
+    res=sendRequest(ser,addr,'p',4)
+    print(res)
+    assert res=='%02x' % (4)
+
 def cfg_addr(ser,oldAddr,addr):
     print('_'*60)
     print('Progr. Addr. %s -> %s' % (oldAddr,addr))
-    time.sleep(2)
           
     res=sendRequest(ser,oldAddr,'@',ord(addr))
     print(res)
@@ -87,7 +94,6 @@ def cfg_addr(ser,oldAddr,addr):
 def cfg_enable(ser,addr,en):
     print('_'*60)
     print('Enable Addr. %s: %d' % (addr,en))
-    time.sleep(2)
           
     res=sendRequest(ser,addr,'e',en)
     print(res)
@@ -185,21 +191,21 @@ def test_basic_pump(ser):
         time.sleep(0.05)
 
 
-def test_basic_oya(ser):
+def test_basic_oya(ser,addr):
     errs=0
     nbre=0
     
-    res=sendRequest(ser,'C','S',1)
+    res=sendRequest(ser,addr,'S',1)
     print('RAZ: %s' % res)
     assert res=='00000000'
 
-    res=sendRequest(ser,'C','e',1)
+    res=sendRequest(ser,addr,'e',1)
     print(res)
     assert(res)=='01'
 
     while True:
         nbre+=1
-        res=sendRequest(ser,'C','2',0)
+        res=sendRequest(ser,addr,'2',0)
         
         if res==None:
             errs+=1
@@ -207,16 +213,16 @@ def test_basic_oya(ser):
         
         if nbre % 10 == 0:
             print(res)
-            res=sendRequest(ser,'A','r',0)
+            res=sendRequest(ser,addr,'r',0)
             print(res)
             
         time.sleep(0.05)
         
-#def test_oya():       
-    
+   
 
-#cfg_addr(ser,'Z','B')        
-#cfg_enable(ser,'B',1)
+cfg_ping(ser,'E')
+#cfg_addr(ser,'Z','E')        
+#cfg_enable(ser,'E',1)
 
 ##time.sleep(2)
 ##for i in range(0,255+1):
@@ -228,8 +234,8 @@ def test_basic_oya(ser):
 
 #test_addr_fct(ser)
 #test_enable_disable(ser,'C')
-test_full(ser,'B')
+#test_full(ser,'D')
 #test_basic_pump(ser)
-#test_basic_oya(ser)
+#test_basic_oya(ser,'D')
 
 ser.close()
