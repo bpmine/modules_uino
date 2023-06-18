@@ -4,9 +4,11 @@
 
 Master master;
 
-void serialEvent(void)
+unsigned long ulT0;
+
+void serialEvent1(void)
 {
-  master.recv();
+  //master.recv();
 }
 
 void setup() 
@@ -14,9 +16,18 @@ void setup()
   Serial.begin(9600);
   master.begin(&Serial1,PIN_TX_EN);
   Serial.println("Boot");
+  ulT0=millis();
 } 
 
 void loop() 
 {
+  unsigned long ulT=millis();
+  if (ulT-ulT0>5000)
+  {
+    master.start_cycle();
+    ulT0=millis();
+  }
+  
   master.loop();
+  master.recv();
 }

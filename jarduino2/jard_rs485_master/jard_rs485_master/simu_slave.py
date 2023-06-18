@@ -33,7 +33,7 @@ high={
 
 low={
     'B':False,
-    'C':False
+    'C':False,
     'D':False,
     'E':False,
     }
@@ -41,12 +41,12 @@ low={
 enable={
     'A':False,
     'B':False,
-    'C':False
+    'C':False,
     'D':False,
     'E':False,
     }
 
-PORT='COM10'
+PORT='COM30'
         
 ser= serial.Serial(port=r"\\.\%s" % PORT,stopbits = 1, bytesize = 8, parity='N',baudrate= 9600,timeout=0.05)
 time.sleep(2)
@@ -60,7 +60,11 @@ while True:
     if b==b'\x01':
         resp=ser.read_until(b'\x02')
 
-        txt=str(resp[:-1],'ascii')
+        try:
+            txt=str(resp[:-1],'ascii')
+        except:
+            txt=''
+
         m=pResp.match(txt)
         if m!=None:
             addr=m.group(1)
@@ -71,6 +75,7 @@ while True:
             cs_calc=resp[0]+resp[1]+resp[2]+resp[3]
             cs_calc=cs_calc%256
             cs_calc='%02X' % cs_calc
+            
             if cs_calc == cs:
                 if fct=='1':
                     if addr in pmp:
@@ -82,9 +87,16 @@ while True:
 
                         ans='\x01%c%c%02X%04X%02X%02X' % (addr,fct,st,123,20,40)
                         cs=calcCS(ans)
-                        ser.write(bytes(ans,'ascii'))
-                        ser.write(bytes('%02X' % cs,'ascii'))
-                        ser.write(b'\x02')
+                        ans+='%02X' % cs
+                        ans+='\x02'
+                        tosend=bytes(ans,'ascii')
+                        print(tosend)
+
+                        time.sleep(0.02)
+                        ser.write(tosend)
+                        ser.flush();
+                    else:
+                        print('Pump not found')
                 elif fct=='2':
                     if addr in oya:
                         st=0
@@ -97,12 +109,18 @@ while True:
                         if high[addr]==True:
                             st=st|0x02
                         
-                        lvl=0x66
-                        ans='\x01%c%c%02X%02X%02X%02X' % (addr,fct,st,lvl,123,20,40)
+                        ans='\x01%c%c%02X%02X%02X' % (addr,fct,st,20,40)
                         cs=calcCS(ans)
-                        ser.write(bytes(ans,'ascii'))
-                        ser.write(bytes('%02X' % cs,'ascii'))
-                        ser.write(b'\x02')
+                        ans+='%02X' % cs
+                        ans+='\x02'
+                        tosend=bytes(ans,'ascii')
+                        print(tosend)
+
+                        time.sleep(0.02)
+                        ser.write(tosend)
+                        ser.flush();
+                    else:
+                        print('Oya not found')
 
 
 ser.close()

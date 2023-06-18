@@ -25,19 +25,17 @@ class Master
       &oyaC,
       &oyaD
     };
-  
+
+    enum {IDLE,SEND,RECV,NEXT} eState;
     int cur;
     uint8_t buffer[DATA_SIZE+10];
     int pos;
-    int expected;
-    bool pending;
-    unsigned long tick0;
-    bool discard;
+    unsigned long m_tick0;
 
     uint8_t calc_cs(uint8_t *datas,uint8_t len)
     {
       uint8_t cs=0;
-      for (int i=0;i<len;i++)
+      for (int i=1;i<len;i++)
       {
         cs+=datas[i];       
       }
@@ -64,17 +62,7 @@ class Master
     {
       return hex_val(a)*16+hex_val(b);      
     }
-
-    void next_request(void)
-    {
-      pos=0;
-      pending=false;
-      discard=false;
-      cur++;
-      if (cur>=sizeof(cycle)/sizeof(Request *))
-        cur=0;      
-    }
-
+    
     char tohexchar(uint8_t b)
     {
       b=b&0xF;
@@ -102,8 +90,8 @@ class Master
         cycle[i]->cmd=0;
       }
       pos=0;
-      pending=false;
-      discard=false;
+
+      eState=IDLE;
     }
 
     void send(Request *pReq)
@@ -128,8 +116,12 @@ class Master
       pStr->write(req,sizeof(req));
       pStr->flush();
       while ((UCSR0A & _BV (TXC0)) == 0) {}
-      delay(1); 
+      delay(2); 
       digitalWrite(this->txen,LOW);
+
+      char tmp[20];
+      sprintf(tmp,"Send %c %c",pReq->addr,pReq->fct);
+      Serial.println(tmp);
     }
 
     void begin(HardwareSerial *pSerial,int txen)
@@ -141,39 +133,79 @@ class Master
       this->pStr=pSerial;
       pos=0;
       cur=0;
-      pending=false;    
-      discard=false;  
-      expected=0;
+      eState=IDLE;
+      m_tick0=millis();
+    }
+
+    void start_cycle(void)
+    {
+      eState=SEND;
     }
   
     void loop(void)
     {
       if (pStr==NULL)
         return;
-        
-      if (pending==false)
+
+      switch (eState)
       {
-        pending=true;
-        discard=false;
-        send(cycle[cur]);
-        tick0=millis();
-      }
-      else
-      {
-        unsigned long delta;
-        unsigned long t=millis();        
-        if (t>tick0)
-          delta=t-tick0;
-        else
-          delta=0xFFFFFFFF-tick0+t;
-        
-        if (delta>20)
+        case IDLE:
         {
-          cycle[cur]->comm_ok=false;
-          pending=false;
+          m_tick0=millis();
+          break;
+        }
+        
+        case SEND:
+        {
+          eState=RECV;
+          memset(buffer,0,sizeof(buffer));
           pos=0;
-          discard=false;
-          next_request();
+          send(cycle[cur]);
+          m_tick0=millis();
+          break;
+        }
+        
+        case RECV:
+        {
+          unsigned long delta;
+          unsigned long t=millis(); 
+          if (t >= m_tick0)
+          {
+            delta=t-m_tick0;
+          }
+          else
+          {
+            delta=0xFFFFFFFFUL-m_tick0+t;
+          }
+
+          if (delta > 200UL)
+          {
+            char tmp[15];
+            sprintf(tmp,"TMT: %c",cycle[cur]->addr);
+            Serial.println(tmp);
+            
+            cycle[cur]->comm_ok=false;
+            eState=NEXT;          
+          }
+
+          break;
+        }
+
+        case NEXT:
+        {
+          cur++;
+          if (cur>=sizeof(cycle)/sizeof(Request *))
+          {
+            eState=IDLE;
+            cur=0;
+          }
+          else
+          {
+            delay(20);
+            eState=SEND;
+          }
+          
+          break;          
         }
       }
     }  
@@ -183,21 +215,36 @@ class Master
       while (pStr->available())
       {
         int b=pStr->read();
-        if ( (b>0) && (b<255) && (discard==false) )
+        //Serial.write(b);
+        if (eState!=RECV)
+          continue;
+          
+        if ( (b>0) && (b<255) )
         {
           if ( (pos==0) && (b!=SOH) )
-            break;
+            continue;
 
           buffer[pos]=(uint8_t)b;
+          pos++;
+          if (pos>sizeof(buffer)-1)
+          {
+            pos=0;
+            continue;
+          }
+          m_tick0=millis();          
 
           if (b==STX)
           {
             uint8_t addr=buffer[1];
             uint8_t fct=buffer[2];
-            uint8_t csa=buffer[pos-1];
-            uint8_t csb=buffer[pos];
+            uint8_t csa=buffer[pos-3];
+            uint8_t csb=buffer[pos-2];
             uint8_t cs=decode_hex_byte(csa,csb);
-            uint8_t cs_calc=calc_cs(buffer,pos);
+            uint8_t cs_calc=calc_cs(buffer,pos-3);
+
+            char str[50];
+            sprintf(str,"recv %c %c cs=%02x calc=%02x",addr,fct,cs,cs_calc);
+            Serial.println(str);
             if (cs_calc==cs)
             {
               cycle[cur]->cserr=false;
@@ -205,16 +252,17 @@ class Master
               {
                 cycle[cur]->frmerr=true;
                 cycle[cur]->nbCyclesErr++;
-                cycle[cur]->comm_ok=false;
+                cycle[cur]->comm_ok=false;                
+                Serial.println("Nosync");
               }
               else
               {
                 cycle[cur]->setRecvData(buffer+3);                
                 cycle[cur]->frmerr=false;
                 cycle[cur]->comm_ok=true;
-                cycle[cur]->decodeData();         
-                Serial.write(buffer,pos);
-                Serial.println("");              
+                cycle[cur]->decodeData();
+                Serial.println("Frame ok");
+                eState=NEXT;
               }              
             }
             else
@@ -223,25 +271,10 @@ class Master
               cycle[cur]->nbCyclesErr++;
               cycle[cur]->nbCsErr++;
               cycle[cur]->comm_ok=false;
-            }
-
-            next_request();
+              Serial.println("CS Error");
+            }            
           }
-
-          if (pos>sizeof(buffer)-1)
-          {
-            pos=0;
-            discard=true;
-          }
-
-          pos++;          
-        }
-        else
-        {
-          discard=true;
-        }
-
-        tick0=millis();
+        }        
       }
     }
 };
