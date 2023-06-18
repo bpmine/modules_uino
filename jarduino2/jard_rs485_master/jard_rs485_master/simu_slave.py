@@ -1,0 +1,113 @@
+import serial
+import time
+import re
+import threading
+
+SIMU=False
+
+def calcCS(buff):
+    cs=0
+    for b in range(1,len(buff)):
+        #print('%d' % ord(buff[b]))
+        cs=cs+ord(buff[b])
+
+    return cs % 256
+
+pmp={
+    'A':False
+    }
+
+oya={
+    'B':False,
+    'C':False,
+    'D':False,
+    'E':False,
+    }
+
+high={
+    'B':False,
+    'C':False,
+    'D':False,
+    'E':False,
+    }
+
+low={
+    'B':False,
+    'C':False
+    'D':False,
+    'E':False,
+    }
+
+enable={
+    'A':False,
+    'B':False,
+    'C':False
+    'D':False,
+    'E':False,
+    }
+
+PORT='COM10'
+        
+ser= serial.Serial(port=r"\\.\%s" % PORT,stopbits = 1, bytesize = 8, parity='N',baudrate= 9600,timeout=0.05)
+time.sleep(2)
+txt=ser.read_until('\n')
+#print(txt)
+ser.flush()
+
+pResp=re.compile(r'(.)(.)([0-9A-F]{2})([0-9A-F]{2})')
+while True:
+    b=ser.read()
+    if b==b'\x01':
+        resp=ser.read_until(b'\x02')
+
+        txt=str(resp[:-1],'ascii')
+        m=pResp.match(txt)
+        if m!=None:
+            addr=m.group(1)
+            fct=m.group(2)
+            cmd=m.group(3)
+            cs=m.group(4)
+
+            cs_calc=resp[0]+resp[1]+resp[2]+resp[3]
+            cs_calc=cs_calc%256
+            cs_calc='%02X' % cs_calc
+            if cs_calc == cs:
+                if fct=='1':
+                    if addr in pmp:
+                        st=0
+                        if pmp[addr]==True:
+                            st=st|0x04
+                        if enable[addr]==True:
+                            st=st|0x08
+
+                        ans='\x01%c%c%02X%04X%02X%02X' % (addr,fct,st,123,20,40)
+                        cs=calcCS(ans)
+                        ser.write(bytes(ans,'ascii'))
+                        ser.write(bytes('%02X' % cs,'ascii'))
+                        ser.write(b'\x02')
+                elif fct=='2':
+                    if addr in oya:
+                        st=0
+                        if oya[addr]==True:
+                            st=st|0x04
+                        if oya[addr]==True:
+                            st=st|0x08
+                        if low[addr]==True:
+                            st=st|0x01
+                        if high[addr]==True:
+                            st=st|0x02
+                        
+                        lvl=0x66
+                        ans='\x01%c%c%02X%02X%02X%02X' % (addr,fct,st,lvl,123,20,40)
+                        cs=calcCS(ans)
+                        ser.write(bytes(ans,'ascii'))
+                        ser.write(bytes('%02X' % cs,'ascii'))
+                        ser.write(b'\x02')
+
+
+ser.close()
+
+
+
+
+
