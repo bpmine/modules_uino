@@ -5,6 +5,8 @@
 
 #include "prot.h"
 
+#include <arduino.h>
+
 class Request
 {
   protected:
@@ -53,7 +55,7 @@ class Request
     virtual void decodeData(void) {};
 };
 
-class Slave:public Request
+class RqSlave:public Request
 {
   protected:
     bool enabled;
@@ -84,7 +86,7 @@ class Slave:public Request
     
     
   public:
-    Slave(uint8_t addr,uint8_t fct):Request(addr,fct)
+    RqSlave(uint8_t addr,uint8_t fct):Request(addr,fct)
     {
       enabled=false;
       on=false;
@@ -95,6 +97,11 @@ class Slave:public Request
       return enabled;
     }
     
+    bool getCommOk(void)
+    {
+      return comm_ok;
+    }
+
     bool getOn(void)
     {
       return on;
@@ -127,13 +134,13 @@ class Slave:public Request
     }    
 };
 
-class Pump:public Slave
+class RqPump:public RqSlave
 {
   private:
     int flow;
     
   public:
-    Pump(uint8_t addr):Slave(addr,FCT_PUMP)
+    RqPump(uint8_t addr):RqSlave(addr,FCT_PUMP)
     {
     }
 
@@ -144,7 +151,7 @@ class Pump:public Slave
 
     virtual void decodeData(void) override
     {
-      Slave::decodeData();
+      RqSlave::decodeData();
       if (comm_ok==true)
       {
         uint8_t a=hex_val(datas[1]);
@@ -169,14 +176,14 @@ class Pump:public Slave
 };
 
 
-class Oya:public Slave
+class RqOya:public RqSlave
 {
   private:
     bool low;
     bool high;
     
   public:
-    Oya(uint8_t addr):Slave(addr,FCT_OYA)
+    RqOya(uint8_t addr):RqSlave(addr,FCT_OYA)
     {
     }
 
@@ -185,7 +192,7 @@ class Oya:public Slave
 
     virtual void decodeData(void) override
     {
-      Slave::decodeData();
+      RqSlave::decodeData();
       
       if (comm_ok==true)
       {

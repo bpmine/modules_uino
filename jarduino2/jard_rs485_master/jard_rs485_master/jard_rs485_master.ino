@@ -1,33 +1,14 @@
-#include "master.hpp"
-
-#define PIN_TX_EN         (6)
-
-Master master;
-
-unsigned long ulT0;
-
-void serialEvent1(void)
-{
-  //master.recv();
-}
+#include "app.h"
 
 void setup() 
 {
-  Serial.begin(9600);
-  master.begin(&Serial1,PIN_TX_EN);
+  Serial.begin(9600);  
   Serial.println("Boot");
-  ulT0=millis();
+
+  app_init();
 } 
 
 void loop() 
 {
-  unsigned long ulT=millis();
-  if (ulT-ulT0>5000)
-  {
-    master.start_cycle();
-    ulT0=millis();
-  }
-  
-  master.loop();
-  master.recv();
+ app_loop();
 }
