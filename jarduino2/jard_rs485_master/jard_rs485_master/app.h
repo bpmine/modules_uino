@@ -5,6 +5,8 @@
 
 #define PIN_TX_EN         (6)
 
+extern bool g_trace_on;
+
 extern void app_init(void);
 extern void app_loop();
 

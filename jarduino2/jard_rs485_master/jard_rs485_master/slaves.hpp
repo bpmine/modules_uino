@@ -55,6 +55,8 @@ class Slave
       {
         cycles_since_off++;
       }
+
+      on=flgOn;
     }
 
     void setCommOk(bool flgCommOk)
@@ -75,6 +77,8 @@ class Slave
         cycles_since_off++;
         cycles_since_nok++;
       }
+
+      comm_ok=flgCommOk;
     }
 
     void setTemp_dg(int temp_dg)

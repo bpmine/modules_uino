@@ -3,6 +3,8 @@
 #include "slaves.hpp"
 #include "master.h"
 
+bool g_trace_on=false;
+
 unsigned long ulT0;
 
 static Pump _pump('A');
@@ -108,7 +110,8 @@ void app_term_log(bool on)
 
 void app_term_trace(bool on)
 {
-  
+  g_trace_on=on;
+  _master.setTrace(on);
 }
 
 bool app_slave(char addr,bool on)

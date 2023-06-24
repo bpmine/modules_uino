@@ -121,12 +121,13 @@ class RqSlave:public Request
     {
       if (comm_ok==true)
       {
-        if ( (datas[0]&ST_ENABLED) == ST_ENABLED )
+        uint8_t st=decode_hex_byte(datas[0],datas[1]);
+        if ( (st&ST_ENABLED) == ST_ENABLED )
           enabled=true;
         else
           enabled=false;
 
-        if ( (datas[0]&ST_CMD_ON) == ST_CMD_ON )
+        if ( (st&ST_CMD_ON) == ST_CMD_ON )
           on=true;
         else
           on=false;   
@@ -154,23 +155,12 @@ class RqPump:public RqSlave
       RqSlave::decodeData();
       if (comm_ok==true)
       {
-        uint8_t a=hex_val(datas[1]);
-        uint8_t b=hex_val(datas[2]);
-        uint8_t c=hex_val(datas[3]);
-        uint8_t d=hex_val(datas[4]);
-
-        uint8_t MSB=decode_hex_byte(a,b);
-        uint8_t LSB=decode_hex_byte(c,d);
-
-        flow=(((int)MSB)<<8) | (((int)LSB));        
+        uint8_t MSB=decode_hex_byte(datas[2],datas[3]);
+        uint8_t LSB=decode_hex_byte(datas[4],datas[5]);
+        flow=(((int)MSB)<<8) | (((int)LSB));
         
-        a=hex_val(datas[5]);
-        b=hex_val(datas[6]);
-        temp=decode_hex_byte(a,b);
-        
-        a=hex_val(datas[7]);
-        b=hex_val(datas[8]);
-        hum=decode_hex_byte(a,b);
+        temp=decode_hex_byte(datas[6],datas[7]);        
+        hum=decode_hex_byte(datas[8],datas[9]);
       }
     }
 };
@@ -196,24 +186,21 @@ class RqOya:public RqSlave
       
       if (comm_ok==true)
       {
-        if ( (datas[0]&ST_LVL_LOW) == ST_LVL_LOW )
+        uint8_t st=decode_hex_byte(datas[0],datas[1]);
+
+        if ( (st&ST_LVL_LOW) == ST_LVL_LOW )
           low=true;
         else
           low=false;
 
-        if ( (datas[0]&ST_LVL_HIGH) == ST_LVL_HIGH )
+        if ( (st&ST_LVL_HIGH) == ST_LVL_HIGH )
           high=true;
         else
           high=false;   
 
-
-        uint8_t a=hex_val(datas[1]);
-        uint8_t b=hex_val(datas[2]);
-        temp=decode_hex_byte(a,b);
+        temp=decode_hex_byte(datas[2],datas[3]);
         
-        a=hex_val(datas[3]);
-        b=hex_val(datas[4]);
-        hum=decode_hex_byte(a,b);        
+        hum=decode_hex_byte(datas[4],datas[5]);  
       }
     }
 };

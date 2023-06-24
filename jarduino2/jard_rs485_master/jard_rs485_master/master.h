@@ -30,6 +30,7 @@ class Master
     bool nextRequest(void);
     Request * getCurRequest(void);
     Request * itNext(int &Pos);
+    bool flgTrace;
 
   public:
     Master();
@@ -43,6 +44,8 @@ class Master
     void recv(void);
     
     Request *getRequestFrom(char addr);
+
+    void setTrace(bool flgEnabled);
 };
 
 #endif

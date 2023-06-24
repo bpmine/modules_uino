@@ -95,9 +95,12 @@ void Master::send(Request *pReq)
   delay(2); 
   digitalWrite(this->txen,LOW);
 
-  char tmp[20];
-  sprintf(tmp,"Send %c %c",pReq->addr,pReq->fct);
-  Serial.println(tmp);
+  if (flgTrace==true)
+  {
+    char tmp[20];
+    sprintf(tmp,"Send %c %c",pReq->addr,pReq->fct);
+    Serial.println(tmp);
+  }
 }
 
 void Master::begin(HardwareSerial *pSerial,int txen)
@@ -169,9 +172,12 @@ bool Master::loop(void)
 
       if (delta > 200UL)
       {
-        char tmp[15];
-        sprintf(tmp,"TMT: %c",pReq->addr);
-        Serial.println(tmp);
+        if (flgTrace==true)
+        {        
+          char tmp[15];
+          sprintf(tmp,"TMT: %c",pReq->addr);
+          Serial.println(tmp);
+        }
             
         pReq->comm_ok=false;
         eState=NEXT;          
@@ -241,9 +247,13 @@ bool Master::loop(void)
             uint8_t cs=decode_hex_byte(csa,csb);
             uint8_t cs_calc=calc_cs(buffer,pos-3);
 
-            char str[50];
-            sprintf(str,"recv %c %c cs=%02x calc=%02x",addr,fct,cs,cs_calc);
-            Serial.println(str);
+            if (flgTrace==true)
+            {
+              char str[50];
+              sprintf(str,"recv %c %c cs=%02x calc=%02x",addr,fct,cs,cs_calc);
+              Serial.println(str);
+            }
+            
             if (cs_calc==cs)
             {
               pReq->cserr=false;
@@ -252,7 +262,10 @@ bool Master::loop(void)
                 pReq->frmerr=true;
                 pReq->nbCyclesErr++;
                 pReq->comm_ok=false;                
-                Serial.println("Nosync");
+                if (flgTrace==true)
+                {
+                  Serial.println("Nosync");
+                }
               }
               else
               {
@@ -260,7 +273,8 @@ bool Master::loop(void)
                 pReq->frmerr=false;
                 pReq->comm_ok=true;
                 pReq->decodeData();
-                Serial.println("Frame ok");
+                if (flgTrace==true)
+                  Serial.println("Frame ok");
                 eState=NEXT;
               }              
             }
@@ -270,7 +284,8 @@ bool Master::loop(void)
               pReq->nbCyclesErr++;
               pReq->nbCsErr++;
               pReq->comm_ok=false;
-              Serial.println("CS Error");
+              if (flgTrace==true)
+                Serial.println("CS Error");
             }            
           }
         }        
@@ -333,3 +348,8 @@ Request *Master::getRequestFrom(char addr)
       
   return NULL;
 } 
+
+void Master::setTrace(bool flgEnabled)
+{
+  flgTrace=flgEnabled;
+}

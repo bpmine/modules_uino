@@ -4,6 +4,16 @@
 #include "app.h"
 #include <arduino.h>
 
+void _help(void)
+{
+  Serial.println("____________________");
+  Serial.println("Aide:");
+  Serial.println("  - test");
+  Serial.println("  - master on/off");
+  Serial.println("  - trace on/off");
+  Serial.println("  - slaves");
+  Serial.println("");
+}
 
 bool parseOnOff(char *params,bool def)
 {
@@ -15,6 +25,16 @@ bool parseOnOff(char *params,bool def)
     return def;
 }
 
+void _OnOffAns(char *strTitle,bool on)
+{
+  Serial.print(strTitle);
+  Serial.print(": ");
+  if (on==true)
+    Serial.println("ON");
+  else
+    Serial.println("OFF");
+}
+
 
 void _execCmd(char *strCmd,char *strParams)
 {
@@ -22,31 +42,53 @@ void _execCmd(char *strCmd,char *strParams)
   {
     Serial.println("OK");
   }
+  else if (strcmp(strCmd,"help")==0)
+  {
+    _help();
+  }
   else if (strcmp(strCmd,"slaves")==0)
   {
     int pos=0;
+    Serial.println("_____");
     Oya *pOya=app_term_get_next_oya(pos);
     while (pOya!=NULL)
     {
       Serial.print("Oya ");
       Serial.print(pOya->addr);
-      Serial.print(pOya->on?" on":" off");
-      Serial.print(pOya->high?" high":"");
-      Serial.print(pOya->low?" low":"");
-      Serial.print(" temp: ");
-      Serial.print(pOya->temp_dg);
-      Serial.print("°C");
-      Serial.print(" hum: ");
-      Serial.print(pOya->hum_pc);
-      Serial.println("%");
+      Serial.print(": ");
+
+      if (pOya->comm_ok==true)
+      {
+        Serial.print(pOya->on==true?" on":" off");
+        Serial.print(pOya->high==true?" high":"");
+        Serial.print(pOya->low==true?" low":"");
+        Serial.print(" temp: ");
+        Serial.print(pOya->temp_dg);
+        Serial.print("°C");
+        Serial.print(" hum: ");
+        Serial.print(pOya->hum_pc);
+        Serial.println("%");
+      }
+      else
+      {
+        Serial.println("NO COMM");
+      }
 
       pOya=app_term_get_next_oya(pos);
     }
+    Serial.println();
   }
   else if (strcmp(strCmd,"master")==0)
   {
     bool on=parseOnOff(strParams,false);
     app_term_master(on);
+    _OnOffAns("Maître 485",on);
+  }
+  else if (strcmp(strCmd,"trace")==0)
+  {
+    bool on=parseOnOff(strParams,false);
+    app_term_trace(on);
+    _OnOffAns("Traces",on);
   }
 }
 
