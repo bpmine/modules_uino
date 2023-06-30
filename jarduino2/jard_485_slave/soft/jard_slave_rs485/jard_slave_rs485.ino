@@ -181,7 +181,7 @@ void setup()
 
   g_cpt_low=false;
   g_cpt_high=false;
-  g_enabled=false;
+  //g_enabled=false;
   g_cmd_ev=false;
   g_defaults=0;
   g_flow_mLpMin=-1;
@@ -196,10 +196,12 @@ void setup()
   Serial.print(str);
   Serial.print(" ");
   sprintf(str,"%c",g_bFct);
-  Serial.println(str);
+  Serial.print(str);
+  Serial.print(" ");
+  Serial.println(g_enabled==true?"EN":"X");
 
   #ifdef FORCE_INIT
-  Serial.println("FORCE INIT!");
+    Serial.println("FORCE INIT!");
   #endif
 
   dht.begin();

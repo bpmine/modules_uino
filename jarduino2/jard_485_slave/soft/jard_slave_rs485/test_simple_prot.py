@@ -210,6 +210,17 @@ def thread_func():
 
     ser.close()
 
+def stopPumpIfNoOya():
+    oy=False
+    for s in oyas:
+        if s.cmd==True:
+            oy=True
+            break
+            
+    if oy==False:
+        pompe.cmd=False
+
+
 time.sleep(2)
 res=sendRequest(ser,pompe.addr,'1',0)
 print(res)
@@ -263,15 +274,9 @@ while True:
                 oyas[0].cmd=False
                 
             print('Oya 1: %s' % (oyas[0].cmd))
-            
-        oy=False
-        for s in oyas:
-            if s.cmd==True:
-                oy=True
-                break
-            
-        if oy==False:
-            pompe.cmd=False
+
+        stopPumpIfNoOya()            
+
     elif res=='4':
         if len(oyas)>1:
             if oyas[1].cmd==False:
@@ -281,14 +286,7 @@ while True:
                 
             print('Oya 2: %s' % (oyas[1].cmd))
 
-        oy=False
-        for s in oyas:
-            if s.cmd==True:
-                oy=True
-                break
-            
-        if oy==False:
-            pompe.cmd=False
+        stopPumpIfNoOya()
 
     elif res=='5':
         if len(oyas)>2:
@@ -298,15 +296,9 @@ while True:
                 oyas[2].cmd=False
                 
             print('Oya 3: %s' % (oyas[2].cmd))
-            
-        oy=False
-        for s in oyas:
-            if s.cmd==True:
-                oy=True
-                break
-            
-        if oy==False:
-            pompe.cmd=False
+
+        stopPumpIfNoOya()    
+
     elif res=='6':
         if len(oyas)>3:
             if oyas[3].cmd==False:
@@ -315,15 +307,9 @@ while True:
                 oyas[3].cmd=False
                 
             print('Oya 4: %s' % (oyas[3].cmd))
-            
-        oy=False
-        for s in oyas:
-            if s.cmd==True:
-                oy=True
-                break
-            
-        if oy==False:
-            pompe.cmd=False
+
+        stopPumpIfNoOya()            
+
     elif res=='0':
         quit=True
         print('Arrêt en cours')
