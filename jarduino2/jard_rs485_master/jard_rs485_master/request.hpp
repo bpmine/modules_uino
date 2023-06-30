@@ -34,6 +34,14 @@ class Request
       nbCsErr=0;
     }
 
+    void reset()
+    {
+      cmd=0;
+      for (int i=0;i<DATA_SIZE;i++)
+        datas[i]=0;
+      comm_ok=false;
+    }
+
     void razErrors(void)
     {
       nbCsErr=0;
@@ -54,6 +62,8 @@ class Request
 
     virtual void decodeData(void) {};
 };
+
+
 
 class RqSlave:public Request
 {
@@ -122,6 +132,7 @@ class RqSlave:public Request
       if (comm_ok==true)
       {
         uint8_t st=decode_hex_byte(datas[0],datas[1]);
+        
         if ( (st&ST_ENABLED) == ST_ENABLED )
           enabled=true;
         else
@@ -182,8 +193,7 @@ class RqOya:public RqSlave
 
     virtual void decodeData(void) override
     {
-      RqSlave::decodeData();
-      
+      RqSlave::decodeData();      
       if (comm_ok==true)
       {
         uint8_t st=decode_hex_byte(datas[0],datas[1]);

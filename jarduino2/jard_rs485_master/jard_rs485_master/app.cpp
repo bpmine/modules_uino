@@ -39,6 +39,7 @@ void _bus_to_objects(void)
       pOya->setLow(pRqOya->getLow());
       pOya->setHigh(pRqOya->getHigh());
       pOya->setOn(pRqOya->getOn());
+      pOya->setEnabled(pRqOya->getEnabled());
       pOya->setTemp_dg(pRqOya->getTemp());
       pOya->setHum_pc(pRqOya->getHum());
     }
@@ -58,6 +59,7 @@ void _bus_to_objects(void)
     _pump.setOn(pPump->getOn());
     _pump.setTemp_dg(pPump->getTemp());
     _pump.setHum_pc(pPump->getHum());
+    _pump.setEnabled(pPump->getEnabled());
   }
   else
   {
@@ -67,15 +69,14 @@ void _bus_to_objects(void)
 
 void _objects_to_bus(void)
 {
-  int pos;
-
+  int pos=0;
   Oya *pOya=_oyasList.itNext(pos);
   while (pOya!=NULL)
-  {  
+  {
     RqOya *pRqOya = _master.getRequestFrom(pOya->addr);
     if (pRqOya!=NULL)
-    {
-      pRqOya->cmd=pOya->cmd==true?1:0;
+    {   
+      pRqOya->cmd = (pOya->cmd==true)?1:0;
     }
 
     pOya = _oyasList.itNext(pos);
@@ -132,18 +133,29 @@ void app_init(void)
 void app_loop(void)
 {
   unsigned long ulT=millis();
-  if (ulT-ulT0>5000)
+  if (ulT-ulT0>1000)
   {
     _master.start_cycle();
     ulT0=millis();
   }
-  
-  if (_master.loop()==true)
-  {
-    _bus_to_objects();
-  }
 
-  _objects_to_bus();
+  if (_master.isRunning()==false)
+  {
+    int pos=0;
+    Oya *pOya=_oyasList.itNext(pos);
+    while (pOya!=NULL)
+    {
+      pOya->comm_ok=false;
+      pOya=_oyasList.itNext(pos);
+    }
+  }
+  else
+  {
+    if (_master.loop()==true)
+      _bus_to_objects();
+      
+    _objects_to_bus();
+  }
   
   _master.recv();
 }

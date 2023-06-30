@@ -1,5 +1,20 @@
 #include "master.h"
 
+static RqPump _rqpump('A');
+static RqOya _rqoyaA('B');
+static RqOya _rqoyaB('C');
+static RqOya _rqoyaC('D');
+static RqOya _rqoyaD('E');
+
+static Request *_cycles[]=
+{
+  &_rqpump,
+  &_rqoyaA,
+  &_rqoyaB,
+  &_rqoyaC,
+  &_rqoyaD
+};
+
 uint8_t Master::calc_cs(uint8_t *datas,uint8_t len)
 {
   uint8_t cs=0;
@@ -81,7 +96,7 @@ void Master::send(Request *pReq)
   cs+=pReq->fct;
   req[3]=tohexchar((pReq->cmd>>4)&0x0F);
   cs+=req[3];
-  req[4]=tohexchar(pReq->cmd&0xFF);
+  req[4]=tohexchar(pReq->cmd&0x0F);
   cs+=req[4];
   req[5]=tohexchar((cs>>4)&0xFF);
   req[6]=tohexchar(cs&0xFF);
@@ -141,6 +156,10 @@ bool Master::loop(void)
   switch (eState)
   {
     case OFF:
+    {
+      for (int i=0;i<sizeof(_cycles)/sizeof(Request *);i++)
+        _cycles[i]->reset();
+    }
     case IDLE:
     {
       m_tick0=millis();
@@ -292,20 +311,10 @@ bool Master::loop(void)
       }
     }
 
-static RqPump _rqpump('A');
-static RqOya _rqoyaA('B');
-static RqOya _rqoyaB('C');
-static RqOya _rqoyaC('D');
-static RqOya _rqoyaD('E');
-
-static Request *_cycles[]=
+bool Master::isRunning(void)
 {
-  &_rqpump,
-  &_rqoyaA,
-  &_rqoyaB,
-  &_rqoyaC,
-  &_rqoyaD
-};
+  return eState==OFF?false:true;
+}
 
 bool Master::nextRequest(void)
 {

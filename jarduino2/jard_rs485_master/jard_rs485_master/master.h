@@ -42,6 +42,7 @@ class Master
     void setEnable(bool enable);  
     bool loop(void);
     void recv(void);
+    bool isRunning(void);
     
     Request *getRequestFrom(char addr);
 

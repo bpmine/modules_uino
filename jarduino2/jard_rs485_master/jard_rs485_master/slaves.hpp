@@ -1,6 +1,6 @@
 /**
  * @file slaves.hpp
- * @brief Representation des esclaves (Pompe et Oyas)
+ * @brief Representation des états des esclaves (Pompe et Oyas)
 */
 #ifndef SLAVES_HEADER_INCLUDED
 #define SLAVES_HEADER_INCLUDED
@@ -14,6 +14,7 @@ class Slave
     bool on;
     int temp_dg;
     int hum_pc;
+    bool enabled;
 
     bool comm_ok;
     
@@ -30,6 +31,7 @@ class Slave
       on=false;
       temp_dg=-1;
       hum_pc=-1;
+      enabled=false;
       comm_ok=false;
       
       cycles_since_off=0;
@@ -38,6 +40,11 @@ class Slave
       cycles_since_ok=0;
 
       cmd=false;
+    }
+
+    void setEnabled(bool en)
+    {
+      enabled=en;
     }
 
     void setOn(bool flgOn)
@@ -132,7 +139,7 @@ class OyasList
 
     Oya * itNext(int &pos)
     {
-      if ( (oyas==NULL) || (nbOyas==0) )
+      if (oyas==NULL)
         return NULL;
         
       if (pos<nbOyas)
