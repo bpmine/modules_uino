@@ -4,10 +4,7 @@
 #include "slaves.hpp"
 #include "pins.h"
 
-typedef enum { BOOT, TEST, RTC, TODO, START_EV, FILLING, STOP_PMP, STOP_EV, NEXT, SLEEP  } E_APP_STATE;
-
 extern bool g_trace_on;
-extern E_APP_STATE g_app_state;
 
 extern void app_init(void);
 extern void app_loop();

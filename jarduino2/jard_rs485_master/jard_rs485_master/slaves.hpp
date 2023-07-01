@@ -165,6 +165,11 @@ class OyasList
 
       return false;
     }
+    
+    int count()
+    {
+      return nbOyas;
+    }
 
     void SetOn(char addr,bool on)
     {

@@ -4,6 +4,7 @@
 #include "master.h"
 #include "pins.h"
 #include "timer.h"
+#include "states.h"
 
 #define NUM_LEDS    (8)
 
@@ -14,7 +15,6 @@
 //#define DATE_INIT
 
 bool g_trace_on=false;
-E_APP_STATE g_app_state=BOOT;
 
 
 static DS1307 _rtc;
@@ -39,8 +39,8 @@ static Oya * _list_oyas[]=
 static OyasList _oyasList(_list_oyas,4);    
 static Master _master;
 
-static Timer tmrState;
 static Timer tmrBlink(500,false);
+static Timer tmrLongTest(2000);
 
 void _app_setAllLeds(CRGB col)
 {
@@ -194,7 +194,7 @@ void app_init(void)
   _flg500ms=false;
   tmrBlink.start();  
   
-  g_app_state=BOOT;
+  //g_app_state=BOOT;
 }
 
 void _app_master_mgt(void)
@@ -243,6 +243,281 @@ void _app_update_leds(void)
     }  
 }
 
+#include <avr/sleep.h>
+#include <avr/power.h>
+#include <avr/wdt.h>
+
+void sleepDeep10s()
+{
+    wdt_enable(WDTO_8S);
+    WDTCSR |= (1<<WDCE) | (1<<WDE);
+    WDTCSR |= _BV(WDIE);
+  
+    set_sleep_mode(SLEEP_MODE_PWR_DOWN);
+    sleep_enable();
+    
+    sleep_mode();
+    
+    sleep_disable();
+    power_all_enable();  
+    wdt_disable();    
+    delay(2000);
+}
+
+
+typedef enum { BOOT, TEST, RTC, TODO, START_EV, FILLING, STOP_PMP, NEXT, SLEEP  } E_APP_STATE;
+
+class AppStates : public States
+{ 
+  private:
+    int posOya;
+    Oya *pOya;
+    unsigned long cycle0;
+    
+  protected:
+    void OnEnterState(int oldState) override
+    { 
+      switch (state)
+      {
+        case TEST:
+        {
+          Serial.println("BOUTON TEST");
+          
+          digitalWrite(PIN_PWR_ON,HIGH);
+          _master.setEnable(true);          
+          tmt.setDuration_ms(10000);
+          tmt.start();
+          tmrLongTest.start();
+          break;
+        }
+        case TODO:
+        {
+            Serial.println("Todo ?");            
+            digitalWrite(PIN_PWR_ON,HIGH);
+            _master.setEnable(true);          
+            break;
+        }
+        case START_EV:
+        {         
+          if (pOya!=NULL)
+          {
+            Serial.print("@");
+            Serial.print(pOya->addr);
+            Serial.println(": Start EV.");
+            pOya->cmd=true;            
+          }
+          
+          cycle0=_master.cycles();
+          tmt.setDuration_ms(1000);
+          tmt.start();
+          break;
+        }        
+        case FILLING:
+        {
+          Serial.println("Filling...");
+          break;
+        }
+        case NEXT:
+        {
+          //Serial.println("Next.");
+          break;          
+        }
+        case STOP_PMP:
+        {
+          Serial.println("Stop PMP.");
+          cycle0=_master.cycles();
+          tmt.setDuration_ms(1000);
+          tmt.start();
+          break;
+        }
+      }
+    }
+    
+    void OnLeaveState(int newState) override
+    { 
+    }
+    
+    virtual void OnRunState(void) override
+    {    
+      switch (state)
+      {
+        case BOOT:
+        {
+          if (digitalRead(PIN_TEST_BTN)==LOW)
+            changeState(TEST);   
+          else
+            changeState(RTC);
+            
+          break;
+        }    
+    
+        case TEST:
+        {      
+          if (digitalRead(PIN_TEST_BTN)==HIGH)
+            tmrLongTest.start();
+    
+          /// Appui long sur test
+          //if (tmrLongTest.tick()==true)
+          //  g_app_state=TODO;
+          
+          digitalWrite(LED_BUILTIN,HIGH);
+          _app_update_leds();
+          _leds[0]=CRGB(255,0,0);
+          _leds[1]=CRGB(0,255,0);
+          _leds[2]=CRGB(0,0,255);
+    
+          if (_flg500ms==true)
+            _leds[3]=CRGB(0,0,255);
+          else
+            _leds[3]=CRGB(0,0,0);
+          
+          break;
+        }
+        
+        case RTC:
+        {
+          Serial.println("Check RTC...");
+          
+          DateTime now = _rtc.now();
+          
+          if ( (now.hour()==23) && (now.minute()>=0) && (now.minute()<=34) )      
+            changeState(TODO);
+          else
+            changeState(SLEEP);
+            
+          break;
+        }
+    
+        case TODO:
+        {
+          _app_update_leds();
+    
+          pOya=_oyasList.getOya(posOya);
+          if (pOya!=NULL)
+          {
+            if ( (pOya->comm_ok==true) && ((pOya->high==true) || (pOya->low==true)) )
+            {
+              changeState(START_EV);
+              break;
+            }              
+          }
+          changeState(NEXT);
+                    
+          break;
+        }    
+    
+        case START_EV:
+        {
+          _app_update_leds();
+    
+          if (pOya!=NULL)
+          {
+            pOya->cmd=true;
+            if (_master.cycles()!=cycle0)
+              changeState(FILLING);
+          }
+          else
+            changeState(NEXT);
+    
+          break;
+        }
+        
+        case FILLING:
+        {
+          _app_update_leds();
+          
+          if (pOya!=NULL)
+          {
+            if ( (pOya->comm_ok==true) && ((pOya->high==true) || (pOya->low==true)) )
+            {
+              pOya->cmd=true;
+              if (pOya->on==true)
+                _pump.cmd=true;
+              else
+                _pump.cmd=false;
+            }
+            else
+              changeState(STOP_PMP);
+          }
+          else
+            changeState(NEXT);
+            
+          break;
+        }
+
+        case STOP_PMP:
+        {
+          _pump.cmd=false;
+          if (_master.cycles()!=cycle0)
+            changeState(NEXT);
+            
+          break;
+        }
+
+        case NEXT:
+        {
+          _pump.cmd=false;
+          int pos=0;
+          Oya *p=_oyasList.itNext(pos);
+          while (p!=NULL)
+          {
+            p->cmd=false;
+            p=_oyasList.itNext(pos);
+          }
+
+          pOya=_oyasList.itNext(posOya);
+          if (pOya==NULL)
+            posOya=0;
+
+          changeState(RTC);
+            
+          break;          
+        }
+    
+        case SLEEP:
+        default:
+        {
+          Serial.println("Sleep...");
+          _app_clrAllLeds();
+          _master.setEnable(false);
+          digitalWrite(LED_BUILTIN,LOW);          
+          digitalWrite(PIN_PWR_ON,LOW);
+          sleepDeep10s();
+          break;
+        }
+      }   
+    }
+    
+    virtual void OnTimeout(void) override
+    {  
+      switch (state)
+      {
+        case TEST:
+        {
+            changeState(SLEEP);
+            break;
+        }
+        case START_EV:
+        case STOP_PMP:
+        {
+          changeState(NEXT);
+          break;
+        }
+      }
+    }
+    
+  
+  public:
+    AppStates():States(BOOT)
+    {
+      posOya=0;
+      cycle0=0;
+    }
+};
+
+
+AppStates _states;
+
 void app_loop(void)
 {
   if (_master.isRunning()==false)
@@ -260,90 +535,7 @@ void app_loop(void)
     _app_master_mgt();
   }
 
-  switch (g_app_state)
-  {
-    case BOOT:
-    {
-      if (digitalRead(PIN_TEST_BTN)==0)
-      {        
-        g_app_state=TEST;
-        digitalWrite(PIN_PWR_ON,HIGH);
-        _master.setEnable(true);
-        Serial.println("BOUTON TEST");
-        tmrState.setDuration_ms(5000);
-        tmrState.start();
-      }        
-      else
-      {
-        Serial.println("Check RTC...");
-        g_app_state=RTC;
-      }
-        
-      break;
-    }    
-
-    case TEST:
-    {      
-      digitalWrite(LED_BUILTIN,HIGH);
-      _app_update_leds();
-      _leds[0]=CRGB(255,0,0);
-      _leds[1]=CRGB(0,255,0);
-      _leds[2]=CRGB(0,0,255);
-
-      if (_flg500ms==true)
-        _leds[3]=CRGB(0,0,255);
-      else
-        _leds[3]=CRGB(0,0,0);
-      
-      if (tmrState.tick()==true)
-      {
-        Serial.println("Sleep...");
-        digitalWrite(LED_BUILTIN,LOW);
-        g_app_state=SLEEP;
-      }
-      break;
-    }
-    
-    case RTC:
-    {
-      DateTime now = _rtc.now();
-      
-      if ( (now.hour()==14) && (now.minute()>=0) && (now.minute()<=10) )      
-      {
-        Serial.println("Todo ?");
-        tmrState.setDuration_ms(10000);
-        g_app_state=TODO;
-        digitalWrite(PIN_PWR_ON,HIGH);
-        _master.setEnable(true);      
-      }
-      else
-        g_app_state=SLEEP;
-        
-      break;      
-    }
-
-    case TODO:
-    {
-      _app_update_leds();
-      
-      if (tmrState.tick()==true)
-      {
-        Serial.println("Tmt todo...");
-        g_app_state=RTC;
-      }
-      
-      break;
-    }    
-
-    case SLEEP:
-    default:
-    {
-      _app_clrAllLeds();
-      _master.setEnable(false);
-      digitalWrite(PIN_PWR_ON,LOW);
-      break;
-    }
-  }
+  _states.loop();
 
   FastLED.show();
     
