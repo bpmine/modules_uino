@@ -11,6 +11,7 @@ class Master
   private:
     HardwareSerial *pStr;
     int txen;
+    unsigned long nbcycles;
 
     enum {OFF,IDLE,SEND,RECV,NEXT,END} eState;
     
@@ -43,6 +44,7 @@ class Master
     bool loop(void);
     void recv(void);
     bool isRunning(void);
+    unsigned long cycles(void);
     
     Request *getRequestFrom(char addr);
 

@@ -75,7 +75,8 @@ void Master::init()
 
   curReq=0;
   pos=0;
-  eState=IDLE;
+  eState=OFF;
+  nbcycles=0;
   m_tick0=millis();  
 }
     
@@ -157,6 +158,7 @@ bool Master::loop(void)
   {
     case OFF:
     {
+      nbcycles=0;
       for (int i=0;i<sizeof(_cycles)/sizeof(Request *);i++)
         _cycles[i]->reset();
     }
@@ -223,6 +225,7 @@ bool Master::loop(void)
     case END:
     {
       eState=IDLE;
+      nbcycles++;
       return true;
     }
   }
@@ -230,90 +233,95 @@ bool Master::loop(void)
   return false;
 }  
 
-    void Master::recv(void)
-    {
-      Request *pReq=getCurRequest();
-      if (pReq==NULL)
-        return;
+void Master::recv(void)
+{
+  Request *pReq=getCurRequest();
+  if (pReq==NULL)
+    return;
       
-      while (pStr->available())
-      {
-        int b=pStr->read();
-        //Serial.write(b);
-        if (eState!=RECV)
-          continue;
+  while (pStr->available())
+  {
+    int b=pStr->read();
+    //Serial.write(b);
+    if (eState!=RECV)
+      continue;
           
-        if ( (b>0) && (b<255) )
+    if ( (b>0) && (b<255) )
+    {
+      if ( (pos==0) && (b!=SOH) )
+        continue;
+
+      buffer[pos]=(uint8_t)b;
+      pos++;
+      if (pos>sizeof(buffer)-1)
+      {
+        pos=0;
+        continue;
+      }
+      m_tick0=millis();          
+
+      if (b==STX)
+      {
+        uint8_t addr=buffer[1];
+        uint8_t fct=buffer[2];
+        uint8_t csa=buffer[pos-3];
+        uint8_t csb=buffer[pos-2];
+        uint8_t cs=decode_hex_byte(csa,csb);
+        uint8_t cs_calc=calc_cs(buffer,pos-3);
+
+        if (flgTrace==true)
         {
-          if ( (pos==0) && (b!=SOH) )
-            continue;
-
-          buffer[pos]=(uint8_t)b;
-          pos++;
-          if (pos>sizeof(buffer)-1)
+          char str[50];
+          sprintf(str,"recv %c %c cs=%02x calc=%02x",addr,fct,cs,cs_calc);
+          Serial.println(str);
+        }
+            
+        if (cs_calc==cs)
+        {
+          pReq->cserr=false;
+          if ( (addr!=pReq->addr) || (fct!=pReq->fct) )
           {
-            pos=0;
-            continue;
-          }
-          m_tick0=millis();          
-
-          if (b==STX)
-          {
-            uint8_t addr=buffer[1];
-            uint8_t fct=buffer[2];
-            uint8_t csa=buffer[pos-3];
-            uint8_t csb=buffer[pos-2];
-            uint8_t cs=decode_hex_byte(csa,csb);
-            uint8_t cs_calc=calc_cs(buffer,pos-3);
-
+            pReq->frmerr=true;
+            pReq->nbCyclesErr++;
+            pReq->comm_ok=false;                
             if (flgTrace==true)
             {
-              char str[50];
-              sprintf(str,"recv %c %c cs=%02x calc=%02x",addr,fct,cs,cs_calc);
-              Serial.println(str);
+              Serial.println("Nosync");
             }
-            
-            if (cs_calc==cs)
-            {
-              pReq->cserr=false;
-              if ( (addr!=pReq->addr) || (fct!=pReq->fct) )
-              {
-                pReq->frmerr=true;
-                pReq->nbCyclesErr++;
-                pReq->comm_ok=false;                
-                if (flgTrace==true)
-                {
-                  Serial.println("Nosync");
-                }
-              }
-              else
-              {
-                pReq->setRecvData(buffer+3);                
-                pReq->frmerr=false;
-                pReq->comm_ok=true;
-                pReq->decodeData();
-                if (flgTrace==true)
-                  Serial.println("Frame ok");
-                eState=NEXT;
-              }              
-            }
-            else
-            {
-              pReq->cserr=true;
-              pReq->nbCyclesErr++;
-              pReq->nbCsErr++;
-              pReq->comm_ok=false;
-              if (flgTrace==true)
-                Serial.println("CS Error");
-            }            
           }
-        }        
+          else
+          {
+            pReq->setRecvData(buffer+3);                
+            pReq->frmerr=false;
+            pReq->comm_ok=true;
+            pReq->decodeData();
+            if (flgTrace==true)
+              Serial.println("Frame ok");
+            eState=NEXT;
+          }              
+        }
+        else
+        {
+          pReq->cserr=true;
+          pReq->nbCyclesErr++;
+          pReq->nbCsErr++;
+          pReq->comm_ok=false;
+          if (flgTrace==true)
+            Serial.println("CS Error");
+        }            
       }
-    }
+    }        
+  }
+}
 
 bool Master::isRunning(void)
 {
   return eState==OFF?false:true;
+}
+
+unsigned long Master::cycles(void)
+{
+  return nbcycles;
 }
 
 bool Master::nextRequest(void)
