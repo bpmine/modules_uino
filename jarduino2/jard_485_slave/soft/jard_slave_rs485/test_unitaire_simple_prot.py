@@ -1,4 +1,5 @@
 import serial
+import serial.rs485
 import time
 import re
 import threading
@@ -58,6 +59,7 @@ def sendRequest(ser,addr,fct,val):
 
 
 ser= serial.Serial(port=r"\\.\%s" % PORT,stopbits = 1, bytesize = 8, parity='N',baudrate= 9600,timeout=0.5)
+#ser.rs485_mode=serial.rs485.RS485Settings() #rts_level_for_tx=True, rts_level_for_rx=False, loopback=False) #, delay_before_tx=0.002f, delay_before_rx=0.001f)
 time.sleep(2)
 txt=ser.read_until('\n')
 print(txt)
@@ -219,10 +221,22 @@ def test_basic_oya(ser,addr):
         time.sleep(0.05)
         
    
-
-cfg_ping(ser,'E')
-#cfg_addr(ser,'Z','E')        
-#cfg_enable(ser,'E',1)
+time.sleep(2)
+lst=['A','D','E','F']
+while True:
+    try:
+        for a in lst:
+            print('Ping %s: ' % (a),end='')
+            res=sendRequest(ser,a,'p',4)
+            print(res)
+            assert res=='%02x' % (4)        
+    except:
+        print('NOK')
+    
+        time.sleep(0.01)
+    
+#cfg_addr(ser,'Z','F')        
+#cfg_enable(ser,'F',1)
 
 ##time.sleep(2)
 ##for i in range(0,255+1):
@@ -234,7 +248,7 @@ cfg_ping(ser,'E')
 
 #test_addr_fct(ser)
 #test_enable_disable(ser,'C')
-#test_full(ser,'D')
+#test_full(ser,'F')
 #test_basic_pump(ser)
 #test_basic_oya(ser,'D')
 

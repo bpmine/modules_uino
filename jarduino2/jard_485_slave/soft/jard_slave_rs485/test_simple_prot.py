@@ -136,10 +136,11 @@ oyas=[
     SlvOya('C'),
     SlvOya('D'),
     SlvOya('E'),
+    SlvOya('F'),
     ]
 
 if SIMU==False:
-    ser= serial.Serial(port=r"\\.\%s" % PORT,stopbits = 1, bytesize = 8, parity='N',baudrate= 9600,timeout=0.1)
+    ser= serial.Serial(port=r"\\.\%s" % PORT,stopbits = 1, bytesize = 8, parity='N',baudrate= 9600,timeout=0.2)
     txt=ser.read_until('\n')
     print(txt)
     ser.flush()
@@ -240,11 +241,12 @@ t.start()
 while True:
     print('_'*60)
     print('1) Statut')
-    print('2) Pompe 1')
-    print('3) Oya 1')
-    print('4) Oya 2')
-    print('5) Oya 3')
-    print('6) Oya 4')
+    print('2) Pompe 1 (@A)')
+    print('3) Oya 1 (@B)')
+    print('4) Oya 2 (@C)')
+    print('5) Oya 3 (@D)')
+    print('6) Oya 4 (@E)')
+    print('7) Oya 5 (@F)')
     print('0) Quitter')
 
     res=input('>')
@@ -307,6 +309,17 @@ while True:
                 oyas[3].cmd=False
                 
             print('Oya 4: %s' % (oyas[3].cmd))
+
+        stopPumpIfNoOya()            
+
+    elif res=='7':
+        if len(oyas)>4:
+            if oyas[4].cmd==False:
+                oyas[4].cmd=True
+            else:
+                oyas[4].cmd=False
+                
+            print('Oya 5: %s' % (oyas[3].cmd))
 
         stopPumpIfNoOya()            
 
