@@ -27,16 +27,18 @@ static Oya _oyaB('B');
 static Oya _oyaC('C');
 static Oya _oyaD('D');
 static Oya _oyaE('E');
+static Oya _oyaF('F');
 
 static Oya * _list_oyas[]=
 {
   &_oyaB,
   &_oyaC,
   &_oyaD,
-  &_oyaE
+  &_oyaE,
+  &_oyaF
 };
 
-static OyasList _oyasList(_list_oyas,4);    
+static OyasList _oyasList(_list_oyas,5);    
 static Master _master;
 
 static Timer tmrBlink(500,false);
@@ -71,6 +73,7 @@ void _bus_to_objects(void)
       pOya->setEnabled(pRqOya->getEnabled());
       pOya->setTemp_dg(pRqOya->getTemp());
       pOya->setHum_pc(pRqOya->getHum());
+      pOya->updCycleStats();
     }
     else
     {
@@ -89,6 +92,7 @@ void _bus_to_objects(void)
     _pump.setTemp_dg(pPump->getTemp());
     _pump.setHum_pc(pPump->getHum());
     _pump.setEnabled(pPump->getEnabled());
+    _pump.updCycleStats();
   }
   else
   {
@@ -171,7 +175,7 @@ void app_init(void)
   FastLED.show();
     
   FastLED.addLeds<NEOPIXEL, PIN_DATA_LEDS>(_leds, NUM_LEDS); 
-  FastLED.setBrightness(255);
+  FastLED.setBrightness(80);
   
   Wire.begin();
   _rtc.begin();
@@ -184,6 +188,7 @@ void app_init(void)
     //app_set_time(11,9,0);    
     Serial.println("/!\\ SET INIT TIME !");
     _rtc.adjust(DateTime(__DATE__, __TIME__));
+    delay(5000);
   #endif
 
   DateTime now = _rtc.now();
@@ -284,6 +289,7 @@ class AppStates : public States
           Serial.println("BOUTON TEST");
           
           digitalWrite(PIN_PWR_ON,HIGH);
+          digitalWrite(PIN_PWR_LEDS,HIGH);
           _master.setEnable(true);          
           tmt.setDuration_ms(10000);
           tmt.start();
@@ -294,6 +300,7 @@ class AppStates : public States
         {
             Serial.println("Todo ?");            
             digitalWrite(PIN_PWR_ON,HIGH);
+            digitalWrite(PIN_PWR_LEDS,HIGH);
             _master.setEnable(true);          
             break;
         }
@@ -477,12 +484,14 @@ class AppStates : public States
         case SLEEP:
         default:
         {
-          Serial.println("Sleep...");
+          //Serial.println("Sleep...");
           _app_clrAllLeds();
-          _master.setEnable(false);
-          digitalWrite(LED_BUILTIN,LOW);          
-          digitalWrite(PIN_PWR_ON,LOW);
-          sleepDeep10s();
+          FastLED.show();
+          //_master.setEnable(false);
+          //digitalWrite(LED_BUILTIN,LOW);          
+          //digitalWrite(PIN_PWR_ON,LOW);
+          //digitalWrite(PIN_PWR_LEDS,LOW);
+          //sleepDeep10s();
           break;
         }
       }   
@@ -535,7 +544,7 @@ void app_loop(void)
     _app_master_mgt();
   }
 
-  _states.loop();
+  //_states.loop();
 
   FastLED.show();
     

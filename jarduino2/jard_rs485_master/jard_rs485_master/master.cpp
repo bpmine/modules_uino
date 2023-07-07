@@ -1,18 +1,20 @@
 #include "master.h"
 
 static RqPump _rqpump('A');
-static RqOya _rqoyaA('B');
-static RqOya _rqoyaB('C');
-static RqOya _rqoyaC('D');
-static RqOya _rqoyaD('E');
+static RqOya _rqoyaB('B');
+static RqOya _rqoyaC('C');
+static RqOya _rqoyaD('D');
+static RqOya _rqoyaE('E');
+static RqOya _rqoyaF('F');
 
 static Request *_cycles[]=
 {
   &_rqpump,
-  &_rqoyaA,
   &_rqoyaB,
   &_rqoyaC,
-  &_rqoyaD
+  &_rqoyaD,
+  &_rqoyaE,
+  &_rqoyaF
 };
 
 uint8_t Master::calc_cs(uint8_t *datas,uint8_t len)
@@ -105,6 +107,7 @@ void Master::send(Request *pReq)
 
   delay(10);
   digitalWrite(this->txen,HIGH);
+  delay(1);
   pStr->write(req,sizeof(req));
   pStr->flush();
   while ((UCSR0A & _BV (TXC0)) == 0) {}
@@ -191,7 +194,7 @@ bool Master::loop(void)
         delta=0xFFFFFFFFUL-m_tick0+t;
       }
 
-      if (delta > 200UL)
+      if (delta > 500UL)
       {
         if (flgTrace==true)
         {        

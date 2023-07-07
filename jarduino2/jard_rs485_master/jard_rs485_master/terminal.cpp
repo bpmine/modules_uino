@@ -55,9 +55,11 @@ void _term_exec_oya(char *strParams)
   {
     if (p->addr==addr)
     {
+      char tmp[10];
       bool on=parseOnOff(onoff,false);
       p->cmd=on;
-      _OnOffAns("Oya",on);      
+      sprintf(tmp,"Oya %c",addr);
+      _OnOffAns(tmp,on);      
       return;
     }
     p=app_term_get_next_oya(pos);
@@ -66,12 +68,12 @@ void _term_exec_oya(char *strParams)
   Serial.println("Oya non trouvé!");
 }
 
-void _term_exec_pump(char strParams)
+void _term_exec_pump(char *strParams)
 {
     Pump *p=app_term_get_pump();
     if (p==NULL)
     {
-      Serial.println("Erreur interne pump est NULL");
+      Serial.println("Erreur interne: pump est NULL");
       return;
     }
 
@@ -106,7 +108,7 @@ void _term_exec_pump(char strParams)
     {
       bool on=parseOnOff(strParams,false);
       p->cmd=on;
-      _OnOffAns("Pompe",on);      
+      _OnOffAns("Pompe",on);
     }  
 }
 
@@ -146,11 +148,56 @@ void _term_exec_oyas(void)
     Serial.println();
 }
 
+void _term_disp_slave_stats(Slave *p)
+{
+  char tmp[20];
+  sprintf(tmp,"Oya %c: ",p->addr);Serial.print(tmp);
+  sprintf(tmp," off=%d ",p->cycles_since_off);Serial.print(tmp);
+  sprintf(tmp," on=%d ",p->cycles_since_on);Serial.print(tmp);
+  sprintf(tmp," nok=%d ",p->cycles_since_nok);Serial.print(tmp);
+  sprintf(tmp," ok=%d ",p->cycles_since_ok);Serial.print(tmp);
+  sprintf(tmp," errs=%d ",p->cycles_errors);Serial.print(tmp);
+  Serial.println("");
+}
+
+void _term_exec_stats(void)
+{
+  Serial.println("___________________");
+  Serial.println("Statistiques:");
+  int pos=0;
+  Oya *pOya=app_term_get_next_oya(pos);
+  while (pOya!=NULL)
+  {
+    _term_disp_slave_stats(pOya);
+    pOya=app_term_get_next_oya(pos);
+  }
+
+  Pump *pPump=app_term_get_pump();
+  if (pPump!=NULL)
+  _term_disp_slave_stats(pPump);
+}
+
+void _term_exec_raz(void)
+{
+  int pos=0;
+  Oya *pOya=app_term_get_next_oya(pos);
+  while (pOya!=NULL)
+  {
+    pOya->razErrors();
+    pOya=app_term_get_next_oya(pos);
+  }
+  Pump *pPump=app_term_get_pump();
+  if (pPump!=NULL)
+    pPump->razErrors();
+  
+  Serial.println("RAZ errors...");
+}
+
 void _execCmd(char *strCmd,char *strParams)
 {
   if (strcmp(strCmd,"test")==0)
   {
-    Serial.println("OK");
+    Serial.println("TEST OK");
   }
   else if (strcmp(strCmd,"help")==0)
   {
@@ -166,7 +213,6 @@ void _execCmd(char *strCmd,char *strParams)
   }
   else if (strcmp(strCmd,"oya")==0)
   {
-    Serial.println(strParams);
     _term_exec_oya(strParams);
   }
   else if (strcmp(strCmd,"master")==0)
@@ -180,6 +226,14 @@ void _execCmd(char *strCmd,char *strParams)
     bool on=parseOnOff(strParams,false);
     app_term_trace(on);
     _OnOffAns("Traces",on);
+  }
+  else if (strcmp(strCmd,"stats")==0)
+  {
+    _term_exec_stats();
+  }
+  else if (strcmp(strCmd,"raz")==0)
+  {
+    _term_exec_raz();
   }
 }
 

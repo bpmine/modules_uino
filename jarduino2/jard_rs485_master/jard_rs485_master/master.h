@@ -46,7 +46,7 @@ class Master
     bool isRunning(void);
     unsigned long cycles(void);
     
-    Request *getRequestFrom(char addr);
+    Request *getRequestFrom(char addr);    
 
     void setTrace(bool flgEnabled);
 };

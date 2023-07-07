@@ -22,6 +22,7 @@ class Slave
     unsigned long cycles_since_on;
     unsigned long cycles_since_nok;
     unsigned long cycles_since_ok;
+    unsigned long cycles_errors;
 
     bool cmd;
 
@@ -38,6 +39,7 @@ class Slave
       cycles_since_on=0;
       cycles_since_nok=0;
       cycles_since_ok=0;
+      cycles_errors=0;
 
       cmd=false;
     }
@@ -98,6 +100,32 @@ class Slave
        this->hum_pc=hum_pc;
     }
 
+    void updCycleStats(void)
+    {
+      if (comm_ok==true)
+      {
+        if (on==false)
+          cycles_since_off++;
+        else
+          cycles_since_on++;
+          
+        cycles_since_nok=0;
+        cycles_since_ok++;
+      }
+      else
+      {
+        cycles_since_off=0;
+        cycles_since_on=0;
+        cycles_since_ok=0;
+        cycles_since_nok++;
+        cycles_errors++;
+      }      
+    }
+
+    void razErrors(void)
+    {
+      cycles_errors=0;
+    }
 };
 
 class Pump : public Slave

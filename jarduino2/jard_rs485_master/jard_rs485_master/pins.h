@@ -5,5 +5,6 @@
 #define PIN_TEST_BTN      (2)
 #define PIN_PWR_ON        (3)
 #define PIN_DATA_LEDS     (4)
+#define PIN_PWR_LEDS      (5)
 
 #endif
