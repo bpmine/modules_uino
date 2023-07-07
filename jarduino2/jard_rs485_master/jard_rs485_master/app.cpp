@@ -11,6 +11,10 @@
 #include <Wire.h>
 #include <RTClib.h>
 #include <FastLED.h>
+#include <avr/sleep.h>
+#include <avr/power.h>
+#include <avr/wdt.h>
+
 
 //#define DATE_INIT
 
@@ -221,11 +225,32 @@ void _app_master_mgt(void)
 
 void _app_update_leds(void)
 {
+  if (_master.isRunning()==false)
+  {
+    _app_clrAllLeds();
+    _leds[0]=CRGB(255,0,0);
+  }
+  else
+  {
+    _leds[0]=CRGB(0,255,0);
+    
+    if (_pump.comm_ok==false)
+      _leds[1]=CRGB(0,0,0);
+    else if (_pump.on==false)
+      _leds[1]=CRGB(255,0,0);
+    else if (_pump.flow==0)
+      _leds[1]=_flg500ms?CRGB(0,0,0):CRGB(255,0,0);
+    else if ( (_pump.flow>0) && (_pump.flow<10) )
+      _leds[1]=_flg500ms?CRGB(0,0,0):CRGB(0,0,255);
+    else
+      _leds[1]=_flg500ms?CRGB(0,0,0):CRGB(0,255,0);
+
+    int i=2;
     int pos=0;
     Oya *pOya=_oyasList.itNext(pos);
     while (pOya!=NULL)
     {
-      if (pos-1<NUM_LEDS)
+      if (i<NUM_LEDS)
       {
         CRGB col;
         if (pOya->comm_ok==false)
@@ -234,23 +259,20 @@ void _app_update_leds(void)
           col=CRGB(0,255,0);
         else if (pOya->low==false)
           col=CRGB(0,0,255);
-        else 
+       else 
           col=CRGB(255,0,0);
 
         if ( (pOya->on==true) && (_flg500ms==true) )
           col=CRGB(0,0,0);
           
-        _leds[pos]=col;
+        _leds[i]=col;
+        i++;
       }
       
-      pOya->comm_ok=false;
       pOya=_oyasList.itNext(pos);
-    }  
+    }    
+  }  
 }
-
-#include <avr/sleep.h>
-#include <avr/power.h>
-#include <avr/wdt.h>
 
 void sleepDeep10s()
 {
@@ -291,7 +313,7 @@ class AppStates : public States
           digitalWrite(PIN_PWR_ON,HIGH);
           digitalWrite(PIN_PWR_LEDS,HIGH);
           _master.setEnable(true);          
-          tmt.setDuration_ms(10000);
+          tmt.setDuration_ms(40000);
           tmt.start();
           tmrLongTest.start();
           break;
@@ -369,14 +391,6 @@ class AppStates : public States
           
           digitalWrite(LED_BUILTIN,HIGH);
           _app_update_leds();
-          _leds[0]=CRGB(255,0,0);
-          _leds[1]=CRGB(0,255,0);
-          _leds[2]=CRGB(0,0,255);
-    
-          if (_flg500ms==true)
-            _leds[3]=CRGB(0,0,255);
-          else
-            _leds[3]=CRGB(0,0,0);
           
           break;
         }
@@ -503,7 +517,7 @@ class AppStates : public States
       {
         case TEST:
         {
-            changeState(SLEEP);
+            //changeState(SLEEP);
             break;
         }
         case START_EV:
@@ -544,7 +558,7 @@ void app_loop(void)
     _app_master_mgt();
   }
 
-  //_states.loop();
+  _states.loop();
 
   FastLED.show();
     
