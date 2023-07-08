@@ -1,8 +1,17 @@
+/**
+ * @file states.h
+ *
+ * @brief Modèle de gestion d'une machine à états
+ **/
 #ifndef STATES_HEADER_INCLUDED
 #define STATES_HEADER_INCLUDED
 
 #include "timer.h"
 
+/**
+ * @class States
+ * @brief Classe de gestion d'une machine à états
+ **/
 class States
 {
   protected:
@@ -15,11 +24,12 @@ class States
     virtual void OnTimeout(void) = 0;
 
   public:
-    States(int initialState) {state=initialState;}
+    States() {state=-1;}
+    virtual ~States() {}
   
     void changeState(int newState);
     
-    void getState(void) {return state;}
+    int getState(void) {return state;}
 
     void loop(void); 
 };

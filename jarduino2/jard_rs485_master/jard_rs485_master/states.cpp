@@ -1,5 +1,14 @@
+/**
+ * @file states.cpp
+ *
+ * @brief Modèle de gestion d'une machine à états
+ **/
 #include "states.h"
 
+/**
+ * @brief Changement d'état
+ * @param[in] newState Nouvel état
+ **/
 void States::changeState(int newState)
 {
   if (state!=newState)
@@ -12,6 +21,9 @@ void States::changeState(int newState)
   }
 }
 
+/**
+ * @brief Boucle à appeler périodiquement
+ **/
 void States::loop(void)
 {
   OnRunState();

@@ -1,3 +1,7 @@
+/**
+ * @file app.cpp
+ * @brief APPLLICATION
+ * */
 #include "app.h"
 
 #include "slaves.hpp"
@@ -5,8 +9,7 @@
 #include "pins.h"
 #include "timer.h"
 #include "states.h"
-
-#define NUM_LEDS    (8)
+#include "btn.hpp"
 
 #include <Wire.h>
 #include <RTClib.h>
@@ -15,6 +18,7 @@
 #include <avr/power.h>
 #include <avr/wdt.h>
 
+#define NUM_LEDS    (8)
 
 //#define DATE_INIT
 
@@ -46,7 +50,8 @@ static OyasList _oyasList(_list_oyas,5);
 static Master _master;
 
 static Timer tmrBlink(500,false);
-static Timer tmrLongTest(2000);
+
+static Btn btnTest;
 
 void _app_setAllLeds(CRGB col)
 {
@@ -67,7 +72,7 @@ void _bus_to_objects(void)
   Oya *pOya=_oyasList.itNext(pos);
   while (pOya!=NULL)
   {
-    RqOya *pRqOya = _master.getRequestFrom(pOya->addr);
+    RqOya *pRqOya=(RqOya *)_master.getRequestFrom(pOya->addr);
     if (pRqOya!=NULL)
     {
       pOya->setCommOk(pRqOya->getCommOk());
@@ -87,7 +92,7 @@ void _bus_to_objects(void)
     pOya=_oyasList.itNext(pos);
   }  
     
-  RqPump *pPump = _master.getRequestFrom(_pump.addr);
+  RqPump *pPump = (RqPump *)_master.getRequestFrom(_pump.addr);
   if (pPump!=NULL)
   {
     _pump.setCommOk(pPump->getCommOk());
@@ -110,7 +115,7 @@ void _objects_to_bus(void)
   Oya *pOya=_oyasList.itNext(pos);
   while (pOya!=NULL)
   {
-    RqOya *pRqOya = _master.getRequestFrom(pOya->addr);
+    RqOya *pRqOya = (RqOya *)_master.getRequestFrom(pOya->addr);
     if (pRqOya!=NULL)
     {   
       pRqOya->cmd = (pOya->cmd==true)?1:0;
@@ -142,7 +147,7 @@ Pump * app_term_get_pump(void)
 }
 
 
-void app_term_log(bool on)
+void app_term_log(bool /*on*/)
 {
 }
 
@@ -150,11 +155,6 @@ void app_term_trace(bool on)
 {
   g_trace_on=on;
   _master.setTrace(on);
-}
-
-bool app_slave(char addr,bool on)
-{
-  return false;
 }
 
 void app_set_date(int year,int month,int day)
@@ -173,38 +173,6 @@ void app_set_time(int hour,int minute,int second)
 
 
 
-void app_init(void)
-{  
-  _app_clrAllLeds();
-  FastLED.show();
-    
-  FastLED.addLeds<NEOPIXEL, PIN_DATA_LEDS>(_leds, NUM_LEDS); 
-  FastLED.setBrightness(80);
-  
-  Wire.begin();
-  _rtc.begin();
-  
-  _master.begin(&Serial1,PIN_TX_EN);
-  ulT0=millis();
-
-  #ifdef DATE_INIT
-    //app_set_date(2023,7,1);
-    //app_set_time(11,9,0);    
-    Serial.println("/!\\ SET INIT TIME !");
-    _rtc.adjust(DateTime(__DATE__, __TIME__));
-    delay(5000);
-  #endif
-
-  DateTime now = _rtc.now();
-  char strDate[20];
-  sprintf(strDate, "%02d/%02d/%04d %02d:%02d:%02d",now.day() , now.month(), now.year(), now.hour(), now.minute(), now.second());
-  Serial.println(strDate);  
-
-  _flg500ms=false;
-  tmrBlink.start();  
-  
-  //g_app_state=BOOT;
-}
 
 void _app_master_mgt(void)
 {
@@ -298,36 +266,56 @@ class AppStates : public States
 { 
   private:
     int posOya;
+    int startPosOya;
     Oya *pOya;
-    unsigned long cycle0;
+    bool test_mode;
     
   protected:
-    void OnEnterState(int oldState) override
+    void OnEnterState(int /*oldState*/) override
     { 
       switch (state)
       {
+    	case BOOT:
+    	{
+    	  startPosOya=posOya;
+    	  Serial.println("Enter boot...");
+          tmt.setDuration_ms(1000);
+          tmt.start();
+          break;
+    	}
+    	case RTC:
+    	{
+    	  Serial.println("Check RTC...");
+
+          digitalWrite(PIN_PWR_ON,HIGH);
+          _master.setEnable(true);
+
+          tmt.setDuration_ms(5000);
+          tmt.start();
+    	  break;
+    	}
         case TEST:
         {
-          Serial.println("BOUTON TEST");
+          Serial.println("Enter test...");
           
           digitalWrite(PIN_PWR_ON,HIGH);
           digitalWrite(PIN_PWR_LEDS,HIGH);
           _master.setEnable(true);          
           tmt.setDuration_ms(40000);
           tmt.start();
-          tmrLongTest.start();
+          test_mode=true;
+          btnTest.reset();
           break;
         }
         case TODO:
         {
-            Serial.println("Todo ?");            
-            digitalWrite(PIN_PWR_ON,HIGH);
+            Serial.println("TODO");
+
             digitalWrite(PIN_PWR_LEDS,HIGH);
-            _master.setEnable(true);          
             break;
         }
         case START_EV:
-        {         
+        {
           if (pOya!=NULL)
           {
             Serial.print("@");
@@ -336,7 +324,6 @@ class AppStates : public States
             pOya->cmd=true;            
           }
           
-          cycle0=_master.cycles();
           tmt.setDuration_ms(1000);
           tmt.start();
           break;
@@ -348,22 +335,26 @@ class AppStates : public States
         }
         case NEXT:
         {
-          //Serial.println("Next.");
+          Serial.println("Next.");
           break;          
         }
         case STOP_PMP:
         {
           Serial.println("Stop PMP.");
-          cycle0=_master.cycles();
           tmt.setDuration_ms(1000);
           tmt.start();
+          break;
+        }
+        case SLEEP:
+        {
+          Serial.println("Sleep...");
           break;
         }
       }
     }
     
-    void OnLeaveState(int newState) override
-    { 
+    void OnLeaveState(int /*newState*/) override
+    {
     }
     
     virtual void OnRunState(void) override
@@ -372,40 +363,30 @@ class AppStates : public States
       {
         case BOOT:
         {
-          if (digitalRead(PIN_TEST_BTN)==LOW)
-            changeState(TEST);   
-          else
-            changeState(RTC);
-            
+          /// @remark On attend le timeout pour prendre la décision selon l'état du bouton de TEST
           break;
         }    
     
         case TEST:
         {      
-          if (digitalRead(PIN_TEST_BTN)==HIGH)
-            tmrLongTest.start();
     
-          /// Appui long sur test
-          //if (tmrLongTest.tick()==true)
-          //  g_app_state=TODO;
+          /// Appui long sur test et on passe en TODO
+          if (btnTest.isLongPressed()==true)
+          {
+        	changeState(TODO);
+        	btnTest.reset();
+          }
           
           digitalWrite(LED_BUILTIN,HIGH);
           _app_update_leds();
+          _leds[0]=CRGB(0,0,255);
           
           break;
         }
         
         case RTC:
         {
-          Serial.println("Check RTC...");
-          
-          DateTime now = _rtc.now();
-          
-          if ( (now.hour()==23) && (now.minute()>=0) && (now.minute()<=34) )      
-            changeState(TODO);
-          else
-            changeState(SLEEP);
-            
+          _app_update_leds();
           break;
         }
     
@@ -422,6 +403,7 @@ class AppStates : public States
               break;
             }              
           }
+
           changeState(NEXT);
                     
           break;
@@ -433,9 +415,18 @@ class AppStates : public States
     
           if (pOya!=NULL)
           {
-            pOya->cmd=true;
-            if (_master.cycles()!=cycle0)
-              changeState(FILLING);
+
+            if (    (pOya->comm_ok==false)
+            	 || ( (pOya->low==false) && (pOya->high==false) )
+				 )
+            {
+              pOya->cmd=false;
+              changeState(NEXT);
+            }
+            else
+            {
+              pOya->cmd=true;
+            }
           }
           else
             changeState(NEXT);
@@ -463,15 +454,24 @@ class AppStates : public States
           else
             changeState(NEXT);
             
+          if (btnTest.isPressed()==true)
+          {
+        	changeState(NEXT);
+        	btnTest.reset();
+          }
+
+          if (btnTest.isLongPressed()==true)
+          {
+        	changeState(test_mode?TEST:SLEEP);
+          }
+
           break;
         }
 
         case STOP_PMP:
         {
+          _app_update_leds();
           _pump.cmd=false;
-          if (_master.cycles()!=cycle0)
-            changeState(NEXT);
-            
           break;
         }
 
@@ -490,7 +490,10 @@ class AppStates : public States
           if (pOya==NULL)
             posOya=0;
 
-          changeState(RTC);
+          if (startPosOya==posOya)
+        	changeState(test_mode?TEST:SLEEP);
+          else
+        	changeState(TODO);
             
           break;          
         }
@@ -498,14 +501,14 @@ class AppStates : public States
         case SLEEP:
         default:
         {
-          //Serial.println("Sleep...");
           _app_clrAllLeds();
           FastLED.show();
-          //_master.setEnable(false);
-          //digitalWrite(LED_BUILTIN,LOW);          
-          //digitalWrite(PIN_PWR_ON,LOW);
-          //digitalWrite(PIN_PWR_LEDS,LOW);
-          //sleepDeep10s();
+          _master.setEnable(false);
+          digitalWrite(LED_BUILTIN,LOW);
+          digitalWrite(PIN_PWR_ON,LOW);
+          digitalWrite(PIN_PWR_LEDS,LOW);
+
+          sleepDeep10s();
           break;
         }
       }   
@@ -515,12 +518,34 @@ class AppStates : public States
     {  
       switch (state)
       {
-        case TEST:
+        case BOOT:
         {
-            //changeState(SLEEP);
-            break;
+          Serial.println("Timeout de boot");
+          if (btnTest.isPressed()==true)
+            changeState(TEST);
+          else
+          {
+            DateTime now = _rtc.now();
+            if ( (now.hour()==12) && (now.minute()<5) )
+            {
+              changeState(RTC);
+            }
+            else
+              changeState(SLEEP);
+          }
+
+          break;
+        }
+        case RTC:
+        {
+          changeState(TODO);
+          break;
         }
         case START_EV:
+        {
+          changeState(FILLING);
+          break;
+        }
         case STOP_PMP:
         {
           changeState(NEXT);
@@ -531,15 +556,54 @@ class AppStates : public States
     
   
   public:
-    AppStates():States(BOOT)
+    AppStates()
     {
+      pOya=NULL;
       posOya=0;
-      cycle0=0;
+      startPosOya=0;
+      test_mode=false;
     }
+
+    ~AppStates() {}
 };
 
 
 AppStates _states;
+
+void app_init(void)
+{
+  _app_clrAllLeds();
+  FastLED.show();
+
+  FastLED.addLeds<NEOPIXEL, PIN_DATA_LEDS>(_leds, NUM_LEDS);
+  FastLED.setBrightness(80);
+
+  Wire.begin();
+  _rtc.begin();
+
+  _master.begin(&Serial1,PIN_TX_EN);
+  ulT0=millis();
+
+  #ifdef DATE_INIT
+    //app_set_date(2023,7,1);
+    //app_set_time(11,9,0);
+    Serial.println("/!\\ SET INIT TIME !");
+    _rtc.adjust(DateTime(__DATE__, __TIME__));
+    delay(5000);
+  #endif
+
+  DateTime now = _rtc.now();
+  char strDate[20];
+  sprintf(strDate, "%02d/%02d/%04d %02d:%02d:%02d",now.day() , now.month(), now.year(), now.hour(), now.minute(), now.second());
+  Serial.println(strDate);
+
+  _flg500ms=false;
+  tmrBlink.start();
+
+  btnTest.begin(PIN_TEST_BTN,INPUT_PULLUP,true);
+
+  _states.changeState(BOOT);
+}
 
 void app_loop(void)
 {
@@ -557,6 +621,8 @@ void app_loop(void)
   {
     _app_master_mgt();
   }
+
+  btnTest.loop();
 
   _states.loop();
 

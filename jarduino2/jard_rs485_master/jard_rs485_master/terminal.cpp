@@ -1,10 +1,19 @@
+/**
+ * @file terminal.cpp
+ * @brief Gestion du terminal
+ *
+ * @todo Ajouter les comandes setdate, settime
+ **/
 #ifndef TERMINAL_HEADER_INCLUDED
 #define TERMINAL_HEADER_INCLUDED
 
 #include "app.h"
 #include <arduino.h>
 
-void _help(void)
+char _bufferTerm[200];
+int _posBufferTerm=0;
+
+static void _help(void)
 {
   Serial.println("____________________");
   Serial.println("Aide:");
@@ -15,10 +24,11 @@ void _help(void)
   Serial.println("  - oyas");
   Serial.println("  - oya @ on/off");
   Serial.println("  - trace on/off");
-  Serial.println("");
+  Serial.println("  - stats");
+  Serial.println("  - razerrs");
 }
 
-bool parseOnOff(char *params,bool def)
+static bool _parseOnOff(const char *params,bool def)
 {
   if (strcmp(params,"on")==0)
     return true;
@@ -28,7 +38,7 @@ bool parseOnOff(char *params,bool def)
     return def;
 }
 
-void _OnOffAns(char *strTitle,bool on)
+static void _OnOffAns(const char *strTitle,bool on)
 {
   Serial.print(strTitle);
   Serial.print(": ");
@@ -38,7 +48,7 @@ void _OnOffAns(char *strTitle,bool on)
     Serial.println("OFF");
 }
 
-void _term_exec_oya(char *strParams)
+static void _term_exec_oya(const char *strParams)
 {
   char addr;
   char onoff[20];
@@ -56,7 +66,7 @@ void _term_exec_oya(char *strParams)
     if (p->addr==addr)
     {
       char tmp[10];
-      bool on=parseOnOff(onoff,false);
+      bool on=_parseOnOff(onoff,false);
       p->cmd=on;
       sprintf(tmp,"Oya %c",addr);
       _OnOffAns(tmp,on);      
@@ -68,7 +78,7 @@ void _term_exec_oya(char *strParams)
   Serial.println("Oya non trouvé!");
 }
 
-void _term_exec_pump(char *strParams)
+static void _term_exec_pump(const char *strParams)
 {
     Pump *p=app_term_get_pump();
     if (p==NULL)
@@ -106,13 +116,13 @@ void _term_exec_pump(char *strParams)
     }
     else
     {
-      bool on=parseOnOff(strParams,false);
+      bool on=_parseOnOff(strParams,false);
       p->cmd=on;
       _OnOffAns("Pompe",on);
     }  
 }
 
-void _term_exec_oyas(void)
+static void _term_exec_oyas(void)
 {
     int pos=0;
     Serial.println("_____");
@@ -148,19 +158,19 @@ void _term_exec_oyas(void)
     Serial.println();
 }
 
-void _term_disp_slave_stats(Slave *p)
+static void _term_disp_slave_stats(Slave *p)
 {
   char tmp[20];
   sprintf(tmp,"Oya %c: ",p->addr);Serial.print(tmp);
-  sprintf(tmp," off=%d ",p->cycles_since_off);Serial.print(tmp);
-  sprintf(tmp," on=%d ",p->cycles_since_on);Serial.print(tmp);
-  sprintf(tmp," nok=%d ",p->cycles_since_nok);Serial.print(tmp);
-  sprintf(tmp," ok=%d ",p->cycles_since_ok);Serial.print(tmp);
-  sprintf(tmp," errs=%d ",p->cycles_errors);Serial.print(tmp);
+  sprintf(tmp," off=%ld ",p->cycles_since_off);Serial.print(tmp);
+  sprintf(tmp," on=%ld ",p->cycles_since_on);Serial.print(tmp);
+  sprintf(tmp," nok=%ld ",p->cycles_since_nok);Serial.print(tmp);
+  sprintf(tmp," ok=%ld ",p->cycles_since_ok);Serial.print(tmp);
+  sprintf(tmp," errs=%ld ",p->cycles_errors);Serial.print(tmp);
   Serial.println("");
 }
 
-void _term_exec_stats(void)
+static void _term_exec_stats(void)
 {
   Serial.println("___________________");
   Serial.println("Statistiques:");
@@ -177,7 +187,7 @@ void _term_exec_stats(void)
   _term_disp_slave_stats(pPump);
 }
 
-void _term_exec_raz(void)
+static void _term_exec_razerrs(void)
 {
   int pos=0;
   Oya *pOya=app_term_get_next_oya(pos);
@@ -193,7 +203,7 @@ void _term_exec_raz(void)
   Serial.println("RAZ errors...");
 }
 
-void _execCmd(char *strCmd,char *strParams)
+static void _execCmd(const char *strCmd,const char *strParams)
 {
   if (strcmp(strCmd,"test")==0)
   {
@@ -217,13 +227,13 @@ void _execCmd(char *strCmd,char *strParams)
   }
   else if (strcmp(strCmd,"master")==0)
   {
-    bool on=parseOnOff(strParams,false);
+    bool on=_parseOnOff(strParams,false);
     app_term_master(on);
-    _OnOffAns("Maître 485",on);
+    _OnOffAns("Maitre 485",on);
   }
   else if (strcmp(strCmd,"trace")==0)
   {
-    bool on=parseOnOff(strParams,false);
+    bool on=_parseOnOff(strParams,false);
     app_term_trace(on);
     _OnOffAns("Traces",on);
   }
@@ -231,20 +241,14 @@ void _execCmd(char *strCmd,char *strParams)
   {
     _term_exec_stats();
   }
-  else if (strcmp(strCmd,"raz")==0)
+  else if (strcmp(strCmd,"razerrs")==0)
   {
-    _term_exec_raz();
+    _term_exec_razerrs();
   }
 }
 
-char _bufferTerm[200];
-int _posBufferTerm=0;
-
 void serialEvent(void)
 {
-  char cmd[20];
-  char par1[20];
-  
   if (Serial.available()>0)
   {
     String st=Serial.readString();
@@ -264,13 +268,6 @@ void serialEvent(void)
     }
   }
 }
-
-
-/*extern void app_term_master(bool on);
-extern void app_term_slaves(void);
-extern void app_term_log(bool on);
-extern void app_term_trace(bool on);
-extern void app_slave(char addr,bool on);*/
 
 
 #endif

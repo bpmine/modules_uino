@@ -14,7 +14,6 @@ extern Oya * app_term_get_next_oya(int &pos);
 extern Pump * app_term_get_pump(void);
 extern void app_term_log(bool on);
 extern void app_term_trace(bool on);
-extern bool app_slave(char addr,bool on);
 extern void app_set_date(int year,int month,int day);
 extern void app_set_time(int hour,int minute,int second);
 

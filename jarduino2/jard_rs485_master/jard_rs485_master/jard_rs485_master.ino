@@ -4,7 +4,7 @@
 void setup() 
 {
   pinMode(PIN_TX_EN,INPUT);    
-  pinMode(PIN_TEST_BTN,INPUT);
+  pinMode(PIN_TEST_BTN,INPUT_PULLUP);
   
   
   pinMode(PIN_PWR_ON,OUTPUT);

@@ -199,7 +199,7 @@ class OyasList
       return nbOyas;
     }
 
-    void SetOn(char addr,bool on)
+    bool SetOn(char addr,bool on)
     {
       int pos=0;
       Oya *p=itNext(pos);
