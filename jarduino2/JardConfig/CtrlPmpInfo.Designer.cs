@@ -69,9 +69,9 @@ namespace JardConfig
             this.grpPmp.Controls.Add(this.numMin);
             this.grpPmp.Dock = System.Windows.Forms.DockStyle.Fill;
             this.grpPmp.Location = new System.Drawing.Point(0, 0);
-            this.grpPmp.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.grpPmp.Margin = new System.Windows.Forms.Padding(2);
             this.grpPmp.Name = "grpPmp";
-            this.grpPmp.Padding = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.grpPmp.Padding = new System.Windows.Forms.Padding(2);
             this.grpPmp.Size = new System.Drawing.Size(230, 324);
             this.grpPmp.TabIndex = 0;
             this.grpPmp.TabStop = false;
@@ -80,8 +80,9 @@ namespace JardConfig
             // 
             // numTimer
             // 
+            this.numTimer.Enabled = false;
             this.numTimer.Location = new System.Drawing.Point(120, 268);
-            this.numTimer.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.numTimer.Margin = new System.Windows.Forms.Padding(2);
             this.numTimer.Maximum = new decimal(new int[] {
             255,
             0,
@@ -104,7 +105,7 @@ namespace JardConfig
             // button1
             // 
             this.button1.Location = new System.Drawing.Point(7, 294);
-            this.button1.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.button1.Margin = new System.Windows.Forms.Padding(2);
             this.button1.Name = "button1";
             this.button1.Size = new System.Drawing.Size(215, 21);
             this.button1.TabIndex = 12;
@@ -115,7 +116,7 @@ namespace JardConfig
             // checkCmdRemote
             // 
             this.checkCmdRemote.Location = new System.Drawing.Point(107, 70);
-            this.checkCmdRemote.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.checkCmdRemote.Margin = new System.Windows.Forms.Padding(2);
             this.checkCmdRemote.Name = "checkCmdRemote";
             this.checkCmdRemote.Size = new System.Drawing.Size(115, 25);
             this.checkCmdRemote.TabIndex = 11;
@@ -125,7 +126,7 @@ namespace JardConfig
             // checkRemote
             // 
             this.checkRemote.Location = new System.Drawing.Point(4, 70);
-            this.checkRemote.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.checkRemote.Margin = new System.Windows.Forms.Padding(2);
             this.checkRemote.Name = "checkRemote";
             this.checkRemote.Size = new System.Drawing.Size(99, 25);
             this.checkRemote.TabIndex = 10;
@@ -144,7 +145,7 @@ namespace JardConfig
             "Vendredi",
             "Samedi"});
             this.checkedListDays.Location = new System.Drawing.Point(4, 128);
-            this.checkedListDays.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.checkedListDays.Margin = new System.Windows.Forms.Padding(2);
             this.checkedListDays.Name = "checkedListDays";
             this.checkedListDays.Size = new System.Drawing.Size(100, 109);
             this.checkedListDays.TabIndex = 9;
@@ -172,7 +173,7 @@ namespace JardConfig
             // numHour
             // 
             this.numHour.Location = new System.Drawing.Point(114, 150);
-            this.numHour.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.numHour.Margin = new System.Windows.Forms.Padding(2);
             this.numHour.Maximum = new decimal(new int[] {
             23,
             0,
@@ -185,7 +186,7 @@ namespace JardConfig
             // numDuration
             // 
             this.numDuration.Location = new System.Drawing.Point(114, 209);
-            this.numDuration.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.numDuration.Margin = new System.Windows.Forms.Padding(2);
             this.numDuration.Maximum = new decimal(new int[] {
             255,
             0,
@@ -198,7 +199,7 @@ namespace JardConfig
             // checkAuto
             // 
             this.checkAuto.Location = new System.Drawing.Point(4, 99);
-            this.checkAuto.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.checkAuto.Margin = new System.Windows.Forms.Padding(2);
             this.checkAuto.Name = "checkAuto";
             this.checkAuto.Size = new System.Drawing.Size(99, 25);
             this.checkAuto.TabIndex = 3;
@@ -209,7 +210,7 @@ namespace JardConfig
             // checkEnabled
             // 
             this.checkEnabled.Location = new System.Drawing.Point(4, 41);
-            this.checkEnabled.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.checkEnabled.Margin = new System.Windows.Forms.Padding(2);
             this.checkEnabled.Name = "checkEnabled";
             this.checkEnabled.Size = new System.Drawing.Size(116, 25);
             this.checkEnabled.TabIndex = 2;
@@ -219,7 +220,7 @@ namespace JardConfig
             // checkForced
             // 
             this.checkForced.Location = new System.Drawing.Point(4, 17);
-            this.checkForced.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.checkForced.Margin = new System.Windows.Forms.Padding(2);
             this.checkForced.Name = "checkForced";
             this.checkForced.Size = new System.Drawing.Size(116, 25);
             this.checkForced.TabIndex = 1;
@@ -229,7 +230,7 @@ namespace JardConfig
             // numMin
             // 
             this.numMin.Location = new System.Drawing.Point(165, 150);
-            this.numMin.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.numMin.Margin = new System.Windows.Forms.Padding(2);
             this.numMin.Maximum = new decimal(new int[] {
             59,
             0,
@@ -244,7 +245,7 @@ namespace JardConfig
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.Controls.Add(this.grpPmp);
-            this.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.Margin = new System.Windows.Forms.Padding(2);
             this.Name = "CtrlPmpInfo";
             this.Size = new System.Drawing.Size(230, 324);
             this.grpPmp.ResumeLayout(false);

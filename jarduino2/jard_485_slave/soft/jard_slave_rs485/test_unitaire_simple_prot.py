@@ -222,21 +222,21 @@ def test_basic_oya(ser,addr):
         
    
 time.sleep(2)
-lst=['A','D','E','F']
+lst=['A','B']
 while True:
-    try:
-        for a in lst:
+    for a in lst:
+        try:
             print('Ping %s: ' % (a),end='')
             res=sendRequest(ser,a,'p',4)
             print(res)
             assert res=='%02x' % (4)        
-    except:
-        print('NOK')
+        except:
+            print('NOK')
     
         time.sleep(0.01)
     
-#cfg_addr(ser,'Z','F')        
-#cfg_enable(ser,'F',1)
+#cfg_addr(ser,'Z','B')        
+#cfg_enable(ser,'B',1)
 
 ##time.sleep(2)
 ##for i in range(0,255+1):

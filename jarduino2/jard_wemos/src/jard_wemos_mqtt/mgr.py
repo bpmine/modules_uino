@@ -123,8 +123,7 @@ class Rempli:
 principal=WifiIoMgr('Principal','192.168.3.210')
 paul=WifiIoMgr('Paul','192.168.3.202')
 reduit=WifiIoMgr('Reduit','192.168.3.203')
-barbec=WifiIoMgr('Barbec','192.168.3.204')
-mgrs=[principal,paul,reduit,barbec]
+mgrs=[principal,paul,reduit]
 
 
 rempli_reduit=Rempli('main_reduit',principal,reduit,principal)

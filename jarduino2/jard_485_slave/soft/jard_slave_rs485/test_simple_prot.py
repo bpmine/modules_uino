@@ -3,7 +3,7 @@ import time
 import re
 import threading
 
-PORT='COM12'
+PORT='COM10'
 SIMU=False
 
 def calcCS(buff):
@@ -140,7 +140,7 @@ oyas=[
     ]
 
 if SIMU==False:
-    ser= serial.Serial(port=r"\\.\%s" % PORT,stopbits = 1, bytesize = 8, parity='N',baudrate= 9600,timeout=0.2)
+    ser= serial.Serial(port=r"\\.\%s" % PORT,stopbits = 1, bytesize = 8, parity='N',baudrate= 9600,timeout=0.3)
     txt=ser.read_until('\n')
     print(txt)
     ser.flush()

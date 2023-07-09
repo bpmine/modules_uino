@@ -5,8 +5,8 @@
 
 //#define NODE_MAIN
 //#define NODE_PAUL
-#define NODE_REDUIT
-//#define NODE_BARBEC
+//#define NODE_REDUIT
+#define NODE_BARBEC
 //#define NODE_TEST
 
 #define PIN_IN_N1       14

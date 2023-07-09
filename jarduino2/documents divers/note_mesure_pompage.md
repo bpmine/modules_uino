@@ -44,7 +44,7 @@ Environ 1m50 de dénivelé
 | Pression | ? |
 | Embouts | 20mm Vis mâle |
 
-# Mesure
+# Mesure 1
 1L rempli en 14s
 257L/H
 
@@ -52,8 +52,13 @@ Environ 1m50 de dénivelé
 1,23A
 15,5W
 
-Environ 1,5m de dénivelé
+Conditions: Environ 1,5m de dénivelé
 
+# Mesure 2
+1,5L rempli en 37s
+146L/Heure
+
+Conditions: De la cuve principale vers celle du réduit via Wifi IO (et via EV ON)
 
 # Pompe DP521
 
@@ -69,13 +74,41 @@ Pompe à eau à membrane
 | Pression | 0.48 MPa |
 | Embouts | 10 mm |
 
-## Mesure
+## Mesure de débit
 
 Direct sur lavabo mais en passant par une EV
 
 1,5 L rempli en 30S
-Soit  3L/H
+Soit  3L/min (180 L/H)
 
 A noter que la pompe fuit au niveau de ses vis si on bloque la sortie.
 
+
+## Mesures électriques
+
+Dispositif avec bidon lave glace modifié -> Filtre -> Pompe -> Débimètre -> EV
+
+| Grandeur | Condition | Valeur |
+| --- | --- | --- |
+| Tension à la pompe | Avec de l'eau | 12,02 V |
+| Courant dans la pompe | Avec de l'eau | 1,15 A |
+| Puissance pompe | Avec de l'eau | 13,9 W |
+| Tension à la pompe | Sans eau | 12,02 V |
+| Courant dans la pompe | Sans eau | 0,66 A |
+| Puissance pompe | Sans eau | 7,9 W |
+
+Note: Le wattmètre consomme environ 1,24 W
+
+Mesures complémentaires sur l'électrovanne:
+
+| Grandeur | Condition | Valeur |
+| --- | --- | --- |
+| Tension EV | Pompe OFF | 12,20 V |
+| Courant EV | Pompe OFF | 0,59 A |
+| Puissance EV| Pompe OFF | 7 W |
+| Tension EV | Pompe ON | 12,02 V |
+| Courant EV | Pompe ON | 0,56 A |
+| Puissance EV| Pompe ON | 6,7 W |
+
+Note: Le wattmètre consomme environ 1,24 W
 

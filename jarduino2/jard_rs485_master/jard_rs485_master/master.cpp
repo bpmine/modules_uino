@@ -1,5 +1,7 @@
 #include "master.h"
 
+#define TIMEOUT_MS		(200UL)
+
 static RqPump _rqpump('A');
 static RqOya _rqoyaB('B');
 static RqOya _rqoyaC('C');
@@ -164,6 +166,7 @@ bool Master::loop(void)
       nbcycles=0;
       for (int i=0;i<sizeof(_cycles)/sizeof(Request *);i++)
         _cycles[i]->reset();
+      break;
     }
     case IDLE:
     {
@@ -194,7 +197,7 @@ bool Master::loop(void)
         delta=0xFFFFFFFFUL-m_tick0+t;
       }
 
-      if (delta > 500UL)
+      if (delta > TIMEOUT_MS)
       {
         if (flgTrace==true)
         {        
@@ -218,7 +221,7 @@ bool Master::loop(void)
       }
       else
       {
-        delay(20);
+        delay(10);
         eState=SEND;
       }
           
