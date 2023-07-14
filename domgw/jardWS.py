@@ -50,6 +50,36 @@ def get_wiio():
     ret=wiioCln.getJson()
     return json.dumps(ret)
 
+@app.route('/wiio/modules/<name>/do/test', methods=['GET'])
+def wiio_pump_test(name):
+    if wiioCln.hasModule(name)==False:
+        abort(404)
+
+    wiioCln.setCmd(name,True,10)
+    return {'result':'ok'}
+
+@app.route('/wiio/modules/<name>/do/on', methods=['GET'])
+def wiio_pump_on(name):
+    if wiioCln.hasModule(name)==False:
+        abort(404)
+
+    duree=request.args.get('duration')
+    if duree==None or not duree.isnumeric() or int(duree)>3600:
+        duree=15*60
+    else:
+        duree=int(duree,10)
+        
+    wiioCln.setCmd(name,True,duree)
+    
+    return {'result':'ok'}
+
+@app.route('/wiio/modules/<name>/do/off', methods=['GET'])
+def wiio_pump_off(name):
+    if wiioCln.hasModule(name)==False:
+        abort(404)
+
+    wiioCln.setCmd(name,False,None)
+    return {'result':'ok'}
 
 if __name__=='__main__':
     app.debug = True

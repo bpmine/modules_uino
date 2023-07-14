@@ -14,17 +14,17 @@ class RdWiioClient(RdApp):
     def setCmd(self,mname,flgOn,tm=None):
         self.set_mod_var(mname,'to_cmd',1 if flgOn==True else 0,tm)
 
-    def getLvl(self,mname,flgOn):
-        n1=self.get_mod_var_bool(name,'n1')
-        n2=self.get_mod_var_bool(name,'n2')
-        n3=self.get_mod_var_bool(name,'n3')
+    def getLvl(self,mname):
+        n1=self.get_mod_var_bool(mname,'n1')
+        n2=self.get_mod_var_bool(mname,'n2')
+        n3=self.get_mod_var_bool(mname,'n3')
 
         lvl=None
         if n1==True:
             lvl=1
-        elif n2==True:
+        if n2==True:
             lvl=2
-        elif n3==True:
+        if n3==True:
             lvl=3
 
         return lvl
@@ -104,7 +104,7 @@ class Rempli:
             # Si le niveau de la source est donne, on arrete qd trop bas !
             src_too_low=False
             if self.lvl_src!=None:
-                mod_src=cln.getModuleJson(self.lvl_src)
+                mod_src=self.cln.getModuleJson(self.lvl_src)
                 
                 if mod_src['valid']==False:
                     src_too_low=True                    
@@ -114,11 +114,12 @@ class Rempli:
                     src_too_low=not mod_src['n2']
                 elif self.limit_src==3:
                     src_too_low=not mod_src['n3']
+            print('src_too_low=%s' % (src_too_low))
 
             # Sinon, on cherche a atteindre la consigne
             if src_too_low==False:
                 if self.lvl_tgt!=None:
-                    mod_dst=cln.getModuleJson(self.lvl_tgt)
+                    mod_dst=self.cln.getModuleJson(self.lvl_tgt)
                     
                     if mod_dst['valid']==False:
                         cmd=False
@@ -137,10 +138,13 @@ class Rempli:
             else:
                 cmd=False
 
-            self.cln.setCmd(self.pmp,cmd)
+            print('%s: %s (%s -> %s)' % (self.pmp,cmd,self.cons_tgt,self.cln.getLvl(self.lvl_tgt)))
+
+            self.cln.setCmd(self.pmp,cmd,7)
 
     def __str__(self):
         return ""
+
 
       
 if __name__=='__main__':
@@ -162,6 +166,17 @@ if __name__=='__main__':
     #cln.setOn(True)
 
     #print('SetCmd')
-    cln.setCmd('barbec',True,600)
+    #cln.setCmd('main',True,600)
 
+    r1=Rempli(cln,"main_reduit","main","reduit","main")
+    r2=Rempli(cln,"reduit_barbec","reduit","barbec","reduit")
+    remplis=[r1,r2]
+    
+    #r1.start(3)
+    #r2.start(3)
+    while True:        
+        for r in remplis:
+            r.run()
+            
+        time.sleep(4)
 
