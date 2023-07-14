@@ -5,10 +5,25 @@
 
 //#define NODE_MAIN
 //#define NODE_PAUL
-//#define NODE_REDUIT
+#define NODE_REDUIT
 //#define NODE_BARBEC
-#define NODE_TEST
+//#define NODE_TEST
 
+#define TIME_BEFORE_SLEEP_S   (3600)
+#define TIME_BEFORE_FIRST_S   (120)
+#define TIME_REPEAT_FIRST_S   (30)
+#define TIME_CYCLE_MS         (100)
+#define TIMEOUT_COMM_S        (5)
+#define SLEEPING_TIME_MIN     (1)
+
+#define WIFI_ID       "Domotique"
+#define WIFI_PWD      "94582604"
+#define MQTT_IP       "192.168.3.200"
+#define MQTT_LOGIN    "toto"
+#define MQTT_PWD      "toto"
+
+
+/////////////////////////////////////////////////////////////////////
 #define PIN_IN_N1       14
 #define PIN_IN_N2       12
 #define PIN_IN_N3       13
@@ -20,13 +35,8 @@
   
 #define TOPIC_PREFIX  "/wifiio"
 #define TOPIC_CMD     "cmd"
-#define TOPIC_SYNC    "sync"
 #define TOPIC_DATA    "data"
 #define TOPIC_LOG     "log"
-  
-/*#define DELAY_TASK_REPORT_COMM  (3600*1000UL)
-#define DELAY_TASK_REPORT_DATA  (5*60*1000UL)
-#define DELAY_TASK_MQTT_OK      (800UL)*/
 
 bool g_comm_ok=false;
 int g_pwr_value=0;
@@ -35,24 +45,42 @@ bool g_lvl_2=false;
 bool g_lvl_3=false;
 int g_rssi=0;
 bool g_cmd_pump=false;
+unsigned long g_tick_s=0;
 
-Timer tmrComm(3000,false);
-Timer tmrCycle(100,false);
-Timer tmrBeforeSleep(60000UL);
+Timer tmrComm((unsigned long)TIMEOUT_COMM_S*1000UL,false);
+Timer tmrCycle((unsigned long)TIME_CYCLE_MS,false);
+Timer tmrBeforeSleep((unsigned long)TIME_BEFORE_SLEEP_S*1000UL);
+Timer tmrGotoSleep(5000UL);
+Timer tmrTick1S(1000UL,false);
+
+Timer tmrBeforeFirst((unsigned long)TIME_BEFORE_FIRST_S*1000UL);
+Timer tmrRepeatFirst((unsigned long)TIME_REPEAT_FIRST_S*1000UL,false);
 
 #ifdef NODE_TEST
   char NAME[]="test";
+#endif
+#ifdef NODE_MAIN
+  char NAME[]="main";
+#endif
+#ifdef NODE_PAUL
+  char NAME[]="paul";
+#endif
+#ifdef NODE_REDUIT
+  char NAME[]="reduit";
+#endif
+#ifdef NODE_BARBEC
+  char NAME[]="barbec";
 #endif
 
 char ssid[] = "Domotique";
 char password[] = "94582604";
 
 EspMQTTClient mqttClient(
-  ssid,
-  password,
-  "192.168.3.200",
-  "toto",
-  "toto",
+  WIFI_ID,
+  WIFI_PWD,
+  MQTT_IP,
+  MQTT_LOGIN,
+  MQTT_PWD,
   NAME
 );
 
@@ -67,11 +95,33 @@ void sendLog(char *strMsg)
 
 void addBool(char *strJson,char *strKey,bool val)
 {
-  strcat(strJson,"\"cmd\":");
+  strcat(strJson,"\"");
+  strcat(strJson,strKey);
+  strcat(strJson,"\":");
   if (val==true)
     strcat(strJson,"true");
   else
     strcat(strJson,"false");  
+}
+
+void addInt(char *strJson,char *strKey,int val)
+{
+  strcat(strJson,"\"");
+  strcat(strJson,strKey);
+  strcat(strJson,"\":");
+  char tmp[15];
+  sprintf(tmp,"%d",val);
+  strcat(strJson,tmp);
+}
+
+void addULong(char *strJson,char *strKey,unsigned long val)
+{
+  strcat(strJson,"\"");
+  strcat(strJson,strKey);
+  strcat(strJson,"\":");
+  char tmp[20];
+  sprintf(tmp,"%ld",val);
+  strcat(strJson,tmp);
 }
 
 void sendData(void)
@@ -90,6 +140,12 @@ void sendData(void)
   addBool(strData,"n2",g_lvl_2);
   strcat(strData,",");
   addBool(strData,"n3",g_lvl_3);
+  strcat(strData,",");
+  addInt(strData,"rssi",g_rssi);
+  strcat(strData,",");
+  addInt(strData,"pwr",g_pwr_value);
+  strcat(strData,",");
+  addULong(strData,"tick",g_tick_s);
   strcat(strData,"}");
   
   mqttClient.publish(strTopicLog, strData);
@@ -104,19 +160,31 @@ void onReceiveCmd(const String &payload)
     g_cmd_pump=true;
   else if (payload=="off")
     g_cmd_pump=false;
-
-  g_comm_ok=true;
-  tmrComm.start();    
+  else if (payload=="sleep")
+  {
+    g_cmd_pump=false;
+    sendLog("Demande de faire dodo!");
+    tmrGotoSleep.start();
+  }
+  else if (payload=="ping")
+  {
+    sendLog("pong");
+  }
 
   sendData();
-
+  
+  g_comm_ok=true;
+  tmrComm.start();
   tmrBeforeSleep.start();
+  
+  tmrBeforeFirst.stop();    ///< Plus dans le cas d'attente de la premiere reponse
+  tmrRepeatFirst.stop();
 }
   
 void onConnectionEstablished()
 {
   char strTopicCmd[50];
-  sprintf(strTopicCmd,"%s/%s",TOPIC_PREFIX,TOPIC_CMD);
+  sprintf(strTopicCmd,"%s/%s/%s",TOPIC_PREFIX,TOPIC_CMD,NAME);
   mqttClient.subscribe(strTopicCmd,onReceiveCmd);  
   
   sendLog("MQTT Connected");
@@ -163,6 +231,9 @@ void setup()
   tmrComm.start();
   tmrCycle.start();
   tmrBeforeSleep.start();
+  tmrBeforeFirst.start();
+  tmrRepeatFirst.start();
+  tmrTick1S.start();
 }
  
 void loop() 
@@ -193,7 +264,10 @@ void loop()
 
      if (g_comm_ok==false)
       g_cmd_pump=false;
-  
+
+     if (tmrGotoSleep.isRunning())
+      g_cmd_pump=false;
+      
      if ( g_cmd_pump==true )
      {
       digitalWrite(PIN_OUT_CMD,HIGH);
@@ -208,8 +282,31 @@ void loop()
 
    mqttClient.loop();
 
-   if (tmrBeforeSleep.tick()==true)
-   {
-     ESP.deepSleep( sleepTimeS * 1000000, WAKE_RF_DISABLED );
+   if (tmrBeforeFirst.isRunning())
+   {    
+    if (tmrRepeatFirst.tick()==true)
+      sendData();
    }
+   
+   if ( tmrBeforeFirst.tick()==true )
+   {
+     Serial.println("Pas de reponse...");
+     sendLog("No answer means sleep...");
+     tmrGotoSleep.start();
+   }
+
+   if ( tmrBeforeSleep.tick()==true )
+   {
+     Serial.println("Sleep...");
+     sendLog("Now time to sleep...");
+     tmrGotoSleep.start();
+   }
+
+   if (tmrGotoSleep.tick()==true)
+   {
+    ESP.deepSleep( (unsigned long)SLEEPING_TIME_MIN * 60UL * 1000000UL );
+   }
+
+   if (tmrTick1S.tick()==true)
+    g_tick_s++;
 }
