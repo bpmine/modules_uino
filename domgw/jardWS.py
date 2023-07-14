@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 from flask import Flask,request
 import json
 import time
@@ -44,49 +45,11 @@ def get_states():
     return json.dumps(ret)
 
 
-@app.route('/rempli/<name>', methods=['GET'])
-def rempli_set_on(name):
-    global r
-    
-    if check_wiio_module_name(name)==False:
-        abort(404)
-
-    rr=None
-    for r in remplissages:
-        if r.name==name:
-            rr=r
-            break
-
-    if rr==None:
-        return "Pas de remplissage trouve"
-    
-    on=request.args.get('on',default=None)    
-    if on!=None:        
-        if on=='1':
-            rr.on=True
-        else: 
-            rr.stop()
-
-        print('Change le ON de %s en %s' % (name,rr.on) )
-        
-    limit_src=request.args.get('limit_src',default=None)    
-    if limit_src!=None:        
-        rr.limit_src=int(limit_src)
-        print('Change la limite de la source %s en %s' % (name,rr.limit_src) )
-
-    cons_tgt=request.args.get('cons_tgt',default=None)    
-    if cons_tgt!=None:        
-        rr.cons_tgt=int(cons_tgt)
-        print('Change la consigne de la destination %s en %s' % (name,rr.cons_tgt) )
-        
-
-    return "OK"
-
-
 @app.route('/wiio', methods=['GET'])
 def get_wiio():
     ret=wiioCln.getJson()
     return json.dumps(ret)
+
 
 if __name__=='__main__':
     app.debug = True

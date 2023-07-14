@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 import paho.mqtt.client as mqtt
 import redis
 import time
@@ -30,6 +31,13 @@ class RdApp:
         k='%s.%s' % (self.kApp(),nvar)
         return self.r.get(k)
 
+    def get_app_var_bool(self,nvar):
+        res=self.get_app_var(nvar)
+        if res==None:
+            return False
+        else:
+            return True if res=='1' else False
+
     def set_mod_var(self,nmod,nvar,val,tmt=TMT):
         k=self.kModVar(nmod,nvar)
         self.r.set(k,val)
@@ -39,6 +47,20 @@ class RdApp:
     def get_mod_var(self,nmod,nvar):
         k=self.kModVar(nmod,nvar)
         return self.r.get(k)
+
+    def get_mod_var_bool(self,nmod,nvar):
+        res=self.get_mod_var(nmod,nvar)
+        if res==None:
+            return False
+        else:
+            return True if res=='1' else False
+
+    def get_mod_var_int(self,nmod,nvar):
+        res=self.get_mod_var(nmod,nvar)
+        if res==None or res.isnumeric()==False:
+            return 0
+        else:
+            return int(res)
 
     def del_mod_var(self,nmod,nvar):
         k=self.kModVar(nmod,nvar)
@@ -59,7 +81,7 @@ class RdWiioSrv(RdApp):
         p.execute()
 
         self.set_app_var('alive',1)
-        self.set_app_var('on',1)
+        self.set_app_var('on',1,None)
 
         self.r.delete('%s.modules' % (self.kApp()))
 
@@ -82,7 +104,6 @@ class RdWiioSrv(RdApp):
             self.del_mod_var(name,key)
         
     def update_data(self,name,data):
-        print(data)
         self.set_mod_var(name,'name',name,None)
         
         self.update_mod_var_bool(name,data,'cmd')
@@ -101,23 +122,26 @@ class RdWiioSrv(RdApp):
         
     pTopic=re.compile(r'/wifiio/data/([a-z]+)')
     def on_message(self,client,userdata,msg):
-        print(msg.topic+" "+str(msg.payload))
+        #print(msg.topic+" "+str(msg.payload))
         
         m=RdWiioSrv.pTopic.match(msg.topic)
         if m!=None:
             name=m.group(1)
             js=json.loads(msg.payload)
             self.update_data(name,js)
+            print('-> Recv %s (%s)' % (name,js['cmd']))
             
             if name not in self.modules:
                 try:
-                    r.sadd('%s.modules' % (self.kApp()),name)
+                    self.r.sadd('%s.modules' % (self.kApp()),name)
                     self.modules.add(name)
                     print('Add %s' % name)
                 except Exception as ex:
                     print(ex)
 
     def start(self):
+        oldOn=False
+        
         print('Start jarduino Wemos MQTT server...')
         self.client.on_connect = self.on_connect
         self.client.on_message = self.on_message
@@ -126,25 +150,28 @@ class RdWiioSrv(RdApp):
 
         self.client.loop_start()
 
-        print('Start cycles...');
+        print('Start program...');
         while True:
             time.sleep(1)
 
-            on = self.get_app_var('on')
-            if on==None:
-                on=False
-            else:
-                on=True if on==1 else False
-
-            #if on==False:
-            #    continue
+            on=self.get_app_var_bool('on')
+            if oldOn!=on:                
+                print("Mise en marche" if on==True else "Arrêt!")
+                oldOn=on
             
+            if on!=True:
+                continue
+
+            print('_'*40)
+            print('Cycle:')
             for n in self.modules:
                 v=self.get_mod_var(n,'to_cmd')
-                if v!=None and v==1:
+                if v!=None and v=='1':
                     self.client.publish("/wifiio/cmd/%s" % n,"on");
+                    print('pub %s on' % n)
                 else:
                     self.client.publish("/wifiio/cmd/%s" % n,"off");
+                    print('pub %s off' % n)
 
                 val=self.get_mod_var(n,'valid')
                 if val==None:
