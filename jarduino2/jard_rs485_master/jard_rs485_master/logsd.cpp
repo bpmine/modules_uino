@@ -69,12 +69,12 @@ bool logsd_log(DateTime &now,OyasList &list,Pump &pump)
 	hum+=p->hum_pc;
 	nbre++;
 
-	if (p->temp_dg>ucTempMax)
+	if ((p->temp_dg>ucTempMax) && (p->temp_dg!=255))
 	  ucTempMax=p->temp_dg;
 	if (p->temp_dg<ucTempMin)
 	  ucTempMin=p->temp_dg;
 
-	if (p->hum_pc>ucHumMax)
+	if ((p->hum_pc>ucHumMax) && (p->hum_pc!=255))
 	  ucHumMax=p->hum_pc;
 	if (p->hum_pc<ucHumMin)
 	  ucHumMin=p->hum_pc;

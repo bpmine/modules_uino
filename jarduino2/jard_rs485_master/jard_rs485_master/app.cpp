@@ -22,6 +22,7 @@
 #define TIME_FOR_TEST_S		(500)
 #define TIME_FOR_READING_S	(10)
 #define TIME_MAX_FILLNG_S	(60)
+#define TIME_CYCLE_MS		(500)
 
 #define NUM_LEDS    (8)
 
@@ -57,8 +58,8 @@ static OyasList _oyasList(_list_oyas,5);
 static Master _master;
 
 static Timer tmrBlink(250,false);
-static Timer tmrCycle(1000,false);
-static Timer tmrLog(1000,false);
+static Timer tmrCycle((unsigned long)TIME_CYCLE_MS,false);
+static Timer tmrLog(5000,false);
 
 static Btn btnTest;
 
@@ -179,9 +180,6 @@ void app_set_time(int hour,int minute,int second)
   DateTime newDte(now.year(),now.month(),now.day(),hour,minute,second);
   _rtc.adjust(newDte);    
 }
-
-
-
 
 void _app_master_mgt(void)
 {
