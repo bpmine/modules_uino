@@ -10,7 +10,7 @@ bool _sdOk=false;
 bool logsd_init(void)
 {
   SPI.begin();
-  if (!SD.begin(SPI_QUARTER_SPEED, PIN_SD_CS))
+  if (!SD.begin(SPI_HALF_SPEED, PIN_SD_CS))
   {
 	Serial.println("SD init Failed!");
 	_sdOk=false;
@@ -107,13 +107,12 @@ bool logsd_log(DateTime &now,OyasList &list,Pump &pump)
 
 
   char strLine[200];
-  sprintf(strLine,"%s;%02x,%02x,%02x,%02x;%d;%d;%d;%d;%d;%d;%d;",
+  sprintf(strLine,"%s;%02x,%02x,%02x,%02x;%d;%d;%d;%d;%d;%d;",
 		  strDteTime,
 		  ucValid,
 		  ucOn,
 		  ucLow,
 		  ucHigh,
-		  pump.flow,
 		  ucTempMin,
 		  ucTempMoy,
 		  ucTempMax,

@@ -133,7 +133,7 @@ class Pump : public Slave
   public:
     int flow;
 
-    Pump(char addr):Slave(addr) {}
+    Pump(char addr):Slave(addr) {flow=0;}
 
     void setFlow(int flow) {this->flow=flow;}
 };

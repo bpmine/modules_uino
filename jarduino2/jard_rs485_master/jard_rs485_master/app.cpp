@@ -21,6 +21,7 @@
 
 #define TIME_FOR_TEST_S		(500)
 #define TIME_FOR_READING_S	(10)
+#define TIME_MAX_FILLNG_S	(60)
 
 #define NUM_LEDS    (8)
 
@@ -56,8 +57,8 @@ static OyasList _oyasList(_list_oyas,5);
 static Master _master;
 
 static Timer tmrBlink(250,false);
-
 static Timer tmrCycle(1000,false);
+static Timer tmrLog(1000,false);
 
 static Btn btnTest;
 
@@ -220,7 +221,7 @@ void _app_master_mgt(void)
     _bus_to_objects();
 
     /// On loggue toujours dans l'inter-cycle pour eviter de prendre de la cpu durant le cycle
-    if (_flgNeedLog==true)
+    if (tmrLog.tick()==true)
     {
       unsigned long t0=millis();
 
@@ -388,7 +389,6 @@ class AppStates : public States
             logsd_init();
 
             digitalWrite(PIN_PWR_ON,HIGH);
-            digitalWrite(PIN_PWR_LEDS,HIGH);
             _master.setEnable(true);
             tmt.setDuration_ms(61000UL);
             tmt.start();
@@ -432,6 +432,9 @@ class AppStates : public States
 		  case FILLING:
 		  {
 			Serial.println("Filling...");
+
+			tmt.setDuration_ms((unsigned long)TIME_MAX_FILLNG_S * 1000UL);
+            tmt.start();
 			break;
 		  }
 		  case NEXT:
@@ -532,7 +535,6 @@ class AppStates : public States
             if (    (pOya->comm_ok==false)
             	 || ( (pOya->low==false) && (pOya->high==false) )
 				 || ( pOya->cycles_since_ok<5 )
-				 || ( _pump.cycles_since_ok<5 )
 				 )
             {
               pOya->cmd=false;
@@ -558,7 +560,8 @@ class AppStates : public States
             if ( (pOya->comm_ok==true) && ((pOya->high==true) || (pOya->low==true)) )
             {
               pOya->cmd=true;
-              if ( (pOya->on==true) && (pOya->cycles_since_ok>5) )
+
+              if ( (pOya->on==true) && (pOya->cycles_since_ok>5) && (_pump.cycles_since_ok>5) )
                 _pump.cmd=true;
               else
                 _pump.cmd=false;
@@ -578,6 +581,7 @@ class AppStates : public States
           if (btnTest.isLongPressed()==true)
           {
         	changeState(test_mode?TEST:SLEEP);
+        	btnTest.reset();
           }
 
           break;
@@ -661,6 +665,11 @@ class AppStates : public States
           changeState(FILLING);
           break;
         }
+        case FILLING:
+        {
+          changeState(STOP_PMP);
+          break;
+        }
         case STOP_PMP:
         {
           changeState(NEXT);
@@ -691,10 +700,6 @@ AppStates _states;
 
 void app_init(void)
 {
-  sleep_disable();
-  //power_all_enable();
-  //wdt_disable();
-
   _app_clrAllLeds();
   FastLED.show();
 
@@ -724,6 +729,7 @@ void app_init(void)
   _flg250ms=false;
   tmrBlink.start();
   tmrCycle.start();
+  tmrLog.start();
 
   _flgNeedLog=false;
 
