@@ -50,13 +50,23 @@ def get_wiio():
     ret=wiioCln.getJson()
     return json.dumps(ret)
 
+@app.route('/wiio/do/on', methods=['GET'])
+def wiio_on():
+    wiioCln.setOn(True);
+    return {'result':True,'msg':'MODULE WIIO ON.'}
+
+@app.route('/wiio/do/off', methods=['GET'])
+def wiio_off():
+    wiioCln.setOn(False);
+    return {'result':True,'msg':'MODULE WIIO OFF.'}
+
 @app.route('/wiio/modules/<name>/do/test', methods=['GET'])
 def wiio_pump_test(name):
     if wiioCln.hasModule(name)==False:
         abort(404)
 
     wiioCln.setCmd(name,True,10)
-    return {'result':'ok'}
+    return {'result':True,'msg':'Test envoyé avec succès.'}
 
 @app.route('/wiio/modules/<name>/do/on', methods=['GET'])
 def wiio_pump_on(name):
@@ -71,7 +81,7 @@ def wiio_pump_on(name):
         
     wiioCln.setCmd(name,True,duree)
     
-    return {'result':'ok'}
+    return {'result':True,'msg':'Pompe %s ON.' % name}
 
 @app.route('/wiio/modules/<name>/do/off', methods=['GET'])
 def wiio_pump_off(name):
@@ -79,7 +89,7 @@ def wiio_pump_off(name):
         abort(404)
 
     wiioCln.setCmd(name,False,None)
-    return {'result':'ok'}
+    return {'result':True,'msg':'Pompe %s OFF.' % name}
 
 if __name__=='__main__':
     app.debug = True

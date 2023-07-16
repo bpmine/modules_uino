@@ -47,7 +47,8 @@ class RdWiioClient(RdApp):
             'n3':self.get_mod_var_bool(name,'n3'),
             'rssi':self.get_mod_var_int(name,'rssi'),
             'pwr':self.get_mod_var_int(name,'pwr'),
-            'valid':self.get_mod_var_bool(name,'valid')
+            'valid':self.get_mod_var_bool(name,'valid'),
+            'date':self.get_mod_var(name,'date')
             }
         
         return mod
@@ -55,8 +56,8 @@ class RdWiioClient(RdApp):
 
     def getJson(self):
         ret={
-            'on': True if self.get_app_var('on')==1 else False,
-            'alive': True if self.get_app_var('alive')==1 else False,
+            'on': True if self.get_app_var('on')=='1' else False,
+            'alive': True if self.get_app_var('alive')=='1' else False,
             'modules':{}
             }
         
@@ -170,10 +171,13 @@ if __name__=='__main__':
 
     r1=Rempli(cln,"main_reduit","main","reduit","main")
     r2=Rempli(cln,"reduit_barbec","reduit","barbec","reduit")
-    remplis=[r1,r2]
+    r3=Rempli(cln,"main_paul","paul","paul","main")
+    remplis=[r1,r2,r3]
     
     #r1.start(3)
     #r2.start(3)
+    r3.start(3)
+    
     while True:        
         for r in remplis:
             r.run()
