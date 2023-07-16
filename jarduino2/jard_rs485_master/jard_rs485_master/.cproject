@@ -24,6 +24,8 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/jard_rs485_master/libraries/FastLED}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/jard_rs485_master/libraries/RTCLib_by_NeiroN}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/jard_rs485_master/libraries/Wire/src}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/jard_rs485_master/libraries/SD/src}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/jard_rs485_master/libraries/SPI/src}&quot;"/>
 								</option>
 								<inputType id="io.sloeber.compiler.cpp.sketch.input.309719801" name="CPP source files" superClass="io.sloeber.compiler.cpp.sketch.input"/>
 							</tool>
@@ -34,6 +36,8 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/jard_rs485_master/libraries/FastLED}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/jard_rs485_master/libraries/RTCLib_by_NeiroN}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/jard_rs485_master/libraries/Wire/src}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/jard_rs485_master/libraries/SD/src}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/jard_rs485_master/libraries/SPI/src}&quot;"/>
 								</option>
 								<inputType id="io.sloeber.compiler.c.sketch.input.1889211603" name="C Source Files" superClass="io.sloeber.compiler.c.sketch.input"/>
 							</tool>
@@ -44,6 +48,8 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/jard_rs485_master/libraries/FastLED}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/jard_rs485_master/libraries/RTCLib_by_NeiroN}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/jard_rs485_master/libraries/Wire/src}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/jard_rs485_master/libraries/SD/src}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/jard_rs485_master/libraries/SPI/src}&quot;"/>
 								</option>
 								<inputType id="io.sloeber.compiler.S.sketch.input.83878300" name="Assembly source files" superClass="io.sloeber.compiler.S.sketch.input"/>
 							</tool>

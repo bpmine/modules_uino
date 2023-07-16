@@ -137,7 +137,7 @@ void Master::begin(HardwareSerial *pSerial,int txen)
 
 void Master::start_cycle(void)
 {
-  if (eState!=OFF)
+  if ( eState==IDLE )
     eState=SEND;
 }
 
