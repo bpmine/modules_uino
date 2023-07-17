@@ -6,6 +6,9 @@ import re
 import json
 import datetime
 
+DEBUG_CYCLE=False
+DEBUG_MQTT=True
+
 class RdApp:
     TMT = 5
     
@@ -30,6 +33,9 @@ class RdApp:
     def get_app_var(self,nvar):
         k='%s.%s' % (self.kApp(),nvar)
         return self.r.get(k)
+
+    def set_app_var_bool(self,nvar,val,tmt=TMT):
+        self.set_app_var(nvar,1 if val==True else 0,tmt)
 
     def get_app_var_bool(self,nvar):
         res=self.get_app_var(nvar)
@@ -122,7 +128,8 @@ class RdWiioSrv(RdApp):
         
     pTopic=re.compile(r'/wifiio/data/([a-z]+)')
     def on_message(self,client,userdata,msg):
-        #print(msg.topic+" "+str(msg.payload))
+        if DEBUG_MQTT==True:
+            print(msg.topic+" "+str(msg.payload))
         
         m=RdWiioSrv.pTopic.match(msg.topic)
         if m!=None:
@@ -138,6 +145,10 @@ class RdWiioSrv(RdApp):
                     print('Add %s' % name)
                 except Exception as ex:
                     print(ex)
+
+            sleep=self.get_app_var_bool('sleep')
+            if sleep==True:
+                self.client.publish("/wifiio/cmd/%s" % name,"sleep");
 
     def start(self):
         oldOn=False
@@ -160,23 +171,36 @@ class RdWiioSrv(RdApp):
                 oldOn=on
             
             if on!=True:
-                continue
+                continue            
 
-            print('_'*40)
-            print('Cycle:')
+            if DEBUG_CYCLE==True:
+                print('_'*40)
+                print('Cycle:')
+
+            slp=self.get_app_var_bool('sleep')
+            
             for n in self.modules:
+                if slp==True:
+                    self.client.publish("/wifiio/cmd/%s" % n,"sleep");
+                    continue
+                
                 v=self.get_mod_var(n,'to_cmd')
                 if v!=None and v=='1':
                     self.client.publish("/wifiio/cmd/%s" % n,"on");
-                    print('pub %s on' % n)
+                    if DEBUG_CYCLE==True:
+                        print('pub %s on' % n)
                 else:
                     self.client.publish("/wifiio/cmd/%s" % n,"off");
-                    print('pub %s off' % n)
+                    if DEBUG_CYCLE==True:
+                        print('pub %s off' % n)
 
                 val=self.get_mod_var(n,'valid')
-                if val==None:
+                if val==None:                    
                     print("Loose %s!" % n)
                     self.set_mod_var(n,'valid',0,None)
+
+            if slp==True:
+                self.set_app_var_bool('on',False,None)                
         
 
 if __name__=='__main__':

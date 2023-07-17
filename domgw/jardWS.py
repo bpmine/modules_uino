@@ -60,6 +60,11 @@ def wiio_off():
     wiioCln.setOn(False);
     return {'result':True,'msg':'MODULE WIIO OFF.'}
 
+@app.route('/wiio/do/sleep', methods=['GET'])
+def wiio_sleep():
+    wiioCln.setSleep(True);
+    return {'result':True,'msg':'MISE EN VEILLE DES MODULES...'}
+
 @app.route('/wiio/modules/<name>/do/test', methods=['GET'])
 def wiio_pump_test(name):
     if wiioCln.hasModule(name)==False:

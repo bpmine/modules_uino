@@ -9,7 +9,13 @@ class RdWiioClient(RdApp):
         super(RdWiioClient,self).__init__(ip,port)
 
     def setOn(self,flgOn,tm=None):
-        self.set_app_var('on',1 if flgOn==True else 0,tm)
+        if (flgOn==True):
+            self.setSleep(False)
+            
+        self.set_app_var_bool('on',flgOn,tm)
+
+    def setSleep(self,flgSleep):
+        self.set_app_var_bool('sleep',flgSleep,None)        
 
     def setCmd(self,mname,flgOn,tm=None):
         self.set_mod_var(mname,'to_cmd',1 if flgOn==True else 0,tm)
@@ -146,41 +152,88 @@ class Rempli:
     def __str__(self):
         return ""
 
+class RempliApp():
+    def get_app_bool(self,vname):
+        val=self.r.get('remplis.%s' % vname)
+        if val==None or val!='1':
+            return False
+        else:
+            return True
+        
+    def get_rempli_bool(self,rname,vname):
+        val=self.r.get('remplis.%s' % vname)
+        if val==None or val!='1':
+            return False
+        else:
+            return True
+        
+    def get_rempli_int(self,rname,vname):
+        val=self.r.get('remplis.%s' % vname)
+        if val!=None and val.isnumeric():
+            return int(val,10)
+        else:
+            return None
+
+    def __init__(self,ip='192.168.3.200',port=6379):
+        self.r = redis.Redis(host=ip, port=port, db=0, decode_responses=True)
+        
+        self.remplis={}
+        
+        r1=Rempli(cln,"main_reduit","main","reduit","main")
+        r2=Rempli(cln,"reduit_barbec","reduit","barbec","reduit")
+        r3=Rempli(cln,"main_paul","paul","paul","main")
+        lst=[r1,r2,r3]        
+        for r in lst:
+            self.remplis[r.name]=r
+
+        ks=self.r.keys('remplis.*')
+        p=self.r.pipeline()
+        for k in ks:
+            p.delete(k)
+        p.execute()
+
+        p=self.r.pipeline()
+        p.set('on','0')
+        for _,v in self.remplis.items():
+            pref='remplis.%s' % v.name
+
+            p.set('%s.on' % (pref),'0')
+            p.set('%s.cons_src' % (pref),'3')
+            p.set('%s.cons_dst' % (pref),'1')
+            p.set('%s.src' % (pref),v.lvl_src)
+            p.set('%s.dst' % (pref),v.lvl_tgt)
+
+        p.execute()
+
+    def loop(self):
+        on=self.get_app_bool('on')
+        
+        for _,v in self.remplis.items():
+            pref='remplis.%s' % v.name
+            
+            src=self.r.get('%s.src' % pref)
+            dst=self.r.get('%s.dst' % pref)
+            
+            ron=self.get_rempli_bool(v.name,'on')
+            rcons_src=self.get_rempli_int(v.name,'cons_src')
+            rcons_dst=self.get_rempli_int(v.name,'cons_dst')
+
+            print('%s (%s->%s): %s [%s->%s]' % (v.name,src,dst,ron,rcons_src,rcons_dst))
+
+            v.on=ron
+            v.cons_tgt=rcons_dst
+            v.cons_src=rcons_src
+            v.run()
+        
+        
 
       
 if __name__=='__main__':
     cln=RdWiioClient('192.168.3.200')
     print(cln.getJson())
     print('_'*40)
-    print(cln.getModuleJson('paul'))
-    print('_'*60)
 
-    #print('Set on')
-    #cln.setOn(True)
-    #time.sleep(2)
+    app=RempliApp()
+    app.loop()
 
-    #print('Set off')
-    #cln.setOn(False)
-    #time.sleep(2)
-
-    #print('Set on')
-    #cln.setOn(True)
-
-    #print('SetCmd')
-    #cln.setCmd('main',True,600)
-
-    r1=Rempli(cln,"main_reduit","main","reduit","main")
-    r2=Rempli(cln,"reduit_barbec","reduit","barbec","reduit")
-    r3=Rempli(cln,"main_paul","paul","paul","main")
-    remplis=[r1,r2,r3]
-    
-    #r1.start(3)
-    #r2.start(3)
-    r3.start(3)
-    
-    while True:        
-        for r in remplis:
-            r.run()
-            
-        time.sleep(4)
 
