@@ -19,10 +19,11 @@
 #include <avr/power.h>
 #include <avr/wdt.h>
 
-#define TIME_FOR_TEST_S		(500)
+#define TIME_FOR_TEST_S		(120)
 #define TIME_FOR_READING_S	(10)
 #define TIME_MAX_FILLNG_S	(60)
 #define TIME_CYCLE_MS		(500)
+#define TIME_ACTION_OYA_S	(5*60)
 
 #define NUM_LEDS    (8)
 
@@ -60,6 +61,7 @@ static Master _master;
 static Timer tmrBlink(250,false);
 static Timer tmrCycle((unsigned long)TIME_CYCLE_MS,false);
 static Timer tmrLog(5000,false);
+static Timer tmrAction((unsigned long)TIME_ACTION_OYA_S * 1000UL);
 
 static Btn btnTest;
 
@@ -325,7 +327,7 @@ class AppStates : public States
 	  /// DayofWeek=0 for sunday
 	  /// Action le dimanche et le mercredi entre 12h et 12h05
 	  DateTime now = _rtc.now();
-	  if (    (now.hour()==15) && (now.minute()>=45) && (now.minute()<=50)
+	  if (    (now.hour()==10) && (now.minute()==5)
 		   //&& ( (now.dayOfWeek()==0) || (now.dayOfWeek()==3) )
 		   )
 	  {
@@ -340,12 +342,12 @@ class AppStates : public States
     bool isTimeTolog(void)
     {
 	  DateTime now = _rtc.now();
-	  if (    (now.minute()%5==0)
-		   /*&& (    (now.hour()==0)
+	  if (    (now.minute()==0)
+		   && (    (now.hour()==0)
 			    || (now.hour()==10)
 				|| (now.hour()==15)
 				|| (now.hour()==20)
-			   )*/
+			   )
 		   )
 	  {
 		return true;
@@ -379,6 +381,8 @@ class AppStates : public States
 
             tmt.setDuration_ms((unsigned long)TIME_FOR_READING_S * 1000UL);
             tmt.start();
+
+            tmrAction.start();
     	    break;
     	  }
     	  case LOG:
@@ -408,7 +412,7 @@ class AppStates : public States
           }
           case TODO:
           {
-            Serial.println("TODO");
+            //Serial.println("TODO");
 
             digitalWrite(PIN_PWR_LEDS,HIGH);
             break;
@@ -437,7 +441,7 @@ class AppStates : public States
 		  }
 		  case NEXT:
 		  {
-			Serial.println("Next.");
+			//Serial.println("Next.");
 			break;
 		  }
 		  case STOP_PMP:
@@ -594,23 +598,40 @@ class AppStates : public States
 
         case NEXT:
         {
+          _app_update_leds();
           _pump.cmd=false;
+
+          bool oneNeed=false;
           int pos=0;
           Oya *p=_oyasList.itNext(pos);
           while (p!=NULL)
           {
             p->cmd=false;
             p=_oyasList.itNext(pos);
+            if ( (p->comm_ok==false) || (p->high==true) || (p->low==true) )
+              oneNeed=true;
           }
 
           pOya=_oyasList.itNext(posOya);
           if (pOya==NULL)
             posOya=0;
 
-          if (startPosOya==posOya)
-        	  changeState(test_mode?TEST:SLEEP);
-          else
+          if (test_mode==true)
+          {
+        	if (startPosOya==posOya)
+        	  changeState(TEST);
+        	else
         	  changeState(TODO);
+          }
+          else
+          {
+        	if (oneNeed)
+        	  changeState(TODO);
+
+        	if (tmrAction.tick()==true)
+        	  changeState(SLEEP);
+
+          }
             
           break;          
         }
