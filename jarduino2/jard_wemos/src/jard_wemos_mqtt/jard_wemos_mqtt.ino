@@ -3,9 +3,9 @@
 
 #include "timer.h"
 
-//#define NODE_MAIN
+#define NODE_MAIN
 //#define NODE_PAUL
-#define NODE_REDUIT
+//#define NODE_REDUIT
 //#define NODE_BARBEC
 //#define NODE_TEST
 
@@ -14,7 +14,7 @@
 #define TIME_REPEAT_FIRST_S   (30)
 #define TIME_CYCLE_MS         (100)
 #define TIMEOUT_COMM_S        (5)
-#define SLEEPING_TIME_MIN     (1)
+#define SLEEPING_TIME_MIN     (60)
 
 #define WIFI_ID       "Domotique"
 #define WIFI_PWD      "94582604"
