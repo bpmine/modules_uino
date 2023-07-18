@@ -112,6 +112,8 @@ namespace jardcmd.ctrl
                 else 
                 {
                     btnPump.Enabled=true;
+                    cmbDuree.Enabled=true;
+
                     c.BackColor=SystemColors.Info;
                     c.ForeColor=Color.Black;
                 }
