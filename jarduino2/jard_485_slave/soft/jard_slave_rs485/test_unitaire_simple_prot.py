@@ -222,7 +222,7 @@ def test_basic_oya(ser,addr):
         
    
 time.sleep(2)
-lst=['A','B']
+lst=['F']
 while True:
     for a in lst:
         try:
