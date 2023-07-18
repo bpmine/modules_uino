@@ -68,6 +68,9 @@ class RdApp:
         else:
             return int(res)
 
+    def set_mod_var_bool(self,nmod,nvar,val,tmt=None):
+        self.set_mod_var(nmod,nvar,1 if val==True else 0,tmt)
+
     def del_mod_var(self,nmod,nvar):
         k=self.kModVar(nmod,nvar)
         self.r.delete(k)
@@ -134,21 +137,29 @@ class RdWiioSrv(RdApp):
         m=RdWiioSrv.pTopic.match(msg.topic)
         if m!=None:
             name=m.group(1)
-            js=json.loads(msg.payload)
-            self.update_data(name,js)
-            print('-> Recv %s (%s)' % (name,js['cmd']))
-            
-            if name not in self.modules:
-                try:
-                    self.r.sadd('%s.modules' % (self.kApp()),name)
-                    self.modules.add(name)
-                    print('Add %s' % name)
-                except Exception as ex:
-                    print(ex)
+
+            try:
+                js=json.loads(msg.payload)
+                self.update_data(name,js)
+                print('-> Recv %s (%s)' % (name,js['cmd']))
+                
+                if name not in self.modules:
+                    try:
+                        self.r.sadd('%s.modules' % (self.kApp()),name)
+                        self.modules.add(name)
+                        print('Add %s' % name)
+                    except Exception as ex:
+                        print(ex)
+            except:
+                if DEBUG_MQTT==True:
+                    print('Message incorrect')
+                pass
 
             sleep=self.get_app_var_bool('sleep')
-            if sleep==True:
+            if sleep==True and self.get_mod_var_bool(name,'sleep')==False:
+                print('Envoi sleep a %s' % (name))
                 self.client.publish("/wifiio/cmd/%s" % name,"sleep");
+                self.set_mod_var_bool(name,'sleep',True,3000)
 
     def start(self):
         oldOn=False

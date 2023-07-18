@@ -54,6 +54,7 @@ class RdWiioClient(RdApp):
             'rssi':self.get_mod_var_int(name,'rssi'),
             'pwr':self.get_mod_var_int(name,'pwr'),
             'valid':self.get_mod_var_bool(name,'valid'),
+            'sleep':self.get_mod_var_bool(name,'sleep'),
             'date':self.get_mod_var(name,'date')
             }
         
@@ -62,8 +63,9 @@ class RdWiioClient(RdApp):
 
     def getJson(self):
         ret={
-            'on': True if self.get_app_var('on')=='1' else False,
-            'alive': True if self.get_app_var('alive')=='1' else False,
+            'on': self.get_app_var_bool('on'),
+            'alive': self.get_app_var_bool('alive'),
+            'sleep': self.get_app_var_bool('sleep'),
             'modules':{}
             }
         
