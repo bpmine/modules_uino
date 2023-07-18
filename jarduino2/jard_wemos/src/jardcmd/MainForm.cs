@@ -38,6 +38,8 @@ namespace jardcmd
             io.SetName(js.name);
             //io.SetIP(js.ip);
             io.SetValid(js.valid);
+            io.SetDate(js.date);
+            io.SetSleep(js.sleep);
         }
 
         private void JsonToRempli(RempliRw r, jsRempli js)
@@ -135,7 +137,7 @@ namespace jardcmd
             }
         }
 
-        private void click_pump(string name)
+        private void click_pump(string name,int duree)
         {
             if (name==null)
                 return;
@@ -146,7 +148,7 @@ namespace jardcmd
                 {
                     try
                     { 
-                        m_cln.SetPumpCmd(name,!io.Cmd);
+                        m_cln.SetPumpCmd(name,!io.Cmd,duree);
                     }
                     catch (Exception)
                     {

@@ -16,13 +16,14 @@ namespace jardcmd.ctrl
         Control []panels= { }; 
         private string name;
 
-        public delegate void OnClickPumpFunc(string name);
+        public delegate void OnClickPumpFunc(string name,int duration_s);
         public OnClickPumpFunc OnClickPump;
 
         public CtrlPmp()
         {
             InitializeComponent();
             panels=new Control[] {panel1,panel2,panel3 };
+            cmbDuree.SelectedIndex=3;
         }
 
         private void panelBottom_Paint(object sender, PaintEventArgs e)
@@ -64,7 +65,8 @@ namespace jardcmd.ctrl
                 { 
                     c.BackColor=SystemColors.Info;
                     c.ForeColor=Color.Black;
-                }
+                }                
+
                 return;
             }
 
@@ -76,6 +78,8 @@ namespace jardcmd.ctrl
 
             lblRSSI.Text="RSSI= "+(0xFFFF-io.RSSI).ToString();
             lblBatt.Text="Batt= "+io.PWR.ToString();
+
+            dteTime.Value=io.Date;
 
             if (io.Cmd==true)            
             {
@@ -91,11 +95,23 @@ namespace jardcmd.ctrl
             foreach (Control c in panels)
                 if (io.Valid==false)
                 {
-                    c.BackColor=Color.Red;
-                    c.ForeColor=Color.White;
+                    btnPump.Enabled=false;
+                    cmbDuree.Enabled=false;
+
+                    if (io.Sleep==true)
+                    {                        
+                        c.BackColor=Color.Black;
+                        c.ForeColor=Color.White;
+                    }
+                    else
+                    { 
+                        c.BackColor=Color.Red;
+                        c.ForeColor=Color.White;
+                    }
                 }
                 else 
                 {
+                    btnPump.Enabled=true;
                     c.BackColor=SystemColors.Info;
                     c.ForeColor=Color.Black;
                 }
@@ -104,7 +120,23 @@ namespace jardcmd.ctrl
         private void btnPump_Click(object sender, EventArgs e)
         {
             if (OnClickPump!=null)
-                OnClickPump(name);
+            {
+                int duree=15;
+                if (cmbDuree.Text=="15 s")
+                    duree=15;
+                else if (cmbDuree.Text=="1 min")
+                    duree=60;
+                else if (cmbDuree.Text=="2 mins")
+                    duree=2*60;
+                else if (cmbDuree.Text=="5 mins")
+                    duree=5*60;
+                else if (cmbDuree.Text=="15 mins")
+                    duree=15*60;
+                else if (cmbDuree.Text=="30 mins")
+                    duree=30*60;
+
+                OnClickPump(name,duree);                
+            }
         }
     }
 }

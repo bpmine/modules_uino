@@ -37,10 +37,24 @@ namespace jardcmd.wsclient
             return ret;
         }
 
-        public jsResult SetPumpCmd(string name,bool flgOn)
+        public jsResult SetPumpCmd(string name,bool flgOn,int duree=0)
         {            
+            if (duree<0)
+            {
+                duree=0;
+                flgOn=false;
+            }
+
+            if (duree>30*60)
+                duree=30*60;
+
+            string sRet;
             string sCmd=flgOn==true?"on":"off";
-            string sRet = ExecGET(m_sURL + "/wiio/modules/"+name+"/do/"+sCmd+"?duration=800");
+            if (flgOn==true)
+                sRet = ExecGET(m_sURL + "/wiio/modules/"+name+"/do/"+sCmd+"?duration="+duree.ToString());
+            else
+                sRet = ExecGET(m_sURL + "/wiio/modules/"+name+"/do/"+sCmd);
+
             jsResult ret = JsonConvert.DeserializeObject<jsResult>(sRet, jser);
             return ret;
         }

@@ -20,6 +20,10 @@ namespace jardcmd.wsclient
         public int rssi {get;set; }
         public int pwr {get;set; }
 
+        public string date { get;set;}
+
+        public bool sleep { get;set;}
+
         public jsWifiIo()
         {
         }

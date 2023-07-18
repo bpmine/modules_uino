@@ -81,39 +81,27 @@ namespace jardcmd
 
         public static DateTime Iso2Dte(string sDate)
         {
-            string[] formats = new[] 
-            {
-                "ddd MMM dd HH:mm:ss UTC yyyy",
-                "ddd MMM dd HH:mm:ss CEST yyyy",
-                "ddd MMM dd HH:mm:ss CET yyyy",
-                "ddd, dd MMM yyyy HH:mm:ss CEST",
-                "ddd, dd MMM yyyy HH:mm:ss CET",
-                "yyyy-MM-ddTHH:mm:ssZ"
-            };
+            Regex rg=new Regex("([0-9]{4})-([0-9]{2})-([0-9]{2})T([0-9]{2}):([0-9]{2}):([0-9]{2})");
 
             if (sDate == null)
                 return new DateTime(0);
 
-            /// Cette horreur, c'est pour etre retrocompatible avec le webservice initial
-            /// En 2018, il faudra retirer ce if et transformer les membres Dates de js_xxxx de string en DateTime et laisser faire le parseur json...
-            if (sDate.EndsWith("+0000"))
+            Match m=rg.Match(sDate);
+            if ( (m!=null) && (m.Success==true) )
             {
-                sDate=sDate.Substring(0,sDate.Length-9)+"Z";
-            }
-            //// Fin de l'horreur
+                int year=int.Parse(m.Groups[1].Value);
+                int month=int.Parse(m.Groups[2].Value);
+                int day=int.Parse(m.Groups[3].Value);
 
-            try
-            {
-                DateTime date = DateTime.ParseExact(sDate,
-                                                    formats,
-                                                    CultureInfo.InvariantCulture,
-                                                    DateTimeStyles.AdjustToUniversal);
-                return date;
+                int hour=int.Parse(m.Groups[4].Value);
+                int min=int.Parse(m.Groups[5].Value);
+                int sec=int.Parse(m.Groups[6].Value);
+
+                DateTime dte=new DateTime(year,month,day,hour,min,sec);
+                return dte;                
             }
-            catch
-            {
-                return new DateTime(1970,1,1,0,0,0,0,DateTimeKind.Utc);
-            }            
+            else
+                return new DateTime(0);
         }
 
         public static string DteToShortDateStr(DateTime dte)

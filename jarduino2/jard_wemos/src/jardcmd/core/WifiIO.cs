@@ -17,6 +17,8 @@ namespace jardcmd.core
         protected int _RSSI;
         protected int _PWR;
         protected string _IP;
+        protected DateTime _date;
+        protected bool _sleep;
 
         public string Name { get { return _Name;}}
         public bool Cmd { get{ return _Cmd;}}
@@ -26,6 +28,9 @@ namespace jardcmd.core
         public int RSSI { get { return _RSSI;}}
         public int PWR { get { return _PWR;}}
         public bool Valid { get { return _Valid;}}
+        public DateTime Date { get { return _date;}}
+        public string IP { get { return _IP;}}
+        public bool Sleep { get { return _sleep;}}
 
         public WifiIO()
         {

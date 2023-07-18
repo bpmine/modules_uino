@@ -34,6 +34,11 @@ namespace jardcmd.core
         {
             this._IP=ip;
         }
+        public void SetDate(string date)
+        {
+            this._date=Utils.Iso2Dte(date);
+        }
+
         public void SetRSSI(int rssi)
         {
             this._RSSI=rssi;
@@ -45,6 +50,10 @@ namespace jardcmd.core
         public void SetValid(bool valid)
         {
             this._Valid=valid;
+        }
+        public void SetSleep(bool sleep)
+        {
+            this._sleep=sleep;
         }
     }
 }
