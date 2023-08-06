@@ -37,15 +37,7 @@ bool logsd_log(DateTime &now,OyasList &list,Pump &pump)
   unsigned char ucOn=0;
   unsigned char ucHigh=0;
   unsigned char ucLow=0;
-  unsigned char ucTempMin=255;
-  unsigned char ucTempMoy=0;
-  unsigned char ucTempMax=0;
-  unsigned char ucHumMin=255;
-  unsigned char ucHumMoy=0;
-  unsigned char ucHumMax=0;
-  long temp=0;
-  long hum=0;
-  int nbre=0;
+  char strVals[50]="";
 
   int pos=0;
   Oya *p=list.itNext(pos);
@@ -65,19 +57,9 @@ bool logsd_log(DateTime &now,OyasList &list,Pump &pump)
 	if (p->high==true)
 	  ucHigh|=(1<<n);
 
-	temp+=p->temp_dg;
-	hum+=p->hum_pc;
-	nbre++;
-
-	if ((p->temp_dg>ucTempMax) && (p->temp_dg!=255))
-	  ucTempMax=p->temp_dg;
-	if (p->temp_dg<ucTempMin)
-	  ucTempMin=p->temp_dg;
-
-	if ((p->hum_pc>ucHumMax) && (p->hum_pc!=255))
-	  ucHumMax=p->hum_pc;
-	if (p->hum_pc<ucHumMin)
-	  ucHumMin=p->hum_pc;
+	char tmp[20];
+	sprintf(tmp,"%d;%d;",p->temp_dg,p->hum_pc);
+	strcat(strVals,tmp);
 
 	p=list.itNext(pos);
   }
@@ -88,38 +70,18 @@ bool logsd_log(DateTime &now,OyasList &list,Pump &pump)
   if (pump.on==true)
 	ucOn|=1;
 
-  temp+=pump.temp_dg;
-  hum+=pump.hum_pc;
-  nbre++;
-
-  ucTempMoy=(unsigned char)(temp/nbre);
-  ucHumMoy=(unsigned char)(hum/nbre);
-
-  if (pump.temp_dg>ucTempMax)
-	ucTempMax=pump.temp_dg;
-  if (pump.temp_dg<ucTempMin)
-	ucTempMin=pump.temp_dg;
-
-  if (pump.hum_pc>ucHumMax)
-	ucHumMax=pump.hum_pc;
-  if (pump.hum_pc<ucHumMin)
-	ucHumMin=pump.hum_pc;
-
-
   char strLine[200];
-  sprintf(strLine,"%s;%02x,%02x,%02x,%02x;%d;%d;%d;%d;%d;%d;",
+  sprintf(strLine,"%s;%02x,%02x,%02x,%02x;%d;",
 		  strDteTime,
 		  ucValid,
 		  ucOn,
 		  ucLow,
 		  ucHigh,
-		  ucTempMin,
-		  ucTempMoy,
-		  ucTempMax,
-		  ucHumMin,
-		  ucHumMoy,
-		  ucHumMax
+		  pump.flow
 		  );
+
+  strcat(strLine,strVals);
+  yield();
 
   Serial.println(strLine);
 

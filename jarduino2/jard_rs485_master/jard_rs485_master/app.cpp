@@ -23,7 +23,7 @@
 #define TIME_FOR_READING_S	(10)
 #define TIME_MAX_FILLNG_S	(60)
 #define TIME_CYCLE_MS		(500)
-#define TIME_ACTION_OYA_S	(5*60)
+#define TIME_ACTION_OYA_S	(15*60)
 
 #define NUM_LEDS    (8)
 
