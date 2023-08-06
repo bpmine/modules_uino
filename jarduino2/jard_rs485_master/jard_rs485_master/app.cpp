@@ -325,10 +325,10 @@ class AppStates : public States
     bool isTimeTodo(void)
     {
 	  /// DayofWeek=0 for sunday
-	  /// Action le dimanche et le mercredi entre 12h et 12h05
+	  /// Action le mardi et le vendredi entre 12h et pendant TIME_ACTION_OYA_S
 	  DateTime now = _rtc.now();
-	  if (    (now.hour()==10) && (now.minute()==5)
-		   //&& ( (now.dayOfWeek()==0) || (now.dayOfWeek()==3) )
+	  if (    (now.hour()==12) && (now.minute()==0)
+		   && ( (now.dayOfWeek()==2) || (now.dayOfWeek()==5) )
 		   )
 	  {
 		return true;
