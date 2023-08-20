@@ -3,8 +3,10 @@ from flask import Flask,request
 import json
 import time
 from jard_wemos_mqtt_client import RdWiioClient
+from jard_remplissage_client import RdRempliClient
 
 wiioCln = RdWiioClient('192.168.3.200')
+rempliCln=RdRempliClient()
 
 app = Flask(__name__)
 
@@ -32,17 +34,6 @@ def get_wiio_modules():
             modules.append(m)
 
     return json.dumps(modules)
-
-
-@app.route('/states', methods=['GET'])
-def get_states():
-    ret={'modules':[]}
-    js=wiioCln.getJson()
-    if 'modules' in js:
-        for k,m in js['modules'].items():
-            ret['modules'].append(m)
-    
-    return json.dumps(ret)
 
 
 @app.route('/wiio', methods=['GET'])
@@ -95,6 +86,72 @@ def wiio_pump_off(name):
 
     wiioCln.setCmd(name,False,None)
     return {'result':True,'msg':'Pompe %s OFF.' % name}
+
+@app.route('/wiio/remplis', methods=['GET'])
+def wiio_get_remplissages():
+    lst=rempliCln.getJsonList()
+    return json.dumps(lst)
+
+@app.route('/wiio/remplis/<name>', methods=['GET'])
+def wiio_get_rempli_byname(name):
+    if (rempliCln.hasRempli(name))==False:
+        abort(404)
+
+    js=rempliCln.getRempliJson(name)
+    return json.dumps(js)
+
+@app.route('/wiio/remplis/<name>/do/on', methods=['GET'])
+def wiio_set_remplissage_on(name):
+    if (rempliCln.hasRempli(name))==False:
+        abort(404)
+        
+    rempliCln.setOn(name,True)
+    
+    return {'result':True,'msg':'Remplissage %s ON.' % name}
+
+@app.route('/wiio/remplis/<name>/do/off', methods=['GET'])
+def wiio_set_remplissage_off(name):
+    if (rempliCln.hasRempli(name))==False:
+        abort(404)
+        
+    rempliCln.setOn(name,False)
+    
+    return {'result':True,'msg':'Remplissage %s OFF.' % name}
+
+@app.route('/wiio/remplis/<name>/do/setcons', methods=['GET'])
+def wiio_set_remplissage_consignes(name):
+    if (rempliCln.hasRempli(name))==False:
+        abort(404)
+
+    cons_src=request.args.get('src')
+    if (cons_src!=None):
+        rempliCln.setConsSrc(name,int(cons_src))
+    
+    cons_dst=request.args.get('dst')
+    if (cons_dst!=None):
+        rempliCln.setConsDst(name,int(cons_dst))
+    
+    return {'result':True,'msg':'Reglage des consignes de %s (%s -> %s).' % (name,cons_src,cons_dst)}
+
+
+@app.route('/states', methods=['GET'])
+def get_states():
+    ret={
+        'modules':[],
+        'remplissages':[]
+        }
+    
+    js=wiioCln.getJson()
+    if js!=None and 'modules' in js:
+        for k,m in js['modules'].items():
+            ret['modules'].append(m)
+
+    js=rempliCln.getJsonList()
+    if js!=None:
+        for r in js:
+            ret['remplissages'].append(r)
+    
+    return json.dumps(ret)
 
 if __name__=='__main__':
     app.debug = True
