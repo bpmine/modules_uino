@@ -9,8 +9,8 @@ namespace jardcmd.wsclient
     public class jsRempli
     {
         public string name {get;set; }
-        public int cons_tgt {get;set; }
-        public int limit_src {get;set; }
+        public int cons_src {get;set; }
+        public int cons_dst {get;set; }
         public bool on {get;set; }
 
         public jsRempli()

@@ -79,7 +79,6 @@ namespace jardcmd
             // 
             // ctrlRempli1
             // 
-            this.ctrlRempli1.Enabled = false;
             this.ctrlRempli1.Location = new System.Drawing.Point(468, 12);
             this.ctrlRempli1.Name = "ctrlRempli1";
             this.ctrlRempli1.Size = new System.Drawing.Size(306, 98);
@@ -87,7 +86,6 @@ namespace jardcmd
             // 
             // ctrlRempli2
             // 
-            this.ctrlRempli2.Enabled = false;
             this.ctrlRempli2.Location = new System.Drawing.Point(468, 116);
             this.ctrlRempli2.Name = "ctrlRempli2";
             this.ctrlRempli2.Size = new System.Drawing.Size(306, 98);
@@ -95,7 +93,6 @@ namespace jardcmd
             // 
             // ctrlRempli3
             // 
-            this.ctrlRempli3.Enabled = false;
             this.ctrlRempli3.Location = new System.Drawing.Point(468, 220);
             this.ctrlRempli3.Name = "ctrlRempli3";
             this.ctrlRempli3.Size = new System.Drawing.Size(306, 98);

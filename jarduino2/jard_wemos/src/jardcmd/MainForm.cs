@@ -45,8 +45,8 @@ namespace jardcmd
         private void JsonToRempli(RempliRw r, jsRempli js)
         {
             r.setName(js.name);
-            r.setConsTgt(js.cons_tgt);
-            r.setLimitSrc(js.limit_src);
+            r.setConsTgt(js.cons_dst);
+            r.setLimitSrc(js.cons_src);
             r.setOn(js.on);
         }
 

@@ -239,7 +239,7 @@ namespace jardcmd.wsclient
         public WsClient()
         {
             m_sURL = "http://192.168.3.200:5000";
-            //m_sURL = "http://192.168.1.159:8080";
+            //m_sURL = "http://192.168.1.110:5000";
             //m_sURL = "http://127.0.0.1:5000";
             m_sLogin = "guest";
             m_sPass = "guest";

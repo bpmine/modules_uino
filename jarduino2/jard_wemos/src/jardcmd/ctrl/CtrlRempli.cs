@@ -51,19 +51,16 @@ namespace jardcmd.ctrl
 
         private void checkRemplir_CheckedChanged(object sender, EventArgs e)
         {
-            if (OnChangeOnOff!=null)
+            if ( (OnChangeOnOff!=null) && (name!=null) && (name!="") )
                 OnChangeOnOff(name,checkRemplir.Checked);
         }
 
         private void src_ValueChanged(object sender, EventArgs e)
         {
-             if (OnChangeSrcLimit!=null)
+             if ( (OnChangeSrcLimit!=null) && (name!=null) && (name!="") )
                 OnChangeSrcLimit(name,src.Value);
         }
 
-        private void tgt_Scroll(object sender, EventArgs e)
-        {
-        }
 
         private void tgt_ValueChanged(object sender, EventArgs e)
         {

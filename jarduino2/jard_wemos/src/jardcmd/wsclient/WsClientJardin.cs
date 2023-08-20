@@ -70,24 +70,24 @@ namespace jardcmd.wsclient
 
         public void SetRemplissageOn(string name,bool newOn)
         {
-            Dictionary<string,string> par=new Dictionary<string,string>();
-            par.Add("on",newOn==true?"1":"0");
-            
-            ExecGET(m_sURL + "/rempli/"+name,par);
+            if (newOn==true)
+                ExecGET(m_sURL + "/wiio/remplis/"+name+"/do/on");
+            else
+                ExecGET(m_sURL + "/wiio/remplis/"+name+"/do/off");
         }
         public void SetSrcLimit(string name,int newVal)
         {
             Dictionary<string,string> par=new Dictionary<string,string>();
-            par.Add("limit_src",newVal.ToString());
+            par.Add("src",newVal.ToString());
             
-            ExecGET(m_sURL + "/rempli/"+name,par);
+            ExecGET(m_sURL + "/wiio/remplis/"+name+"/do/setcons",par);
         }
         public void SetTgtConsigne(string name,int newVal)
         {
             Dictionary<string,string> par=new Dictionary<string,string>();
-            par.Add("cons_tgt",newVal.ToString());
+            par.Add("dst",newVal.ToString());
             
-            ExecGET(m_sURL + "/rempli/"+name,par);
+            ExecGET(m_sURL + "/wiio/remplis/"+name+"/do/setcons",par);
         }
     }
 }
