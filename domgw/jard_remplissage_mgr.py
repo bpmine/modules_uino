@@ -70,16 +70,9 @@ class RempliApp():
         p.execute()
 
         self.add_remplissage("main_reduit"  , "main"  , "reduit", "main")
-        self.add_remplissage("main_paul"    , "main"  , "paul"  , "main")
+        self.add_remplissage("main_paul"    , "paul"  , "paul"  , "main")
         self.add_remplissage("reduit_barbec", "reduit", "barbec", "reduit")
         
-##        self.set_rempli_bool("main_reduit",'on',True,None)
-##        self.set_rempli_var("main_reduit",'cons_src',1,None)
-##        self.set_rempli_var("main_reduit",'cons_dst',3,None)
-##
-##        self.set_rempli_bool("reduit_barbec",'on',False,None)
-##        self.set_rempli_var("reduit_barbec",'cons_src',1,None)
-##        self.set_rempli_var("reduit_barbec",'cons_dst',3,None)
 
     def tolvl(self,n1,n2,n3):
         if n3==True:
