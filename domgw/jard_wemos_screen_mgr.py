@@ -8,12 +8,13 @@ import datetime
 
 DEBUG_MQTT=False
 
-MQTT_IP="192.168.3.200"
+REDIS_IP='192.168.3.200'
+MQTT_IP=REDIS_IP
 MQTT_TOPIC_DATAS='/wifiio/data/#'
 MQTT_TOPIC_BOOT='/wifiio/screen/boot'
 
 class RdWiioScreen():
-    def __init__(self,ip=MQTT_IP,port=6379):
+    def __init__(self,ip=REDIS_IP,port=6379):
         self.r = redis.Redis(host=ip, port=port, db=0, decode_responses=True)
         self.ip=ip
         self.client = mqtt.Client()
@@ -37,7 +38,9 @@ class RdWiioScreen():
         # Sur reception d'un boot, on envoi tous les messages d'event des cuves
         if msg.topic==MQTT_TOPIC_BOOT:
             mqtt_nme=msg.payload
-            print('Reception boot de %s' % (mqtt_nme))
+            if DEBUG_MQTT==True:
+                print('Reception boot de %s' % (mqtt_nme))
+                
             for nme in self.mods.keys():
                 event={
                     'name':nme,
@@ -74,13 +77,10 @@ class RdWiioScreen():
                 pn3=self.mods[name]['n3']
                 pcmd=self.mods[name]['cmd']
                 
-                #print('%s, %s, %s, %s' % (pn1,pn2,pn3,pcmd))
-
                 n1=js['n1']
                 n2=js['n2']
                 n3=js['n3']
                 cmd=js['cmd']
-                #print('%s, %s, %s, %s' % (n1,n2,n3,cmd))
 
                 self.mods[name]['n1']=n1
                 self.mods[name]['n2']=n2
@@ -111,17 +111,7 @@ class RdWiioScreen():
         self.client.on_connect = self.on_connect
         self.client.on_message = self.on_message
 
-        self.client.connect("192.168.3.200", 1883, 60)
-
-##        event={
-##            'name':"barbec",
-##            'n1':True,
-##            'n2':False,
-##            'n3':False,
-##            'cmd':False
-##            }
-##        self.client.publish("/wifiio/screen/data",json.dumps(event));
-        
+        self.client.connect(MQTT_IP, 1883, 60)       
 
         self.client.loop_forever()
 
@@ -130,7 +120,7 @@ class RdWiioScreen():
             time.sleep(1)
 
 if __name__=='__main__':
-    srv=RdWiioScreen('192.168.3.200')
+    srv=RdWiioScreen(REDIS_IP)
     srv.start()
 
 
