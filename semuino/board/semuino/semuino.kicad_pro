@@ -48,8 +48,16 @@
           "min_clearance": 0.508
         }
       },
-      "diff_pair_dimensions": [],
-      "drc_exclusions": [],
+      "diff_pair_dimensions": [
+        {
+          "gap": 0.0,
+          "via_gap": 0.0,
+          "width": 0.0
+        }
+      ],
+      "drc_exclusions": [
+        "text_height|193000000|88000000|8cb98e3b-05e5-4e98-8dd1-b6bbdfca3650|00000000-0000-0000-0000-000000000000"
+      ],
       "meta": {
         "filename": "board_design_settings.json",
         "version": 2
@@ -168,6 +176,7 @@
       ],
       "track_widths": [
         0.0,
+        0.25,
         1.0,
         2.0,
         4.0,
@@ -175,7 +184,12 @@
         6.0,
         10.0
       ],
-      "via_dimensions": [],
+      "via_dimensions": [
+        {
+          "diameter": 0.0,
+          "drill": 0.0
+        }
+      ],
       "zones_allow_external_fillets": false
     },
     "layer_presets": [],
