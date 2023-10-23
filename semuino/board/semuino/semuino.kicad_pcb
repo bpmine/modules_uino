@@ -8,7 +8,7 @@
   (title_block
     (title "Semuino - Contrôleur de meuble à semis")
     (date "2023-09-21")
-    (rev "A0")
+    (rev "A1")
     (company "BPC")
     (comment 2 "Température ambiante - 3 Capteurs d'humidité")
     (comment 3 "3 bandeaux LEDs 12V Blanches - 3 bandeaux LEDs RGB 5V")
@@ -4974,7 +4974,7 @@
   (gr_text "2" (at 193 70.5 90) (layer "F.SilkS") (tstamp 1e3ee995-cf85-42d4-81d2-c42ac348da92)
     (effects (font (size 1 1) (thickness 0.15)))
   )
-  (gr_text "SEMUINO\nRev A0" (at 186 129) (layer "F.SilkS") (tstamp 3627b22b-9bd6-4b07-963f-c8ac3e59d89a)
+  (gr_text "SEMUINO\nRev A1" (at 186 129) (layer "F.SilkS") (tstamp 3627b22b-9bd6-4b07-963f-c8ac3e59d89a)
     (effects (font (size 1 1) (thickness 0.15)) (justify left))
   )
   (gr_text "RF" (at 151.5 90) (layer "F.SilkS") (tstamp 38505d8f-1fc9-4fc1-b6bf-aa6b023bce35)
