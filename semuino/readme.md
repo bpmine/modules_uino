@@ -39,56 +39,27 @@ Il est prévu d'ajouter un étage au dessus du meuble toujours sur le même prin
 
 ### Mode d'emploi
 
-Le bôtier de commande comporte un interrupteur général et un interrupteur de sélection.
-
-L'interrupteur général permet d'allumer ou d'éteindre le système. Son état est visualisé par la LED rouge qui indique qu'il est bien allimenté.
-
-L'interrupteur de sélection permet de choisir le mode de fonctionnement du système:
-
-Mode | Haut | Bas | Luminosité
------- | ------ | ------ | ------
-0 | Eteint | Eteint | Cycle standard
-1 | 80%R/20%B | Eteint | Cycle standard
-2 | Blanc | Eteint | Cycle standard
-3 | Eteint | 80%R/20%B | Cycle standard
-4 | Eteint | Blanc | Cycle standard
-5 | 80%R/20%B | 80%R/20%B | Cycle standard
-6 | 80%R/20%B | Blanc | Cycle standard
-7 | Blanc | 80%R/20%B | Cycle standard
-8 | Blanc | Blanc | Cycle standard
-9 | Démonstration R/G/B | | Maximale
-10 | Bleu/Blanc/Rouge fixe | | Maximale
-
-Un bref appui dessus permet de faire défiler les modes. La LED verte s'allume à chaque fois.
-
-Un appui long pendant plus de 5 secondes permet de sauter la phase de montée en luminosité. La LED verte clignote lorsque la commande a été prise en compte.
-
-**Attention:** Le boîtier n'a pas d'horloge. Il gère "bêtement" les horaires. A l'allumage, il monte la luminosité pendant 2 heures puis éclaire à 100% pendant 12 heures et baisse ensuite sa luminosité pendant 2 heures.
-Dans l'attente d'une future (hypothétique) horloge dans le boîtier de commande, le meuble doit être allumé par un autre automatisme (Hue par exemple).
-
-![GitHub Logo](images/boitier_cmd.png)
+En cours de construction...
  
 ## Détail technique
 
 ### Schéma
 
-![GitHub Logo](images/schema.png)
+En cours de construction...
 
 ### Composants
 
-- Un arduino Nano
-- 5 m de LEDs WS28128 5V / 18W / 60 LEDs/m
-- composants courants...
+En cours de construction...
 
 # Bilan et configuration finale
 
-La bonne configuration a été obtenue avec 23 x 7 = 161 LEDs à chaque étage.
-Le dispositif consomme jusqu'à 19.51 W.
+En cours de construction...
 
-Voir les résultats et mesures [ici](./resultats.md).
+# Version précédente du meuble à semis V0 (Hiver 2021)
 
-Au-dessus du meuble, nous avons fixé la lampe horticole du commerce. Celle-ci est autonome (avec son propre programmateur).
+Une première version du meuble a été mise en ligne en 2021.
 
-![GitHub Logo](images/vue_ensemble.png)
+Pour accéder à l'ancienne version de cette page, cliquer [Ici](./readme_v0.md).
+Voir le tag __ semuino_prototype_2021 __ du git pour avoir l'intégralité des sources de cette version.
 
-[Voir aussi le diaporama ici](./images/diaporama.pptx).
+
