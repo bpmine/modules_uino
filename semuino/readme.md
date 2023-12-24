@@ -45,9 +45,44 @@ En cours de construction...
 
 ### Schéma
 
-En cours de construction...
+[a .\board\semuino](Schéma et PCB de la carte)
+
+Le carte semuino est architecturée autour d'un arduino nano dans sa configuration réduite "standalone".
+
+![GitHub Logo](images/semuino_standalone.png)
+
+Elle comporte les éléments suivants:
+
+- Module Nano;
+- module RTC;
+- module DHT22 pour mesurer l'humidité et la température ambiante;
+- trois Sorties de puissance 12V pour alimenter des LEDs horticoles en mode ON/OFF;
+- une alimentation 5V pilotable pour alimenter les bandeaux de LEDs LEDs RGB;
+- trois sorties pour bandeaux de LEDs RGB;
+- trois entrées pour mesure d'humidité du sol;
+- un bouton de sélection de mode;
+- une entrée/sortie disponible.
+
+Dans cette configuration, le semuino fonctionne de manière autonome. Il se base sur la date et l'heure pour appliquer l'éclairage souhaité.
+Il est également possible de prendre en compte la température et l'humidité (en fonction du programme présent dans le nano).
+L'utilisateur peut changer le mode à l'aide d'un bouton de sélection.
+
+La version plus élaborée de la carte semuino comporte en plus un ESP01 et une extension pour connecter un petit écran OLED.
+
+![GitHub Logo](images/semuino_esp01_wifi.png.png)
+
+Dans cette version, l'arduino Nano devient un simple esclave I²C parmi les autres (RTC et LCD). C'est le module ESP01 qui gère tout.
+Il peut aussi fonctionner en "standalone" avec le même fonctionnement que pour la première configuration.
+Mais il peut communiquer en Wifi et disposer de plus de mémoire pour réaliser plus de choses.
+
+L'ensemble logique de la carte est alimenté en 3.3V (Nano, RTC, ESP01, DHT22, ...). Pour le Nano, il est nécessaire d'ajouter une diode pour permettre l'utilisation simultanée de l'alimentation principale avec celle de l'USB.
+Le 3.3V de la carte est appliqué à l'entrée d'alimentation 5V du nano. En effet, la broche 3.3V du Nano est une sortie reliée au régulateur intégré de la puce USB. Elle ne sera pas utilisée.
 
 ### Composants
+
+En cours de construction...
+
+### Le programme
 
 En cours de construction...
 
