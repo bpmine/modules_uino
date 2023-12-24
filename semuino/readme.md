@@ -92,7 +92,82 @@ semuino|Le programme standalone standard pour le Nano |
 semuino_nano_slave|Le programme esclave I²C pour le nano |
 semuino_nano_master_test|Un programme de test pour remplacer un maître I²C avec un Nano |
 
-En cours de construction...
+Le Nano est quasiment plein niveau RAM. Il n'est pas possible de gérer les trois RGB en même temps. Le RB3 a pour l'instant été retiré.
+
+Pour l'ESP01, il n'y a qu'un seul programme:
+Nom | Description | Lien
+--- | --- | ---
+semuino_wifi|Programme SEMUINO complet pour ESP01 | 
+
+## Protocole d'échange I²C (Esclave Nano)
+
+## Spécification du Webservice ESP01
+
+### Information
+
+GET /semuino/info
+
+{
+  "type":"semuino_info",
+  "version":"V1.0",
+  "description":"API de commande du semuino / Gestion du meuble à semi.",
+  "github":"https://github.com/bpmine/modules_uino/tree/master/semuino"
+}
+
+### Choix du mode manuel/auto
+
+GET /semuino/mode
+
+{
+  "type":"semuino_mode",
+  "mode":"auto"
+}
+
+POST /semuino/mode
+
+{
+  "type":"semuino_mode",
+  "mode":"manual"
+}
+
+### Commandes des LEDs
+
+Seulement en mode manual.
+
+POST /semuino/cmds
+
+{
+  "type":"semuino_cmds",
+
+  "cmd5v":true,
+  "rgb1":true,
+  "rgb2":true,
+  "rgb3":true,
+  "modergb1":2,
+  "modergb2":1,
+  "modergb3":1,
+
+  "cmdp1":true,
+  "cmdp2":false,
+  "cmdp3":false
+}
+
+### Lecture des valeurs des capteurs
+
+GET /semuino/sensors
+
+{  
+  "type":"semuino_sensors",
+
+  "date":"12/12/2023",
+  "time":"10:45",
+  "temp":25,
+  "hum":70,
+  "hum1":100,
+  "hum2":111,
+  "hum3":45
+}
+
 
 # Bilan et configuration finale
 
