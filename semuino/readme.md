@@ -108,7 +108,7 @@ Adresse de l'esclave: 0xA
 Pour écrire une valeur, on envoie le numéro de registre (1 octet) puis la donnée à écrire.
 
 Registre | Nom | R/W  | Taille | Description
---- | --- | --- | ---
+--- | --- | --- | --- | ---
 1 | Commandes | Ecriture | 1 octet | Contient les commandes pour agir sur les LEDs
 2 | Level | Ecriture | 1 octet | Défini le niveau d'éclairage des LEDs RGB (entre 1 et 255)
 3 | Modes RGB A | Ecriture | 1 octet | Contient les modes des bandeaux RGB 1 (4 bits de poids faible) et RGB 2 (4 bits de poids fort)
@@ -118,7 +118,7 @@ Registre | Nom | R/W  | Taille | Description
 Pour lire une valeur, on envoie le numéro de registre (1 octet) puis on demande la lecture des données.
 
 Registre | Nom | R/W  | Taille | Description
---- | --- | --- | ---
+--- | --- | --- | --- | ---
 10 | Inputs | Lecture | 1 octet | Retourne l'état des entrées (bit 1: bouton de select)
 11 | TEMP | Lecture | 1 octet | Retourne la température ambiante (en °C)
 12 | HUM | Lecture | 1 octet | Retourne le taux d'humidité ambiante (en %)
@@ -131,7 +131,7 @@ Registre | Nom | R/W  | Taille | Description
 
 ### Information
 
-La requète suivante permet de récupérer les informations d'identification du service.
+La requête suivante permet de récupérer les informations d'identification du service.
 
 GET /semuino/info
 
@@ -161,7 +161,7 @@ POST /semuino/mode
 ```
 
 Les deux modes possibles sont `manual` et `auto`.
-En mode manuel, l'utilisateur pilote directement le semuino en postant des commandes par `/semuino/cmds`.
+En mode manuel, l'utilisateur pilote directement le semuino en postant des commandes avec `/semuino/cmds`.
 En mode automatique, il modifie la configuration si nécessaire avec `/semuino/set`.
 
 ### Commandes des LEDs
