@@ -45,7 +45,7 @@ En cours de construction...
 
 ### Schéma
 
-[Schéma et PCB de la carte](.\board\semuino)
+[Schéma et PCB de la carte](board\semuino)
 
 Le carte semuino est architecturée autour d'un arduino nano dans sa configuration réduite "standalone".
 
@@ -72,7 +72,7 @@ La version plus élaborée de la carte semuino comporte en plus un ESP01 et une 
 ![GitHub Logo](images/semuino_esp01_wifi.png)
 
 Dans cette version, l'arduino Nano devient un simple esclave I²C parmi les autres (RTC et LCD). C'est le module ESP01 qui gère tout.
-Il peut aussi fonctionner en "standalone" avec le même fonctionnement que pour la première configuration.
+Ce dernier peut aussi fonctionner de façon autonome comme pour la configuration précédente.
 Mais il peut communiquer en Wifi et disposer de plus de mémoire pour réaliser plus de choses.
 
 L'ensemble logique de la carte est alimenté en 3.3V (Nano, RTC, ESP01, DHT22, ...). Pour le Nano, il est nécessaire d'ajouter une diode pour permettre l'utilisation simultanée de l'alimentation principale avec celle de l'USB.
