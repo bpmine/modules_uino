@@ -43,7 +43,7 @@ En cours de construction...
  
 ## Détail technique
 
-### Schéma
+### Schéma et conception
 
 [Schéma et PCB de la carte](board\semuino)
 
@@ -71,7 +71,7 @@ La version plus élaborée de la carte semuino comporte en plus un ESP01 et une 
 
 ![GitHub Logo](images/semuino_esp01_wifi.png)
 
-Dans cette version, l'arduino Nano devient un simple esclave I²C parmi les autres (RTC et LCD). C'est le module ESP01 qui gère tout.
+Dans cette version, l'arduino Nano devient un simple esclave I²C parmi les autres (RTC et écran). C'est le module ESP01 qui gère tout.
 Ce dernier peut aussi fonctionner de façon autonome comme pour la configuration précédente.
 Mais il peut communiquer en Wifi et disposer de plus de mémoire pour réaliser plus de choses.
 
@@ -82,7 +82,15 @@ Le 3.3V de la carte est appliqué à l'entrée d'alimentation 5V du nano. En eff
 
 En cours de construction...
 
-### Le programme
+### Les programmes
+
+Il y'a plusieurs types de programmes différents pour l'arduino Nano:
+Nom | Description | Lien
+--- | --- | ---
+semuino_test|Pour tester la carte semuino | 
+semuino|Le programme standalone standard pour le Nano |
+semuino_nano_slave|Le programme esclave I²C pour le nano |
+semuino_nano_master_test|Un programme de test pour remplacer un maître I²C avec un Nano |
 
 En cours de construction...
 
