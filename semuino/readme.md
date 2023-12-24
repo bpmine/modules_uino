@@ -67,7 +67,7 @@ Dans cette configuration, le semuino fonctionne de manière autonome. Il se base
 Il est également possible de prendre en compte la température et l'humidité (en fonction du programme présent dans le nano).
 L'utilisateur peut changer le mode à l'aide d'un bouton de sélection.
 
-La version plus élaborée de la carte semuino comporte en plus un ESP01 et une extension pour connecter un petit écran OLED.
+La version plus élaborée de la carte semuino comporte en plus un ESP01 et une extension pour connecter un petit écran OLED (type SSD1306 128x64).
 
 ![GitHub Logo](images/semuino_esp01_wifi.png)
 
@@ -101,11 +101,41 @@ semuino_wifi|Programme SEMUINO complet pour ESP01 |
 
 ## Protocole d'échange I²C (Esclave Nano)
 
+L'I²C permet à l'ESP01 d'accéder à l'écran, au RTC et au Nano. Cette partie décrit la gestion de l'esclave par le programme du Nano.
+
+Adresse de l'esclave: 0xA
+
+Pour écrire une valeur, on envoie le numéro de registre (1 octet) puis la donnée à écrire.
+
+Registre | Nom | R/W  | Taille | Description
+--- | --- | --- | ---
+1 | Commandes | Ecriture | 1 octet | Contient les commandes pour agir sur les LEDs
+2 | Level | Ecriture | 1 octet | Défini le niveau d'éclairage des LEDs RGB (entre 1 et 255)
+3 | Modes RGB A | Ecriture | 1 octet | Contient les modes des bandeaux RGB 1 (4 bits de poids faible) et RGB 2 (4 bits de poids fort)
+4 | Modes RGB B | Ecriture | 1 octet | Les 4 bits de poids faible correspondent au mode du bandeau RGB 3
+5 | WRITE EEPROM | Ecriture | 2 octets | Le premier octet contient l'adresse EEPROM où écrire et le second contient la donnée à écrire
+
+Pour lire une valeur, on envoie le numéro de registre (1 octet) puis on demande la lecture des données.
+
+Registre | Nom | R/W  | Taille | Description
+--- | --- | --- | ---
+10 | Inputs | Lecture | 1 octet | Retourne l'état des entrées (bit 1: bouton de select)
+11 | TEMP | Lecture | 1 octet | Retourne la température ambiante (en °C)
+12 | HUM | Lecture | 1 octet | Retourne le taux d'humidité ambiante (en %)
+13 | H1 | Lecture | 1 octet | Retourne la valeur du capteur d'humidité du sol n° 1 (0..255)
+14 | H2 | Lecture | 1 octet | Retourne la valeur du capteur d'humidité du sol n° 2 (0..255)
+15 | H3 | Lecture | 1 octet | Retourne la valeur du capteur d'humidité du sol n° 3 (0..255)
+16 | READ EEPROM | Lecture | 1 octet | Il faut d'abord écrire 1 octet d'adresse, avant de lire l'octet contenant la valeur.
+
 ## Spécification du Webservice ESP01
 
 ### Information
 
+La requète suivante permet de récupérer les informations d'identification du service.
+
 GET /semuino/info
+
+```
 
 {
   "type":"semuino_info",
@@ -114,27 +144,33 @@ GET /semuino/info
   "github":"https://github.com/bpmine/modules_uino/tree/master/semuino"
 }
 
+```
+
 ### Choix du mode manuel/auto
 
 GET /semuino/mode
-
-{
-  "type":"semuino_mode",
-  "mode":"auto"
-}
-
 POST /semuino/mode
+
+```
 
 {
   "type":"semuino_mode",
   "mode":"manual"
 }
 
+```
+
+Les deux modes possibles sont `manual` et `auto`.
+En mode manuel, l'utilisateur pilote directement le semuino en postant des commandes par `/semuino/cmds`.
+En mode automatique, il modifie la configuration si nécessaire avec `/semuino/set`.
+
 ### Commandes des LEDs
 
-Seulement en mode manual.
+Seulement en mode manuel. Pour envoyer des commandes.
 
 POST /semuino/cmds
+
+```
 
 {
   "type":"semuino_cmds",
@@ -152,15 +188,33 @@ POST /semuino/cmds
   "cmdp3":false
 }
 
+```
+
+Champ | Plage | Description
+--- | --- | ---
+cmd5v | false..true | Active ou non l'alimentation 5V des LEDs RGB
+rgb1 | false..true | Active le bandeau RGB1
+rgb2 | false..true | Active le bandeau RGB2
+rgb3 | false..true | Active le bandeau RGB3
+modergb1 | 0..15 | Défini le mode de fonctionnement du bandeau RGB 1
+modergb2 | 0..15 | Défini le mode de fonctionnement du bandeau RGB 2
+modergb3 | 0..15 | Défini le mode de fonctionnement du bandeau RGB 3
+cmdp1 | false..true | Active le bandeau de LED 12V n°1
+cmdp2 | false..true | Active le bandeau de LED 12V n°2
+cmdp3 | false..true | Active le bandeau de LED 12V n°3
+
+
 ### Lecture des valeurs des capteurs
 
-GET /semuino/sensors
+*GET /semuino/sensors*
+
+```
 
 {  
   "type":"semuino_sensors",
 
   "date":"12/12/2023",
-  "time":"10:45",
+  "time":"10:45:01",
   "temp":25,
   "hum":70,
   "hum1":100,
@@ -168,6 +222,40 @@ GET /semuino/sensors
   "hum3":45
 }
 
+```
+
+Champ | Plage | Description
+--- | --- | ---
+date | dd/mm/yyyy | Date du module RTC
+time | HH:MM:SS | Heure du module RTC
+temp | -40..100 | Température ambiante (en °C)
+hum | 0..100 | Taux d'humidité ambiant (en %)
+hum1 | 0..255 | Valeur lue sur le capteur d'humidité 1
+hum2 | 0..255 | Valeur lue sur le capteur d'humidité 2
+hum3 | 0..255 | Valeur lue sur le capteur d'humidité 3
+
+### Configuration du mode automatique
+
+*GET /semuino/set*
+*POST /semuino/set*
+
+```
+
+{
+  "type":"semuino_set",
+
+  "date":"14/11/2023",
+  "time":"12:12:02",
+
+  "sunrise":"07:00",
+  "sunset":"22:00",
+
+  "modergb1":2,
+  "modergb2":1,
+  "modergb3":1
+}
+
+```
 
 # Bilan et configuration finale
 
