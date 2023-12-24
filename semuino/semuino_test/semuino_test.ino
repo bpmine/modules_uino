@@ -178,12 +178,8 @@ void setup()
 
 void test_dht22(void)
 {
-  dht.readHumidity();
-  Serial.println('o');
   float tauxHumidite = dht.readHumidity();              // Lecture du taux d'humidité (en %)
-  Serial.println('p');
   float temperatureEnCelsius = dht.readTemperature();   // Lecture de la température, exprimée en degrés Celsius
-  Serial.println('q');
 
   // Vérification si données bien reçues
   if (isnan(tauxHumidite) || isnan(temperatureEnCelsius))

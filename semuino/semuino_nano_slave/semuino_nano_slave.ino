@@ -11,7 +11,8 @@
 #define POWER_MAX         255
 #define POWER_MIN         10
 
-#define NUM_LEDS          (23*7)  ///< Nombre de LEDs a chaque etage (3 rangées de 23 LEDs)
+#define NUM_LEDS          (23*7)  ///< Nombre de LEDs a chaque etage (7 rangées de 23 LEDs)
+#define NUM_LEDS_DESSUS   (23*4)
 
 #define PIN_SELECT_BTN      (2)   ///< Interrupteur de selection
 
@@ -38,7 +39,10 @@
 
 CRGB leds_bas[NUM_LEDS];      ///< Tableau des LEDs du bas
 CRGB leds_haut[NUM_LEDS];     ///< Tableau des LEDs du haut
-//CRGB leds_dessus[NUM_LEDS];   ///< Tableau des LEDs du dessus du meuble
+CRGB leds_dessus[NUM_LEDS_DESSUS];   ///< Tableau des LEDs du dessus du meuble
+DHT dht(PIN_TEMP, DHT22);
+unsigned long g_ulLastAliveT0_ms=0;
+unsigned char g_alive=0;
 
 #define ADDR_SLAVE      (0xA)
 
@@ -56,6 +60,8 @@ CRGB leds_haut[NUM_LEDS];     ///< Tableau des LEDs du haut
 #define REG_H3          (15)
 #define REG_EEP_READ    (16)
 
+#define REG_ALIVE       (20)
+
 unsigned char g_reg=0;
 unsigned char g_addr=0;
 
@@ -70,6 +76,7 @@ unsigned char g_ctrl=0;
 unsigned char g_modeA=0;
 unsigned char g_modeB=0;
 unsigned char g_level=255;                  ///< Puissance
+unsigned char g_ctrl_old=0;
 
 #define CTRL_5V         0x01
 #define CTRL_RGB1       0x02
@@ -91,6 +98,13 @@ void setAll(CRGB *pLeds,CRGB col)
      pLeds[i] = col;
 }
 
+void setAllDessus(CRGB col)
+{
+  for (int i=0;i<NUM_LEDS_DESSUS;i++)
+    leds_dessus[i]=col;
+}
+
+
 /**
  * @brief Applique une couleur a tous les etages en meme temps
  * @param col Couleur
@@ -99,7 +113,7 @@ void setAll(CRGB col)
 {
   setAll(leds_bas,col);
   setAll(leds_haut,col);
-  //setAll(leds_dessus,col);
+  setAllDessus(col);
 }
 
 /**
@@ -111,6 +125,13 @@ void clearAll(CRGB *pLeds)
   setAll(pLeds,CRGB::Black);
 }
 
+
+void clearAllDessus(void)
+{
+  for (int i=0;i<NUM_LEDS_DESSUS;i++)
+    leds_dessus[i]=CRGB::Black;
+}
+
 /**
  * @brief Eteint tous les etages
 */
@@ -118,13 +139,19 @@ void clearAll()
 {
   clearAll(leds_bas);
   clearAll(leds_haut);
-  //clearAll(leds_dessus);
+  clearAllDessus();
 }
 
 void requestEvent() 
 {  
     switch (g_reg)
     {
+      case REG_ALIVE:
+      {
+        Wire.write(~g_alive);
+        g_ulLastAliveT0_ms=millis();
+        break;
+      }
       case REG_CTRL:
       {
         Wire.write(g_ctrl);
@@ -166,8 +193,6 @@ void requestEvent()
         break;        
       }
     }
-
-    Serial.println("Request");  
 }
 
 void receiveEvent(int howMany) 
@@ -177,6 +202,15 @@ void receiveEvent(int howMany)
   {
     switch (g_reg)
     {
+      case REG_ALIVE:
+      {
+        g_alive=Wire.read();
+        g_ulLastAliveT0_ms=millis();
+        //Serial.print("Rec alive: ");
+        //Serial.println(g_alive,HEX);
+        break;
+      }
+      
       case REG_CTRL:
       {
         g_ctrl=Wire.read();
@@ -223,8 +257,6 @@ void receiveEvent(int howMany)
 */
 void setup() 
 {
-  g_level=0;
-  
   Serial.begin(9600);
   Serial.println("Boot");  
 
@@ -237,7 +269,7 @@ void setup()
 
   FastLED.addLeds<NEOPIXEL, PIN_DATA_LED_BAS>(leds_bas, NUM_LEDS); 
   FastLED.addLeds<NEOPIXEL, PIN_DATA_LED_HAUT>(leds_haut, NUM_LEDS); 
-  //FastLED.addLeds<NEOPIXEL, PIN_DATA_LED_DESSUS>(leds_dessus, NUM_LEDS); 
+  FastLED.addLeds<NEOPIXEL, PIN_DATA_LED_DESSUS>(leds_dessus, NUM_LEDS_DESSUS); 
   FastLED.setBrightness(g_level);
 
   pinMode(PIN_POWER_5V, OUTPUT);
@@ -264,15 +296,12 @@ void setup()
   Wire.onRequest(requestEvent);
   Wire.onReceive(receiveEvent);
 
-  clearAll(leds_bas);
-  clearAll(leds_haut);
-  //clearAll(leds_dessus);
+  dht.begin();
+
+  clearAll();
   FastLED.show();
 
-  clearAll(leds_bas);
-  clearAll(leds_haut);
-  //clearAll(leds_dessus);
-  FastLED.show();
+  g_ulLastAliveT0_ms=millis();
 }
 
 void readHumidity(void)
@@ -287,6 +316,21 @@ void readHumidity(void)
   g_hum3=(unsigned char)(tmp*255/1023);
 }
 
+void readDHT(void)
+{
+  float tauxHumidite = dht.readHumidity();              // Lecture du taux d'humidité (en %)
+  if ( (isnan(tauxHumidite)) || (tauxHumidite<0) )
+    g_hum_pc=255;
+  else
+    g_hum_pc=(unsigned char)tauxHumidite;
+
+  float temperatureEnCelsius = dht.readTemperature();              // Lecture du taux d'humidité (en %)
+  if ( (isnan(temperatureEnCelsius)) || (temperatureEnCelsius<0) )
+    g_temp_dg=255;
+  else
+    g_temp_dg=(unsigned char)temperatureEnCelsius;  
+}
+
 /**
  * @brief BOUCLE PRINCIPALE ARDUINO
 */
@@ -298,8 +342,26 @@ void loop()
      g_inputs&=~0x01;
 
   readHumidity();
+  //readDHT();  ///< Marche pas car bloque trop longtemps
 
-  delay(100);
+  delay(10);
+
+  unsigned long delta;
+  unsigned long t=millis();
+  if (t>=g_ulLastAliveT0_ms)
+    delta=t-g_ulLastAliveT0_ms;
+  else
+    delta=0xFFFFFFFF-g_ulLastAliveT0_ms+t;
+    
+  if (delta>10000)
+  {
+    g_ctrl=0;
+    digitalWrite(LED_BUILTIN,LOW);
+  }
+  else
+  {
+    digitalWrite(LED_BUILTIN,HIGH);
+  }
 
   digitalWrite(PIN_POWER_5V, (g_ctrl&CTRL_5V)==CTRL_5V ? HIGH:LOW);
   digitalWrite(PIN_CMD_P1, (g_ctrl&CTRL_P1)==CTRL_P1 ? HIGH:LOW);
@@ -308,7 +370,7 @@ void loop()
 
   if ( (g_ctrl&CTRL_5V)==CTRL_5V)
   {
-    if ( (g_ctrl&CTRL_RGB1)==CTRL_RGB1 )
+    if ( (g_ctrl&CTRL_RGB1)==CTRL_RGB1 )    
       setAll(leds_bas,COL_RED);
     else
       clearAll(leds_bas);
@@ -318,12 +380,12 @@ void loop()
     else
       clearAll(leds_haut);
 
-    /*if ( (g_ctrl&CTRL_RGB1)==CTRL_RGB1 )
-      setAll(leds_bas,COL_RED);
+    if ( (g_ctrl&CTRL_RGB3)==CTRL_RGB3 )
+      setAllDessus(COL_GREEN);
     else
-      clearAll(leds_bas);*/
+      clearAllDessus();
 
     FastLED.setBrightness(g_level);
-    FastLED.show();
+    FastLED.show();    
   }
 }

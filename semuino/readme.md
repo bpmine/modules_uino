@@ -103,6 +103,8 @@ semuino_wifi|Programme SEMUINO complet pour ESP01 |
 
 L'I²C permet à l'ESP01 d'accéder à l'écran, au RTC et au Nano. Cette partie décrit la gestion de l'esclave par le programme du Nano.
 
+### Description des échanges
+
 Adresse de l'esclave: 0xA
 
 Pour écrire une valeur, on envoie le numéro de registre (1 octet) puis la donnée à écrire.
@@ -126,6 +128,16 @@ Registre | Nom | R/W  | Taille | Description
 14 | H2 | Lecture | 1 octet | Retourne la valeur du capteur d'humidité du sol n° 2 (0..255)
 15 | H3 | Lecture | 1 octet | Retourne la valeur du capteur d'humidité du sol n° 3 (0..255)
 16 | READ EEPROM | Lecture | 1 octet | Il faut d'abord écrire 1 octet d'adresse, avant de lire l'octet contenant la valeur.
+
+### Quelques exemples
+
+Pour envoyer des commandes: [0x0A] [1] [0x01] (Tout coupé sauf le 5V) 
+
+Pour changer le niveau d'intensité des RGB: [0x0A] [2] [255] (Tout à fond)
+
+Lire l'adresse 4 en EEPROM : Ecrire [0x0A] [5] [4] puis lire [0x0A] [Donnée reçue]
+
+Ecrire 0x55 à l'adresse 4 en EEPROM: Ecrire [0x0A] [16] [4] [0x55]
 
 ## Spécification du Webservice ESP01
 
@@ -266,6 +278,6 @@ En cours de construction...
 Une première version du meuble a été mise en ligne en 2021.
 
 Pour accéder à l'ancienne version de cette page, cliquer [Ici](./readme_v0.md).
-Voir le tag __ semuino_prototype_2021 __ du git pour avoir l'intégralité des sources de cette version.
+Voir le tag *semuino_prototype_2021* du git pour avoir l'intégralité des sources de cette version.
 
 
