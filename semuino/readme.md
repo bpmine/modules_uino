@@ -78,6 +78,12 @@ Mais il peut communiquer en Wifi et disposer de plus de mémoire pour réaliser 
 L'ensemble logique de la carte est alimenté en 3.3V (Nano, RTC, ESP01, DHT22, ...). Pour le Nano, il est nécessaire d'ajouter une diode pour permettre l'utilisation simultanée de l'alimentation principale avec celle de l'USB.
 Le 3.3V de la carte est appliqué à l'entrée d'alimentation 5V du nano. En effet, la broche 3.3V du Nano est une sortie reliée au régulateur intégré de la puce USB. Elle ne sera pas utilisée.
 
+Tous les composants autour du Nano sont alimentés en 3.3V et sont compatibles avec ce niveau de tension. Le fait que le Nano soit alimenté en ~2.6 peut poser un problème de pilotage du signal de data des LEDs RGB pour lesquels la tension requise pour un niveau haut
+est de 0.7 Vcc soit 3.5V. En cas de problème, on peut ajouter "en volant" un adaptateur de niveau 3.3V vers 5V qui fera la conversion. Les premiers essais ont validé le schéma initial.
+
+**Attention:** Selon l'alimentation externe utilisée pour obtenir le 5V, il peut être nécessaire d'ajouter un condensateur de filtrage sur le POWER_5V. Cela a été le cas sur notre prototype. Sans ce condensateur, l'alimentation 5V n'était pas correctement filtrée et le bandeau RGB ne fonctionnait pas. 
+Au mieux il clignotait, au pire il affichait des couleurs aléatoires.
+
 ### Composants
 
 En cours de construction...
@@ -270,6 +276,30 @@ hum3 | 0..255 | Valeur lue sur le capteur d'humidité 3
 ```
 
 # Bilan et configuration finale
+
+## Consommation
+
+### Leds 12V
+
+#### Pour chacune des deux étagères
+
+Nombre de LEDs: 21 x 8 = 168
+Courant à 12V: 1,5 A (9 mA par LED)
+
+Chaque rangée de LEDs a 4 LEDs bleues et 17 LEDs rouges
+
+#### Pour le panneau du dessus
+
+Nombre de LEDs: 258
+Courant à 12V: 2 A
+
+#### Consommation totale LEDs 12V
+
+1,5 x 2 + 2 = 5 A
+
+NB: Mesure confirmée lors du premier essai avec la carte + les 3 panneaux de LEDs 12V.
+
+### LEDs RGB
 
 En cours de construction...
 
