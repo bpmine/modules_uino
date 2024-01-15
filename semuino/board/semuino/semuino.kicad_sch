@@ -2100,6 +2100,11 @@
     (effects (font (size 1.27 1.27)) (justify left bottom))
     (uuid 76a58d2d-b73a-4ace-bb42-11b2b7461c05)
   )
+  (text "Attention: L'alim externe 12V vers POWER_5V doit être filtrée par une capa de 100µF sinon les bandeaux ne fonctionnent pas"
+    (at 185.42 157.48 0)
+    (effects (font (size 1 1)) (justify left bottom))
+    (uuid f11079be-47d0-4498-8029-9b99db153874)
+  )
 
   (global_label "CmdRGB2" (shape output) (at 66.04 114.3 0)
     (effects (font (size 1.27 1.27)) (justify left))
