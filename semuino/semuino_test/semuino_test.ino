@@ -14,7 +14,7 @@
 #define TEST_WITH_SERIAL
 
 //#define SET_TIME
-#define SET_DATE_STR "23/12/2023"
+#define SET_DATE_STR "20/01/2024"
 #define SET_TIME_STR __TIME__
 
 
@@ -177,8 +177,8 @@ void setup()
 
   mode = EEPROM.read(0);
 
-  delay(3000);
   t0 = millis();
+  Serial.println("ok");
 }
 
 unsigned long delta(unsigned long lT0)
@@ -218,17 +218,22 @@ void test_dht22(void)
 
 void test_hum(void)
 {
-  int hum = analogRead(PIN_HUM1);
-  Serial.print("Humidité 1:");
-  Serial.println(hum);
+  char tmp[15];
+  
+  int hum = analogRead(PIN_HUM1);  
+  Serial.print("H1:");
+  sprintf(tmp,"%d",hum);
+  Serial.println(tmp);
 
   hum = analogRead(PIN_HUM2);
-  Serial.print("Humidité 2:");
-  Serial.println(hum);
+  Serial.print("H2:");
+  sprintf(tmp,"%d",hum);
+  Serial.println(tmp);
 
   hum = analogRead(PIN_HUM3);
-  Serial.print("Humidité 3:");
-  Serial.println(hum);
+  Serial.print("H3:");
+  sprintf(tmp,"%d",hum);
+  Serial.println(tmp);
 }
 
 bool enable_temp = false;
@@ -265,15 +270,16 @@ typedef struct
 const CRGB black(0, 0, 0);
 const CRGB green(0, 127, 0);
 const CRGB red(127, 0, 0);
+const CRGB white(127, 127, 127);
 
 const T_CMD_RGB rgb_cmds[] =
 {
   {"RGB 1 BLACK", (char)'1', leds_bas, &black},
   {"RGB 1 RED", (char)'4', leds_bas, &red},
-  {"RGB 1 GREEN", (char)'7', leds_bas, &green},
+  {"RGB 1 WHITE", (char)'7', leds_bas, &white},
   {"RGB 2 BLACK", (char)'2', leds_haut, &black},
   {"RGB 2 RED", (char)'5', leds_haut, &red},
-  {"RGB 2 GREEN", (char)'8', leds_haut, &green}
+  {"RGB 2 WHITE", (char)'8', leds_haut, &white}
   /*{"RGB 3 BLACK",'1',leds_bas,&black},
     {"RGB 3 RED",'4',leds_bas,&red},
     {"RGB 3 GREEN",'7',leds_bas,&green},*/
@@ -351,10 +357,11 @@ void loop()
 {
   if (delta(t0) > 1000)
   {
-    //test_hum();
+    test_hum();
     t0 = millis();
   }
-  delay(10);
+  delay(100);
+  FastLED.show();
 
   /*test_dht22();
     delay(1000);*/
@@ -363,7 +370,7 @@ void loop()
   Serial.println("Allumage 5V");
   digitalWrite(PIN_POWER_5V, HIGH);
   delay(2000);
-  1
+  
   Serial.println("LED RGB 1 RED");
   setAll(leds_bas, COL_RED);
   FastLED.show();

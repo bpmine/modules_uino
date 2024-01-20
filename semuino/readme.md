@@ -299,9 +299,41 @@ Courant à 12V: 2 A
 
 NB: Mesure confirmée lors du premier essai avec la carte + les 3 panneaux de LEDs 12V.
 
-### LEDs RGB
+Cela fait un total de 60 W pour les LEDs 12V.
 
-En cours de construction...
+### Consommation des LEDs RGB
+
+Suite à un problème avec l'alimentation 12V->5V, cet essai est effectué à l'aide d'une alimentation 5V extérieure.
+
+Etage | Couleur | Courant | Tension | Puissance
+-- | -- | -- | -- | --
+Haut | Blanc | 2,06 A | 5,34 V | 11 W
+Haut | Rouge | 0,79 A | 5,45 V | 4,3 W
+Bas | Blanc | 1,97 A | 5,36 V | 10,6 W
+Bas | Rouge | 0,77 A | 5,45 V | 4,2 W
+
+NB: Il n'y a pas assez de mémoire pour utiliser la lib RGB classique avec la voie RGB3. Cette dernière ne sera donc pas utilisée. On pourra
+peut être réduire le besoin mémoire en allumant tout le bandeau avec la même couleur (bibliothèque à chercher ou bien à coder).
+
+Il y'a 7 rangées de 23 LEDs RGB sur chaque étage. Soit 161 LEDs par étage.
+En blanc, cela fait 13 mA par LED.
+
+Pour deux étages, cela fait un total (mesuré) de 3.85 A @ 5.22 V, soit 20 W en mode blanc.
+
+Idéalement, il faudrait prévoir en théorie 7 A / 5 V pour trois étages.
+
+### Bilan des consommations
+
+En tout, le meuble à semis consomme actuelement 80 W avec deux étages RGB. On peut prévoir 95 W si un jour on utilise l'étage du dessus.
+Donc un fusible principal de 7 A ou de 9 A peut être utilisé pour protéger la carte. Et l'alimentation extérieure doit bien débiter 10 A pour avoir un peu de marge.
+
+## Difficultés rencontrées
+
+- Le temps pour réaliser les panneaux de LEDs (soudure, câblage, collage, ...);
+- petite erreur sur l'alimentation de l'arduino: Un Nano s'alimente en 5V ! Et on ne doit pas utiliser son 3.3V (il provient du contrôleur USB);
+- oubli de condensateur(s) de filtrage sur l'alimentation 5V: Cela rendait instable le fonctionnement des LEDs RGB;
+- la taille de RAM trop réduite sur le nano, vu les fonctionnalités souhaitées;
+- première alimentation de 5V sous-dimensionnée: Elle doit fournir au moins 5A.
 
 # Version précédente du meuble à semis V0 (Hiver 2021)
 
