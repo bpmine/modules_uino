@@ -39,7 +39,65 @@ Il est prévu d'ajouter un étage au dessus du meuble toujours sur le même prin
 
 ### Mode d'emploi
 
-En cours de construction...
+#### Panneau de commande
+
+Le bouton d'alimentation générale 12V permet d'allumer ou d'éteindre le boîtier. Une LED rouge s'allume lorsque celui-ci est en position "marche".
+
+Le bouton d'alimentation auxiliaire 5V permet d'alimenter les LEDs RGB. Une LED bleue s'allume lorsqu'il est dans la position "marche".
+
+Un bouton de sélection permet de modifier le mode de fonctionnement du meuble. Une LED verte permet d'indiquer à l'utilisateur l'état de fonctionnement du meuble.
+
+#### Principe de fonctionnement du sélecteur
+
+Le meuble a trois modes de fonctionnement que l'on peut sélectionner successivement à l'aide du bouton de sélection.
+
+Mode | Nom | Description
+--- | --- | ---
+0 | OFF | Toutes les LEDs sont éteintes
+1 | Auto/Horloge | Les LEDs s'allument entre 6h et 22h
+2 | ON | Les LEDs s'allument
+
+Le mode choisi est sauvegardé dans le boîtier. Lorsqu'on l'éteint et qu'on le rallume, le réglage est retrouvé.
+
+Lorsqu'on change de mode, la LED verte s'allume une première fois puis clignote rapidement autant de fois que le numéro du mode choisi.
+
+La façon dont s'allume les LEDs (étages allumés) est configurable. Ce réglage est aussi mémorisé par le boîtier.
+
+#### Mode de configuration
+
+Pour entrer dans le mode de configuration, il faut appuyer sur le bouton de sélection pendant plus de 4 secondes. 
+La LED verte clignote plusieurs fois très rapidement pour indiquer l'entrée dans le menu.
+Elle reste ensuite allumée pour indiquer que l'on est dans le mode de configuration
+
+En appuyant sur le bouton de sélection, on peut faire défiler les différents modes d'éclairage. Les LEDs du meuble s'allument en conséquence.
+Lorsque le mode d'éclairage souhaité est rencontré, il faut presser pendant environ 4s sur le bouton de sélection jusqu'à ce que la LED verte s'éteigne.
+
+La LED verte clignote ensuite pour rappeller le mode de fonctionnement en cours (voir partie précédente).
+
+#### Récaputulatif de l'état de la LED verte
+
+Etat | Description
+Clignote très rapidement au démarrage | Impossible de lire la date et l'heure: Vérifier la pile 3V à l'intérieur. Le meuble est bloqué.
+S'allume une fois puis cliqnote n fois rapidement au démarrage | Indique/rapelle le mode de fonctionnement (autant de foir que le numéro de mode)
+Eteinte | fonctionnement normal
+Cliqnote n fois rapidement après une action | Indique/rapelle le mode de fonctionnement (autant de fois que le numéro de mode)
+Clignote toutes les 2s | La terre est sèche: Il faut probablement arroser
+Clignote très très rapidement pusieurs fois puis reste allumée | Entrée en mode de configuration de l'éclairage
+Allumée fixe | Mode de configuration en cours
+
+#### Usage du bouton de sélection
+
+Action | Description
+--- | ---
+Appui court | Changer le mode de fonctionnement (OFF / Auto-Horloge / ON)
+Appui long | Entrer en mode de configuration
+
+##### En mode configuration
+
+Action | Description
+--- | ---
+Appui court | Changer le mode d'éclairage des LEDs du meuble
+Appui long | Quitter le mode de configuration (et sauver le réglage)
  
 ## Détail technique
 
@@ -86,7 +144,25 @@ Au mieux il clignotait, au pire il affichait des couleurs aléatoires.
 
 ### Composants
 
-En cours de construction...
+#### Externes
+
+Nom | Description
+--- | --- 
+WS2812B 5m 300 LEDs | Bandeau RGB avec 300 LEDs / 5M / 18W
+ ? | Capteur d'humidité capatitif
+SSD1306 | Ecran OLEB 128x64
+
+#### Sur la carte (principaux)
+
+Nom | Description
+--- | --- 
+DHT22 | Capteur de température et d'humidité ambiante
+Nano | Module Arduino Nano
+ESP01 | Module ESP01 (pour connectivité wifi et pilotage de LCD)
+RTC | Module RTC avec pile 3V
+... | ...
+
+A compléter...
 
 ### Les programmes
 
@@ -287,7 +363,7 @@ hum3 | 0..255 | Valeur lue sur le capteur d'humidité 3
 
 ![Plaque du dessus](images/plaque_dessus.png)
 
-La plaque du dessus comporte 258 LEDs horticole 12V. Elle a été ajoutée sur le meube en 2024.
+La plaque du dessus comporte 258 LEDs horticoles de 12V. Elle a été ajoutée sur le meuble en 2024.
 
 ### Boîtier de commande
 
@@ -360,7 +436,7 @@ Donc on va alimenter l'arduino nano en 3.3V (~2.5V à ca&use de la diode) à par
   - Pour la RAM, si on accepte 1 à 2 couleurs par étage (avec une règle du type "1 LED sur 3 Bleue et les autres rouge"), alors il est possible de ne pas utiliser de tableau pour mémoriser la couleur de chaque LED.
   - Pour régler définitivement le problème d'alim 5V, un bloc extérieur est finalement utilisé pour alimenter directement les bandeaux RGB. On perd la possibilité de commander en ON/OFF cette alim.
 
-### L'histoire de "Prt prt frt fiout pété pété..." les LEDs RGB
+### "Comment j'ai pété les LEDs RGB"
 
 *Question:* Que se passe-t'il quand on confond l'interrupteur du bas et celui du haut au moment de câbler le tout ?
 
@@ -376,7 +452,7 @@ Du coup, en 2024 le meuble fonctionnera probablement en mode tout ou rien sur le
 
 Dommage!
 
-### Améliorations possibles
+### Améliorations possibles sur la future version
 
 - Déplacer les borniers pour faciliter les branchements (ou utiliser des embase sur le PCB 
 - Prévoir l'alimentation 5V des RGBs extérieure dès le déport et la rendre pilotable par le nano
