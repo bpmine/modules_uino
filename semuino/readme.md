@@ -8,7 +8,7 @@ Pour une croissance optimale, il faut éclairer les semis pendant une certaine d
 
 C'est ce que réalise le meuble à semis sur la photo suivante.
 
-![GitHub Logo](images/meuble.png)
+![Meuble](images/meuble.png)
 
 ## Description de l'éclairage souhaité
 
@@ -49,7 +49,7 @@ En cours de construction...
 
 Le carte semuino est architecturée autour d'un arduino nano dans sa configuration réduite "standalone".
 
-![GitHub Logo](images/semuino_standalone.png)
+![Standalone](images/semuino_standalone.png)
 
 Elle comporte les éléments suivants:
 
@@ -69,7 +69,7 @@ L'utilisateur peut changer le mode à l'aide d'un bouton de sélection.
 
 La version plus élaborée de la carte semuino comporte en plus un ESP01 et une extension pour connecter un petit écran OLED (type SSD1306 128x64).
 
-![GitHub Logo](images/semuino_esp01_wifi.png)
+![esp01 wifi](images/semuino_esp01_wifi.png)
 
 Dans cette version, l'arduino Nano devient un simple esclave I²C parmi les autres (RTC et écran). C'est le module ESP01 qui gère tout.
 Ce dernier peut aussi fonctionner de façon autonome comme pour la configuration précédente.
@@ -277,6 +277,22 @@ hum3 | 0..255 | Valeur lue sur le capteur d'humidité 3
 
 # Bilan et configuration finale
 
+## Photos
+
+### Vue globale
+
+![Vue globale meuble 2024](images/vue_ensemble_2024.png)
+
+### Plaque du dessus
+
+![Plaque du dessus](images/plaque_dessus.png)
+
+La plaque du dessus comporte 258 LEDs horticole 12V. Elle a été ajoutée sur le meube en 2024.
+
+### Boîtier de commande
+
+A rajouter...
+
 ## Consommation
 
 ### Leds 12V
@@ -329,11 +345,42 @@ Donc un fusible principal de 7 A ou de 9 A peut être utilisé pour protéger la
 
 ## Difficultés rencontrées
 
+### Défauts de conception
+
 - Le temps pour réaliser les panneaux de LEDs (soudure, câblage, collage, ...);
-- petite erreur sur l'alimentation de l'arduino: Un Nano s'alimente en 5V ! Et on ne doit pas utiliser son 3.3V (il provient du contrôleur USB);
+- petite erreur sur l'alimentation de l'arduino: Un Nano s'alimente en 5V ! Et on ne doit pas utiliser son 3.3V pour alimenter des composants à l'extérieur (il provient du contrôleur USB);
 - oubli de condensateur(s) de filtrage sur l'alimentation 5V: Cela rendait instable le fonctionnement des LEDs RGB;
 - la taille de RAM trop réduite sur le nano, vu les fonctionnalités souhaitées;
 - première alimentation de 5V sous-dimensionnée: Elle doit fournir au moins 5A.
+
+Pas trop de soucis pour rattrapper tout ça avec le PCB initial:
+  - On coupe la piste au niveau du 3.3V de l'arduino pour la reporter via une diode sur le 5V de l'arduino.
+Donc on va alimenter l'arduino nano en 3.3V (~2.5V à ca&use de la diode) à partir de sa broche 5V.
+  - On ajoute un condensateur en volant en sortie sur le bloc alim 12V->5V.
+  - Pour la RAM, si on accepte 1 à 2 couleurs par étage (avec une règle du type "1 LED sur 3 Bleue et les autres rouge"), alors il est possible de ne pas utiliser de tableau pour mémoriser la couleur de chaque LED.
+  - Pour régler définitivement le problème d'alim 5V, un bloc extérieur est finalement utilisé pour alimenter directement les bandeaux RGB. On perd la possibilité de commander en ON/OFF cette alim.
+
+### L'histoire de "Prt prt frt fiout pété pété..." les LEDs RGB
+
+*Question:* Que se passe-t'il quand on confond l'interrupteur du bas et celui du haut au moment de câbler le tout ?
+
+*Réponse:* Alors on alimente les bandeaux de LEDs 5V en 12V et c'est pas bien !!
+
+![Boom](images/boom.png)
+
+C'est ce qui m'est arrivé. Le résultat n'est pas très drôle puisque j'ai cramé toutes les 322 LEDs RGB du meuble dans une triste "pétarade".
+
+La plupart ne s'allument plus et 3 ou 4 au contraire restent allumées sur une couleur.
+
+Du coup, en 2024 le meuble fonctionnera probablement en mode tout ou rien sur les LEDs 12V (en théorie suffisantes pour assurer une saison). 
+
+Dommage!
+
+### Améliorations possibles
+
+- Déplacer les borniers pour faciliter les branchements (ou utiliser des embase sur le PCB 
+- Prévoir l'alimentation 5V des RGBs extérieure dès le déport et la rendre pilotable par le nano
+- Remplacer l'alimentation 3.3V en 5V pour tout alimenter en 5V et ajouter un régulateur dédié pour le 3.3V de l'ESP01 (Vérifier qu'il est bien 5V tolerant et si ce n'est pas le cas, mettre un buffer pour son accès I²C).
 
 # Version précédente du meuble à semis V0 (Hiver 2021)
 

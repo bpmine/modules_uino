@@ -39,17 +39,77 @@
 #define COL_GROWING         CRGB(127,0,32)      ///< Couleur de croissance
 #define COL_WHITE           CRGB(127,127,127)   ///< Blanc
 
-#define MAX_MODE  2         ///< Nombre de modes
-unsigned char g_mode=0;     ///< Mode en cours
+#define MAX_MODE  4         ///< Nombre de modes
 DS1307 rtc;
 unsigned long g_t0=0;
 bool g_blink_1s=false;
 bool g_blink_2s=false;
 
+#define MAGIC1  (0x55)
+#define MAGIC2  (0xAA)
+typedef struct
+{
+  unsigned char magic1;
+  unsigned char mode;
+  unsigned char states;
+  unsigned char magic2;
+} T_CONFIG;
+
+bool g_mode_config=false;
+T_CONFIG g_config=
+{
+  MAGIC1,
+  0,
+  0x07,
+  MAGIC2
+};
+
+#define ST_LED_P1   (0x01)
+#define ST_LED_P2   (0x02)
+#define ST_LED_P3   (0x04)
+
 int g_power=255;              ///< Puissance
 CRGB leds_bas[NUM_LEDS];      ///< Tableau des LEDs du bas
 CRGB leds_haut[NUM_LEDS];     ///< Tableau des LEDs du haut
 //CRGB leds_dessus[NUM_LEDS]; ///< Tableau des LEDs du dessus du meuble
+
+/**
+ * @brief Sauvegarde la configuration en EEPROM
+ * 
+ * - mode
+ * - etat des LEDs ouhaité lors du fonctionnement
+*/
+void save_config(void)
+{
+  EEPROM.write(0,g_config.magic1);
+  EEPROM.write(1,g_config.mode);
+  EEPROM.write(2,g_config.states);
+  EEPROM.write(3,g_config.magic2);  
+}
+
+/**
+ * @brief Chargement de la configuration en EEPROM et reinit en cas d'incohérence
+ * 
+ * - mode
+ * - etat des LEDs ouhaité lors du fonctionnement
+*/
+void load_config(void)
+{
+  g_config.magic1=EEPROM.read(0);
+  g_config.mode=EEPROM.read(1);
+  g_config.states=EEPROM.read(2);
+  g_config.magic2=EEPROM.read(3);
+
+  if ( (g_config.magic1!=MAGIC1) || (g_config.magic2!=MAGIC2) || (g_config.mode>MAX_MODE) )
+  {
+    g_config.magic1=MAGIC1;
+    g_config.mode=0;
+    g_config.states=0;
+    g_config.magic2=MAGIC2;
+    
+    save_config();  
+  }
+}
 
 /**
  * @brief Applique une couleur a tout un etage
@@ -139,6 +199,17 @@ void animDemarrage(CRGB *pLeds)
    clearAll(pLeds);
 }
 
+void display_mode(int mode)
+{
+  for (int i=0;i<mode;i++)
+  {
+    delay(300);
+    digitalWrite(PIN_LED_GREEN,HIGH);
+    delay(300);
+    digitalWrite(PIN_LED_GREEN,LOW);
+  }
+}
+
 /**
  * @brief Setup d'arduino (demarage)
  * 
@@ -206,9 +277,11 @@ void setup()
   //clearAll(leds_dessus);
   FastLED.show();
 
-  g_mode=EEPROM.read(0);
-  Serial.print("Mode ");
-  Serial.println(g_mode);
+  load_config();
+  Serial.print("Mode: ");
+  Serial.println(g_config.mode);
+  Serial.print("States: ");
+  Serial.println(g_config.states,HEX);
 
   rtc.begin();
 
@@ -246,6 +319,7 @@ void setup()
     }
   }
 
+  display_mode(g_config.mode);
   g_t0=millis();
 }
 
@@ -314,9 +388,9 @@ void manageMode_smart(void)
 
     if (g_power==255)
     {
-      digitalWrite(PIN_CMD_P1,HIGH);
-      digitalWrite(PIN_CMD_P2,HIGH);
-      digitalWrite(PIN_CMD_P3,HIGH);
+      digitalWrite(PIN_CMD_P1,(g_config.states&ST_LED_P1)==ST_LED_P1?HIGH:LOW);
+      digitalWrite(PIN_CMD_P2,(g_config.states&ST_LED_P2)==ST_LED_P2?HIGH:LOW);
+      digitalWrite(PIN_CMD_P3,(g_config.states&ST_LED_P3)==ST_LED_P3?HIGH:LOW);
     }
     else
     {
@@ -325,6 +399,16 @@ void manageMode_smart(void)
       digitalWrite(PIN_CMD_P3,LOW);
     }
   }  
+}
+
+/**
+ * @brief Tache de config
+*/
+void taskConfig(void)
+{  
+  digitalWrite(PIN_CMD_P1,(g_config.states&ST_LED_P1)==ST_LED_P1?HIGH:LOW);
+  digitalWrite(PIN_CMD_P2,(g_config.states&ST_LED_P2)==ST_LED_P2?HIGH:LOW);
+  digitalWrite(PIN_CMD_P3,(g_config.states&ST_LED_P3)==ST_LED_P3?HIGH:LOW);
 }
 
 /**
@@ -337,12 +421,12 @@ void taskSemuino(void)
   getTime(h,m,s);
   g_power=getPower(h,m);
   
-  switch (g_mode)
+  switch (g_config.mode)
   {
     case 0:   /// All OFF
     default:
     {
-      g_mode=0;
+      g_config.mode=0;
       clearAll(leds_bas);
       clearAll(leds_haut);
       //clearAll(leds_dessus);
@@ -355,7 +439,12 @@ void taskSemuino(void)
       digitalWrite(PIN_CMD_P3,LOW);
       break;
     }
-    case 1: /// Only 12V LEDs ON
+    case 1: ///< Smart mode
+    {
+      manageMode_smart();
+      break;
+    }
+    case 2: /// Manual mode
     {
       clearAll(leds_bas);
       clearAll(leds_haut);
@@ -363,15 +452,10 @@ void taskSemuino(void)
       FastLED.show();  
       digitalWrite(PIN_POWER_5V,LOW);
       
-      digitalWrite(PIN_CMD_P1,HIGH);
-      digitalWrite(PIN_CMD_P2,HIGH);
-      digitalWrite(PIN_CMD_P3,HIGH);
+      digitalWrite(PIN_CMD_P1,(g_config.states&ST_LED_P1)==ST_LED_P1?HIGH:LOW);
+      digitalWrite(PIN_CMD_P2,(g_config.states&ST_LED_P2)==ST_LED_P2?HIGH:LOW);
+      digitalWrite(PIN_CMD_P3,(g_config.states&ST_LED_P3)==ST_LED_P3?HIGH:LOW);
       
-      break;
-    }
-    case 2: ///< Smart mode
-    {
-      manageMode_smart();
       break;
     }
   }  
@@ -391,42 +475,60 @@ bool inputInterrupteur()
     while (digitalRead(PIN_SELECT_BTN)==0)
     {
       long t=millis();
-      if (t-t0>5000)
+      if (t-t0>4500)
       {
-        for (int i=0;i<10;i++)
+        if (g_mode_config==false)
         {
-          digitalWrite(PIN_LED_GREEN,LOW);
-          delay(100);
-          digitalWrite(PIN_LED_GREEN,HIGH);
-          delay(100);
+          for (int i=0;i<10;i++)
+          {
+            delay(100);
+            digitalWrite(PIN_LED_GREEN,LOW);
+            delay(100);
+            digitalWrite(PIN_LED_GREEN,HIGH);
+          }
+          g_mode_config=true;
         }
-
-        digitalWrite(PIN_LED_GREEN,LOW);
+        else
+        {
+          save_config();
+          g_mode_config=false;
+          digitalWrite(PIN_LED_GREEN,LOW);
+          while (digitalRead(PIN_SELECT_BTN)==0)
+            delay(500);
+        }
+  
         return true;
       }
     }
     
-    g_mode=g_mode+1;
-    if (g_mode>MAX_MODE)
-      g_mode=0;
-
-    Serial.print("Mode: ");
-    Serial.println(g_mode);
-    delay(500);
-    digitalWrite(PIN_LED_GREEN,LOW);
-
-    EEPROM.write(0,g_mode);
-    taskSemuino();
-
-    /// Indiquer le mode en clignotant n fois
-    for (int i=0;i<g_mode;i++)
+    if (g_mode_config==false)
     {
-      delay(300);
-      digitalWrite(PIN_LED_GREEN,HIGH);
-      delay(300);
-      digitalWrite(PIN_LED_GREEN,LOW);      
+      g_config.mode=g_config.mode+1;
+      if (g_config.mode>MAX_MODE)
+        g_config.mode=0;
+  
+      Serial.print("Mode: ");
+      Serial.println(g_config.mode);
+      Serial.print("States: ");
+      Serial.println(g_config.states,HEX);
+      delay(500);
+      digitalWrite(PIN_LED_GREEN,LOW);
+  
+      // On sauvegarde la config pour les modes 0, 1 et 2 seulement
+      save_config();
+  
+      taskSemuino();
+  
+      /// Indiquer le mode en clignotant n fois
+      display_mode(g_config.mode);
+      delay(1500);
     }
-    delay(1500);
+    else
+    {
+      g_config.states=g_config.states+1;
+      if (g_config.states>0x07)
+        g_config.states=0;
+    }
     
     return true;
   }  
@@ -445,14 +547,22 @@ void loop()
     delta=t-g_t0;
   else
     delta=0xFFFFFFFF-g_t0+t;
-  
-  if (delta>=1000)
+
+  if (g_mode_config==false)
   {
-    taskSemuino();
-    
-    g_blink_1s=!g_blink_1s;    
-    if (g_blink_1s==true)
-      g_blink_2s=!g_blink_2s;
+    if (delta>=1000)
+    {
+      taskSemuino();
+      
+      g_blink_1s=!g_blink_1s;    
+      if (g_blink_1s==true)
+        g_blink_2s=!g_blink_2s;
+      g_t0=millis();
+    }
+  }
+  else
+  {
+    taskConfig();
     g_t0=millis();
   }
 
