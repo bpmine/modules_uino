@@ -9,12 +9,17 @@
 #include <RTClib.h>
 #include <Wire.h>
 
+//#define SET_TIME
+#define SET_DATE_STR "27/01/2024"
+#define SET_TIME_STR __TIME__
+
 #define POWER_MAX         255
 #define POWER_MIN         10
 
 #define NUM_LEDS          (23*7)  ///< Nombre de LEDs a chaque etage (3 rangées de 23 LEDs)
 
 #define PIN_SELECT_BTN      (2)   ///< Interrupteur de selection
+#define PIN_LED_GREEN       (4)   ///< LED verte
 
 #define PIN_POWER_5V        (3)   ///< Alumage alimentation 5V
 #define PIN_DATA_LED_BAS    (5)   ///< Broche etage du bas
@@ -34,15 +39,17 @@
 #define COL_GROWING         CRGB(127,0,32)      ///< Couleur de croissance
 #define COL_WHITE           CRGB(127,127,127)   ///< Blanc
 
-#define MAX_MODE  10        ///< Nombre de modes
-unsigned char mode=0;       ///< Mode en cours
+#define MAX_MODE  2         ///< Nombre de modes
+unsigned char g_mode=0;     ///< Mode en cours
+DS1307 rtc;
+unsigned long g_t0=0;
+bool g_blink_1s=false;
+bool g_blink_2s=false;
 
-int g_power=255;                  ///< Puissance
+int g_power=255;              ///< Puissance
 CRGB leds_bas[NUM_LEDS];      ///< Tableau des LEDs du bas
 CRGB leds_haut[NUM_LEDS];     ///< Tableau des LEDs du haut
-//CRGB leds_dessus[NUM_LEDS];   ///< Tableau des LEDs du dessus du meuble
-
-
+//CRGB leds_dessus[NUM_LEDS]; ///< Tableau des LEDs du dessus du meuble
 
 /**
  * @brief Applique une couleur a tout un etage
@@ -135,7 +142,9 @@ void animDemarrage(CRGB *pLeds)
 /**
  * @brief Setup d'arduino (demarage)
  * 
- * Une petite animation avec test de toutes les LEDs
+ * - Init des I/O
+ * - Lecture du mode en EEPROM
+ * - Lecture RTC -> Part en défaut si date incorrecte
 */
 void setup() 
 {
@@ -144,7 +153,7 @@ void setup()
   g_power=POWER_MAX;
   
   Serial.begin(9600);
-  Serial.println("Boot");  
+  Serial.println("Boot...");  
 
   pinMode(PIN_DATA_LED_BAS, OUTPUT);
   digitalWrite(PIN_DATA_LED_BAS,LOW);
@@ -178,6 +187,9 @@ void setup()
   pinMode(LED_BUILTIN,OUTPUT);
   digitalWrite(LED_BUILTIN,HIGH);
 
+  pinMode(PIN_LED_GREEN,OUTPUT);
+  digitalWrite(PIN_LED_GREEN,HIGH);
+
   Wire.begin();
 
   clearAll(leds_bas);
@@ -186,95 +198,65 @@ void setup()
   FastLED.show();
 
   //animDemarrage(leds_dessus);
-  animDemarrage(leds_haut);
-  animDemarrage(leds_bas);
+  //animDemarrage(leds_haut);
+  //animDemarrage(leds_bas);
 
   clearAll(leds_bas);
   clearAll(leds_haut);
   //clearAll(leds_dessus);
   FastLED.show();
 
-  mode=EEPROM.read(0);
+  g_mode=EEPROM.read(0);
+  Serial.print("Mode ");
+  Serial.println(g_mode);
 
-  //digitalWrite(PIN_GREEN_LED,LOW);
-}
-
-/**
- * @brief Detection de la pression sur l'interrupteur de selection du mode
- * @return true si presse
-*/
-bool inputInterrupteur()
-{
-  if (digitalRead(PIN_SELECT_BTN)==0)
-  {
-    //digitalWrite(PIN_GREEN_LED,HIGH);
-
-    long t0=millis();
-    while (digitalRead(PIN_SELECT_BTN)==0)
-    {
-      long t=millis();
-      if (t-t0>5000)
-      {
-        /*for (int i=0;i<6;i++)
-        {
-          digitalWrite(PIN_GREEN_LED,LOW);
-          delay(100);
-          digitalWrite(PIN_GREEN_LED,HIGH);
-          delay(100);
-        }*/
-
-        //digitalWrite(PIN_GREEN_LED,LOW);
-        return true;
-      }
-    }
-    
-    mode=mode+1;
-    if (mode>MAX_MODE)
-      mode=0;
-
-    Serial.print("Mode: ");
-    Serial.println(mode);
-    delay(500);
-    //digitalWrite(PIN_GREEN_LED,LOW);
-
-    EEPROM.write(0,mode);
-    
-    return true;
-  }  
-  
-  return false;
-}
-
-/**
- * @brief Delai d'attente avec detection interrupteur
- * @param ms Duree en ms
- * @return true si l'interrupteur a ete presse et l'attente interrompue
-*/
-bool delay_inp(long ms)
-{
-  long delta=0;
-  long t0=millis();
-  do
-  {
-    long t=millis();
-    if (t>t0)
-      delta=t-t0;
-    else
-      delta=0xFFFFFFFF-t0+t;
-
-    if (inputInterrupteur()==true)
-      return true;
-
-    delay(10);
-  } while (delta<ms);
-
-  return false;
-}
-
-int getTime(int &hour,int &minute, int &second)
-{
-  DS1307 rtc;
   rtc.begin();
+
+#ifdef SET_TIME
+  Serial.print("Set datetime ");
+  Serial.print(SET_DATE_STR);
+  Serial.print(" ");
+  Serial.println(SET_TIME_STR);
+
+  int year, month, day, hour, minute, second;
+  sscanf(SET_DATE_STR, "%02d/%02d/%04d", &day, &month, &year);
+  sscanf(SET_TIME_STR, "%02d:%02d:%02d", &hour, &minute, &second);
+  DateTime newDte(year, month, day, hour, minute, second);
+  rtc.adjust(newDte);
+#endif
+
+  char tmp[22];
+  DateTime now = rtc.now();
+  sprintf(tmp, "%02d/%02d/%04d %02d:%02d:%02d", now.day() , now.month(), now.year(), now.hour(), now.minute(), now.second());
+  Serial.println(tmp);
+
+  delay(500);
+  digitalWrite(PIN_LED_GREEN,LOW);
+
+  /// Si RTC non reglee, on bloque en defaut au demarrage !
+  if (now.year()<2024)
+  {
+    Serial.println("Date incorrecte !!!");
+    while (1)
+    {
+      digitalWrite(PIN_LED_GREEN,HIGH);
+      delay(100);
+      digitalWrite(PIN_LED_GREEN,LOW);
+      delay(100);
+    }
+  }
+
+  g_t0=millis();
+}
+
+/**
+ * @brief Lecture de l'heure
+ * @param[out] hour Heure
+ * @param[out] minute Minute
+ * @param[out] second Seconde
+*/
+void getTime(int &hour,int &minute, int &second)
+{
   DateTime now = rtc.now();
   hour=now.hour();
   minute=now.minute();
@@ -282,151 +264,47 @@ int getTime(int &hour,int &minute, int &second)
   return 0;
 }
 
-unsigned char getPower(int h,int m)
+/**
+ * @brief Retourne la puissance des LEDs en fonction de l'heure
+ * @param[in] h Heure
+ * @param[in] m Minute
+ * @return -1 signifie OFF et 255 à fond
+*/
+int getPower(int h,int m)
 {
-  if ( (h>=7) && (h<=22) )
+  if ( (h>=5) && (h<=23) )
   {
     return 255;
   }
-  else if (h==6)
+  else if (h==5)
   {
     int res=m*255/59;
-    return (unsigned char)(res&0xFF);
+    return (res&0xFF);
   }
-  else if (h==21)
+  else if (h==23)
   {
     int res=(59-m)*255/60;
-    return (unsigned char)(res&0xFF);
+    return (res&0xFF);
   }
   else
   {
     return -1;
-  }  
+  }
 }
 
 /**
- * @brief BOUCLE PRINCIPALE ARDUINO
+ * @brief Gestion du mode intelligent (en fonction de l'heure pour simuler aube et crépuscule)
 */
-void loop() 
+void manageMode_smart(void)
 {
-  delay(100); 
-  int h,m,s;
-
-  getTime(h,m,s);
-  g_power=getPower(h,m);
-  
-  switch (mode)
-  {
-    case 0:
-    default:
-    {
-      mode=0;
-      clearAll(leds_bas);
-      clearAll(leds_haut);
-      //clearAll(leds_dessus);
-      break;
-    }
-    case 1:
-    {
-      setAll(leds_haut,COL_GROWING);
-      clearAll(leds_bas);
-      break;
-    }
-    case 2:
-    {
-      setAll(leds_haut,COL_WHITE);
-      clearAll(leds_bas);
-      break;
-    }
-    
-    case 3:
-    {
-      clearAll(leds_haut);
-      setAll(leds_bas,COL_GROWING);
-      break;
-    }
-    case 4:
-    {
-      clearAll(leds_haut);
-      setAll(leds_bas,COL_WHITE);
-      break;
-    }
-
-    case 5:
-    {
-      setAll(leds_haut,COL_GROWING);
-      setAll(leds_bas,COL_GROWING);
-      break;
-    }
-    case 6:
-    {
-      setAll(leds_haut,COL_GROWING);
-      setAll(leds_bas,COL_WHITE);
-      break;
-    }
-    case 7:
-    {
-      setAll(leds_haut,COL_WHITE);
-      setAll(leds_bas,COL_GROWING);
-      break;
-    }
-    case 8:
-    {
-      setAll(leds_haut,COL_WHITE);
-      setAll(leds_bas,COL_WHITE);
-      break;
-    }
-    case 9: ///< Alternance R G B d'un etage a l'autre (anim pour le fun / demo)
-    {
-      g_power=POWER_MAX;
-      FastLED.setBrightness(g_power);
-      
-      CRGB col1=CRGB(127,0,0);
-      CRGB col2=CRGB(0,127,0);      
-      CRGB col3=CRGB(0,0,127);      
-
-      setAll(leds_bas,col1);
-      setAll(leds_haut,col2);
-      //setAll(leds_dessus,col3);
-      FastLED.show();
-
-      if (delay_inp(1000)==true)
-        break;
-
-      setAll(leds_bas,col3);
-      setAll(leds_haut,col1);
-      //setAll(leds_dessus,col2);
-      FastLED.show();
-
-      if (delay_inp(1000)==true)
-        break;
-
-      setAll(leds_bas,col2);
-      setAll(leds_haut,col3);
-      //setAll(leds_dessus,col1);
-      FastLED.show();
-
-      delay_inp(900);
-
-      break;
-    }
-    case 10:
-    {
-      g_power=POWER_MAX;
-      setBBR(leds_bas);
-      setBBR(leds_haut);
-      //setBBR(leds_dessus);
-      break;
-    }
-  }
-  
-  if (g_power==-1)
+  if ( g_power==-1 )
   {
     clearAll();
     digitalWrite(PIN_POWER_5V,LOW);
     digitalWrite(PIN_CMD_P1,LOW);
     digitalWrite(PIN_CMD_P2,LOW);
     digitalWrite(PIN_CMD_P3,LOW);
+    FastLED.show();
   }
   else
   {
@@ -446,7 +324,148 @@ void loop()
       digitalWrite(PIN_CMD_P2,LOW);
       digitalWrite(PIN_CMD_P3,LOW);
     }
+  }  
+}
+
+/**
+ * @brief Tache du SEMUINO
+*/
+void taskSemuino(void)
+{
+  int h,m,s;
+
+  getTime(h,m,s);
+  g_power=getPower(h,m);
+  
+  switch (g_mode)
+  {
+    case 0:   /// All OFF
+    default:
+    {
+      g_mode=0;
+      clearAll(leds_bas);
+      clearAll(leds_haut);
+      //clearAll(leds_dessus);
+      FastLED.setBrightness(0);
+      FastLED.show();  
+      digitalWrite(PIN_POWER_5V,LOW);
+      
+      digitalWrite(PIN_CMD_P1,LOW);
+      digitalWrite(PIN_CMD_P2,LOW);
+      digitalWrite(PIN_CMD_P3,LOW);
+      break;
+    }
+    case 1: /// Only 12V LEDs ON
+    {
+      clearAll(leds_bas);
+      clearAll(leds_haut);
+      FastLED.setBrightness(0);
+      FastLED.show();  
+      digitalWrite(PIN_POWER_5V,LOW);
+      
+      digitalWrite(PIN_CMD_P1,HIGH);
+      digitalWrite(PIN_CMD_P2,HIGH);
+      digitalWrite(PIN_CMD_P3,HIGH);
+      
+      break;
+    }
+    case 2: ///< Smart mode
+    {
+      manageMode_smart();
+      break;
+    }
+  }  
+}
+
+/**
+ * @brief Detection de la pression sur l'interrupteur de selection du mode
+ * @return true si presse
+*/
+bool inputInterrupteur()
+{
+  if (digitalRead(PIN_SELECT_BTN)==0)
+  {
+    digitalWrite(PIN_LED_GREEN,HIGH);
+
+    long t0=millis();
+    while (digitalRead(PIN_SELECT_BTN)==0)
+    {
+      long t=millis();
+      if (t-t0>5000)
+      {
+        for (int i=0;i<10;i++)
+        {
+          digitalWrite(PIN_LED_GREEN,LOW);
+          delay(100);
+          digitalWrite(PIN_LED_GREEN,HIGH);
+          delay(100);
+        }
+
+        digitalWrite(PIN_LED_GREEN,LOW);
+        return true;
+      }
+    }
+    
+    g_mode=g_mode+1;
+    if (g_mode>MAX_MODE)
+      g_mode=0;
+
+    Serial.print("Mode: ");
+    Serial.println(g_mode);
+    delay(500);
+    digitalWrite(PIN_LED_GREEN,LOW);
+
+    EEPROM.write(0,g_mode);
+    taskSemuino();
+
+    /// Indiquer le mode en clignotant n fois
+    for (int i=0;i<g_mode;i++)
+    {
+      delay(300);
+      digitalWrite(PIN_LED_GREEN,HIGH);
+      delay(300);
+      digitalWrite(PIN_LED_GREEN,LOW);      
+    }
+    delay(1500);
+    
+    return true;
+  }  
+  
+  return false;
+}
+
+/**
+ * @brief BOUCLE PRINCIPALE ARDUINO
+*/
+void loop() 
+{
+  unsigned long delta=0;
+  unsigned long t=millis();
+  if (t>=g_t0)
+    delta=t-g_t0;
+  else
+    delta=0xFFFFFFFF-g_t0+t;
+  
+  if (delta>=1000)
+  {
+    taskSemuino();
+    
+    g_blink_1s=!g_blink_1s;    
+    if (g_blink_1s==true)
+      g_blink_2s=!g_blink_2s;
+    g_t0=millis();
   }
 
+  delay(50);
+
   inputInterrupteur();
+
+  /*int tmp=analogRead(PIN_HUM3);
+  if (tmp>700)
+    digitalWrite(PIN_LED_GREEN,g_blink_2s?HIGH:LOW);
+  else
+    digitalWrite(PIN_LED_GREEN,LOW);
+
+  Serial.print("Hum:");
+  Serial.println(tmp);*/
 }

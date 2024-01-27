@@ -348,6 +348,14 @@ void serialEvent()
     Serial.print("Power: ");
     Serial.println(g_power);
   }
+  else if (b=='h')
+  {
+    test_hum();    
+  }
+  else if (b=='t')
+  {
+    test_dht22();
+  }
 }
 
 /**
@@ -357,7 +365,7 @@ void loop()
 {
   if (delta(t0) > 1000)
   {
-    test_hum();
+    //test_hum();
     t0 = millis();
   }
   delay(100);

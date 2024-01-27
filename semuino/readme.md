@@ -291,11 +291,11 @@ Chaque rangée de LEDs a 4 LEDs bleues et 17 LEDs rouges
 #### Pour le panneau du dessus
 
 Nombre de LEDs: 258
-Courant à 12V: 2 A
+Courant à 12V: 2 A (7,8 mA par LED)
 
 #### Consommation totale LEDs 12V
 
-1,5 x 2 + 2 = 5 A
+1,5 x 2 + 2 = 5 A (8 mA par LED)
 
 NB: Mesure confirmée lors du premier essai avec la carte + les 3 panneaux de LEDs 12V.
 
@@ -320,11 +320,11 @@ En blanc, cela fait 13 mA par LED.
 
 Pour deux étages, cela fait un total (mesuré) de 3.85 A @ 5.22 V, soit 20 W en mode blanc.
 
-Idéalement, il faudrait prévoir en théorie 7 A / 5 V pour trois étages.
+Idéalement, il faudrait prévoir 7 A / 5 V pour trois étages.
 
 ### Bilan des consommations
 
-En tout, le meuble à semis consomme actuelement 80 W avec deux étages RGB. On peut prévoir 95 W si un jour on utilise l'étage du dessus.
+En tout, le meuble à semis consomme actuellement 80 W avec deux étages RGB montés. On peut prévoir 95 W si un jour on utilisait l'étage RGB du dessus.
 Donc un fusible principal de 7 A ou de 9 A peut être utilisé pour protéger la carte. Et l'alimentation extérieure doit bien débiter 10 A pour avoir un peu de marge.
 
 ## Difficultés rencontrées
