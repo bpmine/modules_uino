@@ -338,6 +338,9 @@ void getTime(int &hour,int &minute, int &second)
   return 0;
 }
 
+#define START_HOUR  (5)  ///< Heure de la montee en lumiere (au max au bout d'1h)
+#define END_HOUR    (22)  ///< Heure de debut de la baisse de luminosite (OFF au bout d'1h) 
+
 /**
  * @brief Retourne la puissance des LEDs en fonction de l'heure
  * @param[in] h Heure
@@ -346,19 +349,19 @@ void getTime(int &hour,int &minute, int &second)
 */
 int getPower(int h,int m)
 {
-  if ( (h>=5) && (h<=23) )
-  {
-    return 255;
-  }
-  else if (h==5)
+  if (h==START_HOUR)
   {
     int res=m*255/59;
     return (res&0xFF);
   }
-  else if (h==23)
+  else if (h==END_HOUR)
   {
     int res=(59-m)*255/60;
     return (res&0xFF);
+  }
+  else if ( (h>START_HOUR) && (h<END_HOUR) )
+  {
+    return 255;
   }
   else
   {
