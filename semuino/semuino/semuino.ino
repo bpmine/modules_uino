@@ -10,11 +10,14 @@
 #include <Wire.h>
 
 //#define SET_TIME
-#define SET_DATE_STR "27/01/2024"
+#define SET_DATE_STR "01/03/2024"
 #define SET_TIME_STR __TIME__
 
-#define POWER_MAX         255
-#define POWER_MIN         10
+#define START_HOUR  (6)  ///< Heure de la montee en lumiere (au max au bout d'1h)
+#define END_HOUR    (21)  ///< Heure de debut de la baisse de luminosite (OFF au bout d'1h) 
+
+#define POWER_MAX         150
+#define POWER_MIN         0
 
 #define NUM_LEDS          (23*7)  ///< Nombre de LEDs a chaque etage (3 rangées de 23 LEDs)
 
@@ -68,7 +71,8 @@ T_CONFIG g_config=
 #define ST_LED_P2   (0x02)
 #define ST_LED_P3   (0x04)
 
-int g_power=255;              ///< Puissance
+int g_power=POWER_MAX;        ///< Puissance
+bool g_boost=false;           ///< BOOST (au milieu de la journée)
 CRGB leds_bas[NUM_LEDS];      ///< Tableau des LEDs du bas
 CRGB leds_haut[NUM_LEDS];     ///< Tableau des LEDs du haut
 //CRGB leds_dessus[NUM_LEDS]; ///< Tableau des LEDs du dessus du meuble
@@ -222,6 +226,7 @@ void setup()
   randomSeed(millis());
   
   g_power=POWER_MAX;
+  g_boost=false;
   
   Serial.begin(9600);
   Serial.println("Boot...");  
@@ -338,9 +343,6 @@ void getTime(int &hour,int &minute, int &second)
   return 0;
 }
 
-#define START_HOUR  (5)  ///< Heure de la montee en lumiere (au max au bout d'1h)
-#define END_HOUR    (22)  ///< Heure de debut de la baisse de luminosite (OFF au bout d'1h) 
-
 /**
  * @brief Retourne la puissance des LEDs en fonction de l'heure
  * @param[in] h Heure
@@ -350,18 +352,20 @@ void getTime(int &hour,int &minute, int &second)
 int getPower(int h,int m)
 {
   if (h==START_HOUR)
-  {
-    int res=m*255/59;
+  {    
+    //int res=m*255/59;
+    int res=map(m,0,59,POWER_MIN,POWER_MAX);
     return (res&0xFF);
   }
   else if (h==END_HOUR)
   {
-    int res=(59-m)*255/60;
+    //int res=(59-m)*255/60;
+    int res=map(59-m,0,59,POWER_MIN,POWER_MAX);
     return (res&0xFF);
   }
   else if ( (h>START_HOUR) && (h<END_HOUR) )
   {
-    return 255;
+    return POWER_MAX;
   }
   else
   {
@@ -381,25 +385,48 @@ void manageMode_smart(void)
     digitalWrite(PIN_CMD_P1,LOW);
     digitalWrite(PIN_CMD_P2,LOW);
     digitalWrite(PIN_CMD_P3,LOW);
+    clearAll(leds_haut);
+    clearAll(leds_bas);
     FastLED.show();
   }
   else
   {
     digitalWrite(PIN_POWER_5V,HIGH);
+       
     FastLED.setBrightness(g_power);
     FastLED.show();
 
-    if (g_power==255)
+    if (g_power==POWER_MAX)
     {
       digitalWrite(PIN_CMD_P1,(g_config.states&ST_LED_P1)==ST_LED_P1?HIGH:LOW);
       digitalWrite(PIN_CMD_P2,(g_config.states&ST_LED_P2)==ST_LED_P2?HIGH:LOW);
       digitalWrite(PIN_CMD_P3,(g_config.states&ST_LED_P3)==ST_LED_P3?HIGH:LOW);
+      
+      if ((g_config.states&ST_LED_P1)==ST_LED_P1)
+        setAll(leds_bas,g_boost==true?COL_WHITE:COL_GROWING);
+      else
+        clearAll(leds_bas);
+        
+      if ((g_config.states&ST_LED_P2)==ST_LED_P2)
+        setAll(leds_haut,g_boost==true?COL_WHITE:COL_GROWING);
+      else
+        clearAll(leds_haut);
     }
     else
     {
       digitalWrite(PIN_CMD_P1,LOW);
       digitalWrite(PIN_CMD_P2,LOW);
       digitalWrite(PIN_CMD_P3,LOW);
+
+      if ((g_config.states&ST_LED_P1)==ST_LED_P1)
+        setAll(leds_bas,COL_GROWING);
+      else
+        clearAll(leds_bas);
+        
+      if ((g_config.states&ST_LED_P2)==ST_LED_P2)
+        setAll(leds_haut,COL_GROWING);
+      else
+        clearAll(leds_haut);
     }
   }  
 }
@@ -423,6 +450,21 @@ void taskSemuino(void)
 
   getTime(h,m,s);
   g_power=getPower(h,m);
+
+  // Periode de BOOST... (LEDs RGB blanches au lieu de Rouge horticole)
+  if ( (h>=11) && (h<=13) )
+    g_boost=true;
+  else
+    g_boost=false;
+
+  Serial.print("Time: ");
+  Serial.print(h);
+  Serial.print(":");
+  Serial.print(m);
+  Serial.print("; mode: ");
+  Serial.print(g_config.mode);
+  Serial.print("; power: ");
+  Serial.println(g_power);
   
   switch (g_config.mode)
   {
