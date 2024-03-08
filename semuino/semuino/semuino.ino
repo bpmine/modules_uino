@@ -9,6 +9,8 @@
 #include <RTClib.h>
 #include <Wire.h>
 
+#define VERSION "V1.0"
+
 //#define SET_TIME
 #define SET_DATE_STR "01/03/2024"
 #define SET_TIME_STR __TIME__
@@ -16,8 +18,9 @@
 #define START_HOUR  (6)  ///< Heure de la montee en lumiere (au max au bout d'1h)
 #define END_HOUR    (21)  ///< Heure de debut de la baisse de luminosite (OFF au bout d'1h) 
 
-#define POWER_MAX         150
+#define POWER_MAX         255
 #define POWER_MIN         0
+#define BOOST_POWER_MAX   255
 
 #define NUM_LEDS          (23*7)  ///< Nombre de LEDs a chaque etage (3 rangées de 23 LEDs)
 
@@ -230,6 +233,8 @@ void setup()
   
   Serial.begin(9600);
   Serial.println("Boot...");  
+  Serial.print("Standalone ");
+  Serial.println(VERSION);
 
   pinMode(PIN_DATA_LED_BAS, OUTPUT);
   digitalWrite(PIN_DATA_LED_BAS,LOW);
@@ -380,6 +385,7 @@ void manageMode_smart(void)
 {
   if ( g_power==-1 )
   {
+    /// @remark Si power -1, tout est coupé (c'est la nuit)
     clearAll();
     digitalWrite(PIN_POWER_5V,LOW);
     digitalWrite(PIN_CMD_P1,LOW);
@@ -391,42 +397,49 @@ void manageMode_smart(void)
   }
   else
   {
+    /// @remark Sinon on alimente le RGB 5V
     digitalWrite(PIN_POWER_5V,HIGH);
-       
-    FastLED.setBrightness(g_power);
-    FastLED.show();
-
+    
     if (g_power==POWER_MAX)
     {
+      /// @remark Au maximum, on allume systematiquement les LEDs 12V choisies
       digitalWrite(PIN_CMD_P1,(g_config.states&ST_LED_P1)==ST_LED_P1?HIGH:LOW);
       digitalWrite(PIN_CMD_P2,(g_config.states&ST_LED_P2)==ST_LED_P2?HIGH:LOW);
       digitalWrite(PIN_CMD_P3,(g_config.states&ST_LED_P3)==ST_LED_P3?HIGH:LOW);
-      
-      if ((g_config.states&ST_LED_P1)==ST_LED_P1)
+
+      /// @remark, lors du boost, on met en blanc les deux étages RGBs choisis et à la puissance max du boost sinon en rouge horticole à la puissance actuelle
+      if ((g_config.states&ST_LED_P1)==ST_LED_P1)           
         setAll(leds_bas,g_boost==true?COL_WHITE:COL_GROWING);
       else
         clearAll(leds_bas);
-        
+                 
       if ((g_config.states&ST_LED_P2)==ST_LED_P2)
         setAll(leds_haut,g_boost==true?COL_WHITE:COL_GROWING);
       else
         clearAll(leds_haut);
+
+      FastLED.setBrightness(g_boost==true?BOOST_POWER_MAX:g_power);            
+      FastLED.show();
     }
     else
     {
+      /// @remark Lors des montées et descente, on éteint les 12V et on applique la luminosité des RGBs souhaitee
       digitalWrite(PIN_CMD_P1,LOW);
       digitalWrite(PIN_CMD_P2,LOW);
       digitalWrite(PIN_CMD_P3,LOW);
 
       if ((g_config.states&ST_LED_P1)==ST_LED_P1)
-        setAll(leds_bas,COL_GROWING);
+        setAll(leds_bas,COL_WHITE);
       else
         clearAll(leds_bas);
         
       if ((g_config.states&ST_LED_P2)==ST_LED_P2)
-        setAll(leds_haut,COL_GROWING);
+        setAll(leds_haut,COL_WHITE);
       else
         clearAll(leds_haut);
+
+      FastLED.setBrightness(g_power);
+      FastLED.show();
     }
   }  
 }
@@ -452,7 +465,7 @@ void taskSemuino(void)
   g_power=getPower(h,m);
 
   // Periode de BOOST... (LEDs RGB blanches au lieu de Rouge horticole)
-  if ( (h>=11) && (h<=13) )
+  if ( (h>=12) && (h<=13) )
     g_boost=true;
   else
     g_boost=false;
