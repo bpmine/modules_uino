@@ -54,7 +54,7 @@ Le meuble a trois modes de fonctionnement que l'on peut sélectionner successive
 Mode | Nom | Description
 --- | --- | ---
 0 | OFF | Toutes les LEDs sont éteintes
-1 | Auto/Horloge | Les LEDs s'allument entre 6h et 22h
+1 | Auto/Horloge | Les LEDs s'allument entre 6h et 22h selon un mode d'éclairage défini
 2 | ON | Les LEDs s'allument
 
 Le mode choisi est sauvegardé dans le boîtier. Lorsqu'on l'éteint et qu'on le rallume, le réglage est retrouvé.
@@ -99,6 +99,16 @@ Action | Description
 Appui court | Changer le mode d'éclairage des LEDs du meuble
 Appui long | Quitter le mode de configuration (et sauver le réglage)
  
+#### Description du mode auto
+
+En mode auto, le semuino gère l'éclairage tout seul de la façon suivante:
+
+- De 6h à 7h, la lumière blanche monte toute seule
+- de 7h à 12h, la lumière est de type horticole (LEDs RGB et LEDs 12V majoritairement en rouge spécial)
+- de 12h à 14h, la lumière est au maxium (LEDs RGB blanches)
+- de 14h à 21h, on revient à l'éclairage horticole normal
+- de 21h à 22h, la lumière blanche descend toute seule
+
 ## Détail technique
 
 ### Schéma et conception
@@ -419,6 +429,58 @@ Idéalement, il faudrait prévoir 7 A / 5 V pour trois étages.
 En tout, le meuble à semis consomme actuellement 80 W avec deux étages RGB montés. On peut prévoir 95 W si un jour on utilisait l'étage RGB du dessus.
 Donc un fusible principal de 7 A ou de 9 A peut être utilisé pour protéger la carte. Et l'alimentation extérieure doit bien débiter 10 A pour avoir un peu de marge.
 
+## Eclairage
+
+Les mesures suivantes sont réalisées avec un smartphone et l'application "Luxmetre".
+
+### Panneau du dessus du meuble
+
+A environ 40cm, 300 LUX
+
+### Etage du haut en position 15cm
+
+Description | Eclairage
+--- | ---
+RGB Blanc | 1000 LUX
+RGB horticole | 525 LUX
+12V horticole | 1000 LUX
+12V + RGB horticole | 1610 LUX
+12V + RGB blanc | 2100 LUX
+
+En mode auto, cela donne le scénario suivant:
+
+Plage horaire | Eclairage
+--- | ---
+6h à 7h | de 0 à 1000 LUX
+7h à 12h | 1600 LUX
+12h à 14h | 2000 LUX
+14h à 21h | 1600 LUX
+21h à 22h | 1000 LUX à 0
+
+### Etage du bas en position 30cm
+
+Description | Eclairage
+--- | ---
+RGB Blanc | 800 LUX
+RGB horticole | 430 LUX
+RGB vert | 425 LUX
+RGB bleu | 449 LUX
+12V horticole | 583 LUX
+12V + RGB horticole | 1019 LUX
+12V + RGB blanc | 1400 LUX
+
+NB: Vert et Bleu n'ont pas d'intérêt pour le meuble de semis...
+
+En mode auto, cela donne le scénario suivant:
+
+Plage horaire | Eclairage
+--- | ---
+6h à 7h | de 0 à 800 LUX
+7h à 12h | 1019 LUX
+12h à 14h | 1400 LUX
+14h à 21h | 1019 LUX
+21h à 22h | 800 LUX à 0
+
 ## Difficultés rencontrées
 
 ### Défauts de conception
@@ -446,16 +508,16 @@ Donc on va alimenter l'arduino nano en 3.3V (~2.5V à ca&use de la diode) à par
 
 C'est ce qui m'est arrivé. Le résultat n'est pas très drôle puisque j'ai cramé toutes les 322 LEDs RGB du meuble dans une triste "pétarade".
 
-La plupart ne s'allument plus et 3 ou 4 au contraire restent allumées sur une couleur.
-
-Du coup, en 2024 le meuble fonctionnera probablement en mode tout ou rien sur les LEDs 12V (en théorie suffisantes pour assurer une saison). 
+La plupart ne s'allumaient plus et 3 ou 4 au contraire restaient allumées sur une couleur fixe.
 
 Dommage!
+
+NB: Armé d'un peu de patience, je les ai finalement remplacé...
 
 ### Améliorations possibles sur la future version
 
 - Déplacer les borniers pour faciliter les branchements (ou utiliser des embase sur le PCB 
-- Prévoir l'alimentation 5V des RGBs extérieure dès le déport et la rendre pilotable par le nano
+- Prévoir l'alimentation 5V des RGBs extérieure dès le départ et la rendre pilotable par le nano
 - Remplacer l'alimentation 3.3V en 5V pour tout alimenter en 5V et ajouter un régulateur dédié pour le 3.3V de l'ESP01 (Vérifier qu'il est bien 5V tolerant et si ce n'est pas le cas, mettre un buffer pour son accès I²C).
 
 # Version précédente du meuble à semis V0 (Hiver 2021)
