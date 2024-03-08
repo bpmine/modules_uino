@@ -14,14 +14,14 @@
 #define TEST_WITH_SERIAL
 
 //#define SET_TIME
-#define SET_DATE_STR "20/01/2024"
+#define SET_DATE_STR "01/03/2024"
 #define SET_TIME_STR __TIME__
 
 
 #define POWER_MAX         255
 #define POWER_MIN         10
 
-#define NUM_LEDS          (23*7)  ///< Nombre de LEDs a chaque etage (3 rangées de 23 LEDs)
+#define NUM_LEDS          (23*7)  ///< Nombre de LEDs a chaque etage (7 rangées de 23 LEDs)
 
 #define PIN_SELECT_BTN      (2)   ///< Interrupteur de selection
 
@@ -55,7 +55,7 @@ CRGB leds_haut[NUM_LEDS];     ///< Tableau des LEDs du haut
 //CRGB leds_dessus[NUM_LEDS];   ///< Tableau des LEDs du dessus du meuble
 
 DS1307 rtc;
-DHT dht(PIN_TEMP, DHT22);
+//DHT dht(PIN_TEMP, DHT22);
 
 unsigned long t0 = 0;
 
@@ -150,7 +150,7 @@ void setup()
 
   Wire.begin();
   rtc.begin();
-  dht.begin();
+  //dht.begin();
 
 #ifdef SET_TIME
   Serial.print("Set datetime ");
@@ -193,7 +193,7 @@ unsigned long delta(unsigned long lT0)
   return delt;
 }
 
-void test_dht22(void)
+/*void test_dht22(void)
 {
   float tauxHumidite = dht.readHumidity();              // Lecture du taux d'humidité (en %)
   float temperatureEnCelsius = dht.readTemperature();   // Lecture de la température, exprimée en degrés Celsius
@@ -214,7 +214,7 @@ void test_dht22(void)
   Serial.print("Température = "); Serial.print(temperatureEnCelsius); Serial.println(" °C");
   Serial.print("Température ressentie = "); Serial.print(temperatureRessentieEnCelsius); Serial.println(" °C");
   Serial.println();
-}
+}*/
 
 void test_hum(void)
 {
@@ -270,15 +270,17 @@ typedef struct
 const CRGB black(0, 0, 0);
 const CRGB green(0, 127, 0);
 const CRGB red(127, 0, 0);
+const CRGB blue(0, 0, 127);
+const CRGB growing(127, 0, 32);
 const CRGB white(127, 127, 127);
 
 const T_CMD_RGB rgb_cmds[] =
 {
   {"RGB 1 BLACK", (char)'1', leds_bas, &black},
-  {"RGB 1 RED", (char)'4', leds_bas, &red},
+  {"RGB 1 GROW", (char)'4', leds_bas, &growing},
   {"RGB 1 WHITE", (char)'7', leds_bas, &white},
   {"RGB 2 BLACK", (char)'2', leds_haut, &black},
-  {"RGB 2 RED", (char)'5', leds_haut, &red},
+  {"RGB 2 GROW", (char)'5', leds_haut, &growing},
   {"RGB 2 WHITE", (char)'8', leds_haut, &white}
   /*{"RGB 3 BLACK",'1',leds_bas,&black},
     {"RGB 3 RED",'4',leds_bas,&red},
@@ -306,11 +308,11 @@ void serialEvent()
 
   for (int i = 0; i < sizeof(rgb_cmds) / sizeof(T_CMD_RGB); i++)
   {
-    Serial.print(i);
+    /*Serial.print(i);
     Serial.print(" ");
     Serial.print(c);
     Serial.print(" ");
-    Serial.println(rgb_cmds[i].cmd);
+    Serial.println(rgb_cmds[i].cmd);*/
 
     if (rgb_cmds[i].cmd == c)
     {
@@ -354,7 +356,7 @@ void serialEvent()
   }
   else if (b=='t')
   {
-    test_dht22();
+    //test_dht22();
   }
 }
 
