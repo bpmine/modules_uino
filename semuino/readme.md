@@ -113,7 +113,7 @@ En mode auto, le semuino gère l'éclairage tout seul de la façon suivante:
 
 ### Schéma et conception
 
-[Schéma et PCB de la carte](board\semuino)
+[Schéma et PCB de la carte](board/semuino)
 
 Le carte semuino est architecturée autour d'un arduino nano dans sa configuration réduite "standalone".
 
@@ -174,9 +174,10 @@ RTC | Module RTC avec pile 3V
 
 A compléter...
 
-### Les programmes
+### Les logiciels
 
-Il y'a plusieurs types de programmes différents pour l'arduino Nano:
+Il y'a plusieurs types de logiciels différents pour l'arduino Nano:
+
 Nom | Description | Lien
 --- | --- | ---
 semuino_test|Pour tester la carte semuino | 
@@ -184,18 +185,19 @@ semuino|Le programme standalone standard pour le Nano |
 semuino_nano_slave|Le programme esclave I²C pour le nano |
 semuino_nano_master_test|Un programme de test pour remplacer un maître I²C avec un Nano |
 
-Le Nano est quasiment plein niveau RAM. Il n'est pas possible de gérer les trois RGB en même temps. Le RB3 a pour l'instant été retiré.
+Le Nano est quasiment plein niveau RAM. Il n'est pas possible de gérer les trois RGB en même temps. Le RGB3 a pour l'instant été retiré.
+Au niveau temps de cycle, il n'est pas possible d'utiliser le DHT22 en même temps que le bus I²C.
 
 Pour l'ESP01, il n'y a qu'un seul programme:
 Nom | Description | Lien
 --- | --- | ---
-semuino_wifi|Programme SEMUINO complet pour ESP01 | 
+semuino_esp01_master|Programme SEMUINO complet pour ESP01 | 
 
 ## Protocole d'échange I²C (Esclave Nano)
 
 L'I²C permet à l'ESP01 d'accéder à l'écran, au RTC et au Nano. Cette partie décrit la gestion de l'esclave par le programme du Nano.
 
-### Description des échanges
+### Description des échanges I²C
 
 Adresse de l'esclave: 0xA
 
@@ -203,17 +205,18 @@ Pour écrire une valeur, on envoie le numéro de registre (1 octet) puis la donn
 
 Registre | Nom | R/W  | Taille | Description
 --- | --- | --- | --- | ---
-1 | Commandes | Ecriture | 1 octet | Contient les commandes pour agir sur les LEDs
+1 | Commandes | Ecriture | 1 octet | Contient les commandes pour agir sur les bandeaux de LEDs
 2 | Level | Ecriture | 1 octet | Défini le niveau d'éclairage des LEDs RGB (entre 1 et 255)
 3 | Modes RGB A | Ecriture | 1 octet | Contient les modes des bandeaux RGB 1 (4 bits de poids faible) et RGB 2 (4 bits de poids fort)
 4 | Modes RGB B | Ecriture | 1 octet | Les 4 bits de poids faible correspondent au mode du bandeau RGB 3
 5 | WRITE EEPROM | Ecriture | 2 octets | Le premier octet contient l'adresse EEPROM où écrire et le second contient la donnée à écrire
+6 | Voyants | Ecriture | 1 octet | Etat des voyants (bit 0: LED verte)
 
 Pour lire une valeur, on envoie le numéro de registre (1 octet) puis on demande la lecture des données.
 
 Registre | Nom | R/W  | Taille | Description
 --- | --- | --- | --- | ---
-10 | Inputs | Lecture | 1 octet | Retourne l'état des entrées (bit 1: bouton de select)
+10 | Inputs | Lecture | 1 octet | Retourne l'état des entrées (bit 0: bouton de select)
 11 | TEMP | Lecture | 1 octet | Retourne la température ambiante (en °C)
 12 | HUM | Lecture | 1 octet | Retourne le taux d'humidité ambiante (en %)
 13 | H1 | Lecture | 1 octet | Retourne la valeur du capteur d'humidité du sol n° 1 (0..255)
@@ -221,7 +224,35 @@ Registre | Nom | R/W  | Taille | Description
 15 | H3 | Lecture | 1 octet | Retourne la valeur du capteur d'humidité du sol n° 3 (0..255)
 16 | READ EEPROM | Lecture | 1 octet | Il faut d'abord écrire 1 octet d'adresse, avant de lire l'octet contenant la valeur.
 
-### Quelques exemples
+#### Description des commandes
+
+Le tableau ci-dessous décrit le format de l'octet de commande correspondant au registre 1
+
+Bit | Description
+--- | ---
+0 | Contrôle de l'alimentation 5V (0: Coupée, 1:ON)
+1 | Bandeau LEDs 12V P1 (0:OFF, 1:ON)
+2 | Bandeau LEDs 12V P2 (0:OFF, 1:ON)
+3 | Bandeau LEDs 12V P3 (0:OFF, 1:ON)
+4 | Bandeau LEDs 5V RGB1 (0:OFF, 1:ON)
+5 | Bandeau LEDs 5V RGB2 (0:OFF, 1:ON)
+6 | Bandeau LEDs 5V RGB3 P1 (0:OFF, 1:ON)
+7 | Non utilisé
+
+#### Description des modes d'éclairage d'un bandeau RGB
+
+Le tableau ci-dessous décrit les différents modes d'éclairage d'un bandeau RGB.
+
+Mode | Description
+--- | ---
+0 | Tout à OFF
+1 | Tout en rouge croissance
+2 | Tout en blanc
+3 | BBR (Bleu Blanc Rouge pour le fun)
+4 | Moitié blanc / moitié rouge croissance
+5 à 15 | Non utilisé (équivalent à OFF)
+
+### Quelques exemples d'échanges I²C
 
 Pour envoyer des commandes: [0x0A] [1] [0x01] (Tout coupé sauf le 5V) 
 
@@ -232,6 +263,8 @@ Lire l'adresse 4 en EEPROM : Ecrire [0x0A] [5] [4] puis lire [0x0A] [Donnée re�
 Ecrire 0x55 à l'adresse 4 en EEPROM: Ecrire [0x0A] [16] [4] [0x55]
 
 ## Spécification du Webservice ESP01
+
+L'ESP01 héberge un webservice. Il peut être configuré en mode Access Point ou bien en mode station Wifi.
 
 ### Information
 
@@ -259,6 +292,7 @@ POST /semuino/mode
 
 {
   "type":"semuino_mode",
+  
   "mode":"manual"
 }
 
@@ -266,7 +300,7 @@ POST /semuino/mode
 
 Les deux modes possibles sont `manual` et `auto`.
 En mode manuel, l'utilisateur pilote directement le semuino en postant des commandes avec `/semuino/cmds`.
-En mode automatique, il modifie la configuration si nécessaire avec `/semuino/set`.
+En mode automatique, l'utilisateur peut modifier le reste de la configuration (heure, mode, ...) avec `/semuino/set`.
 
 ### Commandes des LEDs
 
@@ -340,16 +374,16 @@ hum3 | 0..255 | Valeur lue sur le capteur d'humidité 3
 
 ### Configuration du mode automatique
 
-*GET /semuino/set*
-*POST /semuino/set*
+*GET /semuino/settings*
+*POST /semuino/settings*
 
 ```
 
 {
-  "type":"semuino_set",
-
-  "date":"14/11/2023",
-  "time":"12:12:02",
+  "type":"semuino_settings",
+  
+  "date":"01/02/2024",
+  "time":"14:45:12",
 
   "sunrise":"07:00",
   "sunset":"22:00",
@@ -360,6 +394,25 @@ hum3 | 0..255 | Valeur lue sur le capteur d'humidité 3
 }
 
 ```
+
+**NB:** La date et l'heure posté à l'aide de la commande POST sont ignorés. Pour modifier l'heure ou la date, il faut utiliser *sethour* et *setdate*.
+
+### Configuration de la date et de l'heure
+
+*POST /semuino/setdtm*
+
+```
+
+{
+  "type":"semuino_setdtm",
+
+  "date":"14/08/2026",
+  "time":"22:00",
+}
+
+```
+
+**NB:** Les champ *date* et *time* sont optionnels. Seuls les champs postés sont mis à jour.
 
 # Bilan et configuration finale
 
