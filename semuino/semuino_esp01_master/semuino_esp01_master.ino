@@ -10,6 +10,7 @@
  *   - D2: SDA
  *   - 5V: Aliment? par un 7805
  *   - GND: Masse
+ *   
 */
 #include <ESP8266WiFi.h>
 #include <WiFiClient.h>
@@ -18,7 +19,7 @@
 #include <string.h>
 #include <Wire.h>
 
-#include "master.h"
+#include "semuino.h"
 #include "wsctrl.h"
 
 #define VERSION "V0.0"
@@ -56,8 +57,7 @@ void setup(void)
   Serial.println(tmp);
 
   Wire.begin();
-  master_init();
-  
+  Wire.setClock(10000);
   
   pinMode(LED_BUILTIN, OUTPUT);
   digitalWrite(LED_BUILTIN, LOW);
@@ -123,24 +123,25 @@ void setup(void)
       else if (error == OTA_END_ERROR) Serial.println("End Failed");
     });
     ArduinoOTA.begin();
-  #endif
-  
-  Wire.begin();
-  Wire.setClock(10000);
+  #endif  
+
+  semuino_init();
 }
+
 
 /**
  * @brief Boucle cyclique de l'arduino
  * */
 void loop()
-{
-  wsctrl_loop();
+{  
   MDNS.update();
 
   #ifdef USE_OTA
     ArduinoOTA.handle();
   #endif
 
+  wsctrl_loop();
+  //semuino_loop();  // Code de Bernard commente en attendant qu'il soit fini....
   
   delay(1);
 }

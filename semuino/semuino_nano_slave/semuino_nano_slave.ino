@@ -8,11 +8,12 @@
 #include <DHT.h>
 #include <Wire.h>
 
+#include "i2c_cmn.h"
+
 #define POWER_MAX         255
 #define POWER_MIN         10
 
 #define NUM_LEDS          (23*7)  ///< Nombre de LEDs a chaque etage (7 rangées de 23 LEDs)
-#define NUM_LEDS_DESSUS   (23*4)
 
 #define PIN_SELECT_BTN      (2)   ///< Interrupteur de selection
 
@@ -36,31 +37,12 @@
 #define COL_GREEN           CRGB(0,127,0)  
 #define COL_BLUE            CRGB(0,0,127)
 
+CRGB leds_bas[NUM_LEDS];              ///< Tableau des LEDs du bas
+CRGB leds_haut[NUM_LEDS];             ///< Tableau des LEDs du haut
 
-CRGB leds_bas[NUM_LEDS];      ///< Tableau des LEDs du bas
-CRGB leds_haut[NUM_LEDS];     ///< Tableau des LEDs du haut
-CRGB leds_dessus[NUM_LEDS_DESSUS];   ///< Tableau des LEDs du dessus du meuble
 DHT dht(PIN_TEMP, DHT22);
 unsigned long g_ulLastAliveT0_ms=0;
 unsigned char g_alive=0;
-
-#define ADDR_SLAVE      (0xA)
-
-#define REG_CTRL        (1)
-#define REG_LEVEL       (2)
-#define REG_MODE_RGB_A  (3)
-#define REG_MODE_RGB_B  (4)
-#define REG_EEP_WRITE   (5)
-
-#define REG_INPUTS      (10)
-#define REG_TEMP        (11)
-#define REG_HUM         (12)
-#define REG_H1          (13)
-#define REG_H2          (14)
-#define REG_H3          (15)
-#define REG_EEP_READ    (16)
-
-#define REG_ALIVE       (20)
 
 unsigned char g_reg=0;
 unsigned char g_addr=0;
@@ -78,15 +60,6 @@ unsigned char g_modeB=0;
 unsigned char g_level=255;                  ///< Puissance
 unsigned char g_ctrl_old=0;
 
-#define CTRL_5V         0x01
-#define CTRL_RGB1       0x02
-#define CTRL_RGB2       0x04
-#define CTRL_RGB3       0x08
-#define CTRL_P1         0x10
-#define CTRL_P2         0x20
-#define CTRL_P3         0x40
-#define CTRL_RESERVED   0x80
-
 /**
  * @brief Applique une couleur a tout un etage
  * @param pLeds Tableau de LEDs de l'etage
@@ -98,12 +71,6 @@ void setAll(CRGB *pLeds,CRGB col)
      pLeds[i] = col;
 }
 
-void setAllDessus(CRGB col)
-{
-  for (int i=0;i<NUM_LEDS_DESSUS;i++)
-    leds_dessus[i]=col;
-}
-
 
 /**
  * @brief Applique une couleur a tous les etages en meme temps
@@ -113,7 +80,6 @@ void setAll(CRGB col)
 {
   setAll(leds_bas,col);
   setAll(leds_haut,col);
-  setAllDessus(col);
 }
 
 /**
@@ -126,12 +92,6 @@ void clearAll(CRGB *pLeds)
 }
 
 
-void clearAllDessus(void)
-{
-  for (int i=0;i<NUM_LEDS_DESSUS;i++)
-    leds_dessus[i]=CRGB::Black;
-}
-
 /**
  * @brief Eteint tous les etages
 */
@@ -139,7 +99,6 @@ void clearAll()
 {
   clearAll(leds_bas);
   clearAll(leds_haut);
-  clearAllDessus();
 }
 
 void requestEvent() 
@@ -269,7 +228,6 @@ void setup()
 
   FastLED.addLeds<NEOPIXEL, PIN_DATA_LED_BAS>(leds_bas, NUM_LEDS); 
   FastLED.addLeds<NEOPIXEL, PIN_DATA_LED_HAUT>(leds_haut, NUM_LEDS); 
-  FastLED.addLeds<NEOPIXEL, PIN_DATA_LED_DESSUS>(leds_dessus, NUM_LEDS_DESSUS); 
   FastLED.setBrightness(g_level);
 
   pinMode(PIN_POWER_5V, OUTPUT);
@@ -331,15 +289,57 @@ void readDHT(void)
     g_temp_dg=(unsigned char)temperatureEnCelsius;  
 }
 
+void set_leds_by_mode(CRGB *pLeds,int mode)
+{
+  switch (mode)
+  {
+    case RGB_MOD_GROW:
+    {
+      setAll(pLeds,COL_GROWING);
+      break;
+    }
+    case RGB_MOD_WHITE:
+    {
+      setAll(pLeds,COL_WHITE);
+      break;
+    }
+    case RGB_MOD_MIXED:
+    {
+      for (int i=0;i<NUM_LEDS;i++)
+      {
+        if ((i%10)==0)
+        {
+          pLeds[i]=COL_BLUE;
+        }
+        else if ((i%2)==0)
+        {
+          pLeds[i]=COL_GROWING;
+        }
+        else
+        {
+          pLeds[i]=COL_WHITE;          
+        }
+      }
+      break;
+    }
+    case RGB_MOD_OFF:
+    default:
+    {
+      clearAll(pLeds);
+      break;
+    }
+  }
+}
+
 /**
  * @brief BOUCLE PRINCIPALE ARDUINO
 */
 void loop() 
 {
   if (digitalRead(PIN_SELECT_BTN)==HIGH)
-     g_inputs|=0x01;
+     g_inputs|=INP_SELECTOR;
   else
-     g_inputs&=~0x01;
+     g_inputs&=~INP_SELECTOR;
 
   readHumidity();
   //readDHT();  ///< Marche pas car bloque trop longtemps
@@ -371,19 +371,14 @@ void loop()
   if ( (g_ctrl&CTRL_5V)==CTRL_5V)
   {
     if ( (g_ctrl&CTRL_RGB1)==CTRL_RGB1 )    
-      setAll(leds_bas,COL_RED);
+      set_leds_by_mode(leds_bas,(g_modeA&0x0F));
     else
       clearAll(leds_bas);
 
     if ( (g_ctrl&CTRL_RGB2)==CTRL_RGB2 )
-      setAll(leds_haut,COL_BLUE);
+      set_leds_by_mode(leds_haut,((g_modeA>>4)&0x0F));
     else
       clearAll(leds_haut);
-
-    if ( (g_ctrl&CTRL_RGB3)==CTRL_RGB3 )
-      setAllDessus(COL_GREEN);
-    else
-      clearAllDessus();
 
     FastLED.setBrightness(g_level);
     FastLED.show();    

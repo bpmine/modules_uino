@@ -1,4 +1,5 @@
 #include "master.h"
+#include "i2c_cmn.h"
 
 #include <Wire.h>
 
@@ -16,44 +17,43 @@ static void _write_eep(unsigned char addr,unsigned char val);
 
 void _write_ctrl(unsigned char val)
 {
-  Wire.beginTransmission(0xA);
-  Wire.write(byte(1));
+  Wire.beginTransmission(ADDR_SLAVE);
+  Wire.write(byte(REG_CTRL));
   Wire.write(byte(val));
   Wire.endTransmission();   
 }
 
 void _write_level(unsigned char level)
 {
-  Wire.beginTransmission(0xA);
-  Wire.write(byte(2));
+  Wire.beginTransmission(ADDR_SLAVE);
+  Wire.write(byte(REG_LEVEL));
   Wire.write(byte(level));
   Wire.endTransmission();   
 }
 
-
 void _write_modeA(unsigned char val)
 {
-  Wire.beginTransmission(0xA);
-  Wire.write(byte(3));
+  Wire.beginTransmission(ADDR_SLAVE);
+  Wire.write(byte(REG_MODE_RGB_A));
   Wire.write(byte(val));
   Wire.endTransmission();   
 }
 
 void _write_modeB(unsigned char val)
 {
-  Wire.beginTransmission(0xA);
-  Wire.write(byte(4));
+  Wire.beginTransmission(ADDR_SLAVE);
+  Wire.write(byte(REG_MODE_RGB_B));
   Wire.write(byte(val));
   Wire.endTransmission();   
 }
 
 unsigned char _do_alive(unsigned char val)
 {
-  Wire.beginTransmission(0xA);
+  Wire.beginTransmission(ADDR_SLAVE);
   Wire.write(byte(20));
   Wire.write(byte(val));
   Wire.endTransmission();  
-  Wire.requestFrom(0xA, 1); 
+  Wire.requestFrom(ADDR_SLAVE, 1); 
   if (1 <= Wire.available())
     return Wire.read();
   else
@@ -82,11 +82,11 @@ unsigned char _read_eep(unsigned char addr)
   Serial.print(addr);
   Serial.print(": ");
   
-  Wire.beginTransmission(0xA);
-  Wire.write(byte(16));
+  Wire.beginTransmission(ADDR_SLAVE);
+  Wire.write(byte(REG_EEP_READ));
   Wire.write(byte(addr));
   Wire.endTransmission();    
-  Wire.requestFrom(0xA, 1);
+  Wire.requestFrom(ADDR_SLAVE, 1);
 
   if (1 <= Wire.available())
   {
@@ -98,18 +98,29 @@ unsigned char _read_eep(unsigned char addr)
   }
 }
 
+
 void _write_eep(unsigned char addr,unsigned char val)
 {
   Serial.print("Write EEP @");
   Serial.print(addr);
   Serial.print(": ");
   
-  Wire.beginTransmission(0xA);
-  Wire.write(byte(5));
+  Wire.beginTransmission(ADDR_SLAVE);
+  Wire.write(byte(REG_EEP_WRITE));
   Wire.write(byte(addr));
   Wire.write(byte(val));
   Wire.endTransmission();    
 }
+
+void master_get_in_values(T_IN *pIN)
+{  
+}
+
+void master_set_out_values(T_OUT *pOUT)
+{
+  memcpy(&_master_out,pOUT,sizeof(T_OUT));
+}
+
 
 void master_init(void)
 {
@@ -121,8 +132,12 @@ void master_init(void)
   _master_out.leds=0;
 }
 
+int cycle=0;
+
 void master_loop(void)
 {
+  if (cycle++>2000)
+  {
   _write_ctrl(_master_out.ctrl);
   _write_level(_master_out.level);
 
@@ -136,5 +151,7 @@ void master_loop(void)
   /// + LEDs à finir
   _do_alive(0x10);
 
-  /// + lire les valeurs en entree
+  /// + lire les valeurs en entree  
+  cycle=0;
+  }
 }
