@@ -23,7 +23,7 @@
 
 #define VERSION "V0.0"
 
-#define MODE_SIMU     ///< Pour simuler le semuino (sans l'esclave nano, aussi appellé mode "Paul")
+//#define MODE_SIMU     ///< Pour simuler le semuino (sans l'esclave nano, aussi appellé mode "Paul")
 
 #define MODE_AP         ///<Wifi en Access point
 //#define USE_OTA       ///< Activer la mise à jour à distance du soft
@@ -58,6 +58,10 @@ void setup(void)
   char tmp[20];
   sprintf(tmp,"Semuino %s",VERSION);
   Serial.println(tmp);
+
+  #ifdef MODE_SIMU
+    Serial.println("** MODE SIMU **");
+  #endif
 
   /// @remark Activation I2C
   Wire.begin();

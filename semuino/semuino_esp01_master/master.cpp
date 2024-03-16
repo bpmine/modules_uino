@@ -1,7 +1,12 @@
+/**
+ * @file master.cpp
+ * @brief Implémentation - Gestion de la communication I²C avec l'esclave nano
+*/
 #include "master.h"
 #include "i2c_cmn.h"
 
 #include <Wire.h>
+#include <Arduino.h>
 
 static T_IN _master_in;
 static T_OUT _master_out;
@@ -17,8 +22,8 @@ static unsigned char _do_alive(unsigned char val);
 static unsigned char _read_eep(unsigned char addr);
 static void _write_eep(unsigned char addr,unsigned char val);
 
-bool _read_inputs(byte *pVal);
-bool _read_hums(byte *pHum1,byte *pHum2,byte *pHum3);
+bool _read_inputs(unsigned char *pVal);
+bool _read_hums(unsigned char *pHum1,unsigned char *pHum2,unsigned char *pHum3);
 
 
 void _write_register(unsigned char reg,unsigned char val)
@@ -45,31 +50,31 @@ bool _read_register(unsigned char reg,unsigned char *pVal)
     return false;
 }
 
-void _write_ctrl(unsigned char ctrl)
+inline void _write_ctrl(unsigned char ctrl)
 {
   _write_register(REG_CTRL,ctrl);
 }
 
-void _write_level(unsigned char level)
+inline void _write_level(unsigned char level)
 {
   _write_register(REG_LEVEL,level);
 }
 
-void _write_modeA(unsigned char val)
+inline void _write_modeA(unsigned char val)
 {
   _write_register(REG_MODE_RGB_A,val);
 }
 
-void _write_modeB(unsigned char val)
+inline void _write_modeB(unsigned char val)
 {
   _write_register(REG_MODE_RGB_B,val);
 }
 
-unsigned char _do_alive(unsigned char val)
+inline unsigned char _do_alive(unsigned char val)
 {
   Wire.beginTransmission(ADDR_SLAVE);
-  Wire.write(byte(20));
-  Wire.write(byte(val));
+  Wire.write(REG_ALIVE);
+  Wire.write(val);
   Wire.endTransmission();  
   Wire.requestFrom(ADDR_SLAVE, 1); 
   if (1 <= Wire.available())
@@ -78,12 +83,12 @@ unsigned char _do_alive(unsigned char val)
     return 0;
 }
 
-bool _read_inputs(byte *pVal)
+inline bool _read_inputs(unsigned char *pVal)
 {
   return _read_register(REG_INPUTS,pVal);
 }
 
-bool _read_hums(byte *pHum1,byte *pHum2,byte *pHum3)
+inline bool _read_hums(unsigned char *pHum1,unsigned char *pHum2,unsigned char *pHum3)
 {
   if (_read_register(REG_H1,pHum1)==false)
     return false;
@@ -95,7 +100,7 @@ bool _read_hums(byte *pHum1,byte *pHum2,byte *pHum3)
   return true;
 }
 
-unsigned char _read_eep(unsigned char addr)
+inline unsigned char _read_eep(unsigned char addr)
 {
   Serial.print("Read EEP @");
   Serial.print(addr);
@@ -118,7 +123,7 @@ unsigned char _read_eep(unsigned char addr)
 }
 
 
-void _write_eep(unsigned char addr,unsigned char val)
+inline void _write_eep(unsigned char addr,unsigned char val)
 {
   Serial.print("Write EEP @");
   Serial.print(addr);
@@ -167,36 +172,43 @@ void master_init(void)
   _master_in.h3=0;
 }
 
-int cycle=0;
-
 void master_loop(void)
 {
-  if (cycle++>100)
+  if (_read_inputs(&(_master_in.inputs))==false)
+    _master_in.inputs=0;
+
+  if (_read_hums(&(_master_in.h1),&(_master_in.h2),&(_master_in.h3))==false)
   {
-    if (_read_inputs(&(_master_in.inputs))==false)
-      _master_in.inputs=0;
-
-    if (_read_hums(&(_master_in.h1),&(_master_in.h2),&(_master_in.h3))==false)
-    {
-      _master_in.h1=0;
-      _master_in.h2=0;
-      _master_in.h3=0;
-    }
-
-    _write_ctrl(_master_out.ctrl);
-    _write_level(_master_out.level);
-  
-    byte a,b;
-    a=(_master_out.modeRGB1&0xF);
-    a=a|((_master_out.modeRGB2<<4)&0xF);
-    b=(_master_out.modeRGB3&0xF);
-    _write_modeA(a);
-    _write_modeB(b);
-  
-    /// + LEDs à finir
-    _do_alive(0x10);
-  
-    /// + lire les valeurs en entree  
-    cycle=0;
+    _master_in.h1=0;
+    _master_in.h2=0;
+    _master_in.h3=0;
   }
+
+  _write_ctrl(_master_out.ctrl);
+  _write_level(_master_out.level);
+  
+  unsigned char a,b;
+  a=(_master_out.modeRGB1&0xF);
+  a= a | ((_master_out.modeRGB2<<4)&0xF0);
+  b=(_master_out.modeRGB3&0xF);
+  _write_modeA(a);
+  _write_modeB(b);
+
+  /*Serial.print(_master_out.modeRGB1);
+  Serial.print(" ");
+  Serial.print(_master_out.modeRGB2);
+  Serial.print(" ");
+  Serial.print(a);
+  Serial.print(" ");
+  Serial.println(_master_out.ctrl,HEX);*/
+  
+  /// + LEDs à finir
+  unsigned char res=_do_alive(0x11);
+  if (res!=(unsigned char)~0x11)
+  {
+    Serial.print("Alive:");
+    Serial.println(res,HEX);
+  }
+  
+  /// + lire les valeurs en entree  
 }

@@ -6,6 +6,7 @@
 #include "semuino.h"
 #include "master.h"
 #include "i2c_cmn.h"
+#include "timer.h"
 
 #include <RTClib.h>
 
@@ -26,7 +27,6 @@
 
 #define MAX_MODE  3         ///< Nombre de modes
 DS1307 rtc;
-unsigned long g_t0=0;
 bool g_blink_1s=false;
 bool g_blink_2s=false;
 int g_power=POWER_MAX;        ///< Puissance
@@ -53,6 +53,8 @@ T_CONFIG g_config=
 
 T_OUT _out;
 T_IN _in;
+
+Timer tmrTask(3000,false);
 
 /**
  * @brief Sauvegarde la configuration en EEPROM
@@ -150,7 +152,7 @@ void manageMode_smart(void)
   {
     _out.ctrl=0;
     /// @remark Sinon on alimente le RGB 5V
-    _out.ctrl|=CTRL_5V;    
+    _out.ctrl|=CTRL_5V;
     
     if (g_power==POWER_MAX)
     {
@@ -181,6 +183,7 @@ void manageMode_smart(void)
     {
       /// @remark Lors des montées et descente, on éteint les 12V et on applique la luminosité des RGBs souhaitee
       _out.ctrl=0;
+      _out.ctrl|=CTRL_5V;
 
       if ((g_config.states&ST_LED_P1)==ST_LED_P1)      
       {
@@ -283,92 +286,72 @@ bool inputInterrupteur()
   {
     while (1)
     {
-      master_loop(); 
+      delay(200);
+      master_loop();
       master_get_in_values(&_in);
 
       if ((_in.inputs&INP_SEL_LONG)==INP_SEL_LONG)
       {
-        break;
-        // Mode config 
-      }
-      else if ((_in.inputs&INP_SELECTOR)==0)
-      {
-        Serial.println("ok");
-        g_config.mode=g_config.mode+1;
-        if (g_config.mode>MAX_MODE)
-          g_config.mode=0;
-
-        g_config.states=1;
-        _save_config();
-        break;
-      }
-    }
-  }
-  
-    //digitalWrite(PIN_LED_GREEN,HIGH);
-
-    /*long t0=millis();
-    while (digitalRead(PIN_SELECT_BTN)==0)
-    {
-      long t=millis();
-      if (t-t0>4500)
-      {
+        Serial.println("Config mode");
         if (g_mode_config==false)
         {
           for (int i=0;i<10;i++)
           {
+            _out.leds|=OUP_GREEN;
+            master_set_out_values(&_out);
+            master_loop();
             delay(100);
-            digitalWrite(PIN_LED_GREEN,LOW);
+            _out.leds&=~OUP_GREEN;
+            master_set_out_values(&_out);
+            master_loop();
             delay(100);
-            digitalWrite(PIN_LED_GREEN,HIGH);
           }
           g_mode_config=true;
         }
         else
         {
-          save_config();
+          _save_config();
           g_mode_config=false;
-          digitalWrite(PIN_LED_GREEN,LOW);
-          while (digitalRead(PIN_SELECT_BTN)==0)
-            delay(500);
+          
+          Serial.println("Exit Config");
+
+          _out.leds&=~OUP_GREEN;
+          while ((_in.inputs&INP_SELECTOR)==INP_SELECTOR)
+          {
+            delay(200);
+            master_set_out_values(&_out);
+            master_loop();
+            master_get_in_values(&_in);
+          }
         }
+        
+        break;
+      }
+      else if ((_in.inputs&INP_SELECTOR)==0)
+      {
+        if (g_mode_config==false)
+        {
+          Serial.println("Ch. mode");
+          g_config.mode=g_config.mode+1;
+          if (g_config.mode>MAX_MODE)
+            g_config.mode=0;
   
-        return true;
+          //g_config.states=1;
+          _save_config();
+        }
+        else
+        {
+          Serial.println("Ch. config");
+          g_config.states=g_config.states+1;
+          if (g_config.states>0x07)
+            g_config.states=0;          
+        }
+        
+        break;
       }
     }
+  }
     
-    if (g_mode_config==false)
-    {
-      g_config.mode=g_config.mode+1;
-      if (g_config.mode>MAX_MODE)
-        g_config.mode=0;
-  
-      Serial.print("Mode: ");
-      Serial.println(g_config.mode);
-      Serial.print("States: ");
-      Serial.println(g_config.states,HEX);
-      delay(500);
-      digitalWrite(PIN_LED_GREEN,LOW);
-  
-      // On sauvegarde la config pour les modes 0, 1 et 2 seulement
-      save_config();
-  
-      taskSemuino();
-  
-      /// Indiquer le mode en clignotant n fois
-      display_mode(g_config.mode);
-      delay(1500);
-    }
-    else
-    {
-      g_config.states=g_config.states+1;
-      if (g_config.states>0x07)
-        g_config.states=0;
-    }
-    
-    return true;
-  }  */
-  
   return false;
 }
 
@@ -424,39 +407,41 @@ void semuino_init(void)
     }
   }
 
-  g_t0=millis();  
+  Serial.print("Mode: ");
+  Serial.println(g_config.mode);
+  Serial.print("States: ");
+  Serial.println(g_config.states);
+
+  tmrTask.start();  
 }
+
+int cycles=0;
 
 void semuino_loop(void)
 {
-  unsigned long delta=0;
-  unsigned long t=millis();
-  if (t>=g_t0)
-    delta=t-g_t0;
-  else
-    delta=0xFFFFFFFF-g_t0+t;
-
-  if (g_mode_config==false)
+  if (tmrTask.tick()==true)
   {
-    if (delta>=1000)
+    if (g_mode_config==false)
     {
       taskSemuino();
       
       g_blink_1s=!g_blink_1s;    
       if (g_blink_1s==true)
-        g_blink_2s=!g_blink_2s;
-      g_t0=millis();
+        g_blink_2s=!g_blink_2s;      
     }
-  }
-  else
-  {
-    taskConfig();
-    g_t0=millis();
+    else
+    {
+      taskConfig();      
+    }
   }
 
   inputInterrupteur();
 
   master_set_out_values(&_out);
-  master_loop(); 
+  if (cycles++>100)
+  {
+    master_loop(); 
+    cycles=0;
+  }
   master_get_in_values(&_in);  
 }

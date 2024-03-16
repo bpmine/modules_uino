@@ -1,24 +1,30 @@
+/**
+ * @file master.h
+ * @brief Interface - Gestion de la communication I²C avec l'esclave nano
+*/
 #ifndef MASTER_HEADER_INCLUDED
 #define MASTER_HEADER_INCLUDED
 
-#include <arduino.h>
-
+/**
+ * @struct T_OUT
+ * @brief Etat du semuino à appliquer sur l'esclave nano (commandes)
+*/
 typedef struct
 {
-  byte ctrl;
-  byte level;
-  byte modeRGB1;
-  byte modeRGB2;
-  byte modeRGB3;  
-  byte leds;
+  unsigned char ctrl;        ///< Contenu du registre de contrôle
+  unsigned char level;       ///< Niveau RGB [0..255]
+  unsigned char modeRGB1;    ///< Mode du bandeau RGB 1 [0..15]
+  unsigned char modeRGB2;    ///< Mode du bandeau RGB 2 [0..15]
+  unsigned char modeRGB3;    ///< Mode du bandeau RGB 3 [0..15] -- Non utilise car indisponible
+  unsigned char leds;        ///< Etat de la LED verte
 } T_OUT;
 
 typedef struct
 {
- byte h1; 
- byte h2;
- byte h3;
- byte inputs;
+ unsigned char h1; 
+ unsigned char h2;
+ unsigned char h3;
+ unsigned char inputs;
 } T_IN;
 
 

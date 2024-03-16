@@ -9,6 +9,7 @@
 #include <Wire.h>
 
 #include "i2c_cmn.h"
+#include "timer.h"
 
 #define POWER_MAX         255
 #define POWER_MIN         10
@@ -16,6 +17,7 @@
 #define NUM_LEDS          (23*7)  ///< Nombre de LEDs a chaque etage (7 rangées de 23 LEDs)
 
 #define PIN_SELECT_BTN      (2)   ///< Interrupteur de selection
+#define PIN_LED_GREEN       (4)   ///< LED verte
 
 #define PIN_POWER_5V        (3)   ///< Alumage alimentation 5V
 #define PIN_DATA_LED_BAS    (5)   ///< Broche etage du bas
@@ -41,7 +43,6 @@ CRGB leds_bas[NUM_LEDS];              ///< Tableau des LEDs du bas
 CRGB leds_haut[NUM_LEDS];             ///< Tableau des LEDs du haut
 
 DHT dht(PIN_TEMP, DHT22);
-unsigned long g_ulLastAliveT0_ms=0;
 unsigned char g_alive=0;
 
 unsigned char g_reg=0;
@@ -58,9 +59,13 @@ unsigned char g_ctrl=0;
 unsigned char g_modeA=0;
 unsigned char g_modeB=0;
 unsigned char g_level=255;                  ///< Puissance
-unsigned char g_ctrl_old=0;
+unsigned char g_voyants=0;
 
 unsigned long g_ulSelectT0_ms=0;
+
+Timer tmrAlive(10000);
+Timer tmrBlink500mS(500,false);
+bool g_flgBlink_500ms=false;
 
 /**
  * @brief Applique une couleur a tout un etage
@@ -110,7 +115,8 @@ void requestEvent()
       case REG_ALIVE:
       {
         Wire.write(~g_alive);
-        g_ulLastAliveT0_ms=millis();
+        //g_ulLastAliveT0_ms=millis();
+        tmrAlive.start();
         break;
       }
       case REG_CTRL:
@@ -166,7 +172,8 @@ void receiveEvent(int howMany)
       case REG_ALIVE:
       {
         g_alive=Wire.read();
-        g_ulLastAliveT0_ms=millis();
+        //g_ulLastAliveT0_ms=millis();
+        tmrAlive.start();
         //Serial.print("Rec alive: ");
         //Serial.println(g_alive,HEX);
         break;
@@ -201,6 +208,11 @@ void receiveEvent(int howMany)
         EEPROM.write(addr,data);
         break;        
       }
+      case REG_VOYANTS:
+      {
+        g_voyants=Wire.read();
+        break;
+      }
       case REG_EEP_READ:
       {
         g_addr=Wire.read();
@@ -219,7 +231,7 @@ void receiveEvent(int howMany)
 void setup() 
 {
   Serial.begin(9600);
-  Serial.println("Boot");  
+  Serial.println("Sem. SLV");  
 
   pinMode(PIN_DATA_LED_BAS, OUTPUT);
   digitalWrite(PIN_DATA_LED_BAS,LOW);
@@ -261,8 +273,11 @@ void setup()
   clearAll();
   FastLED.show();
 
-  g_ulLastAliveT0_ms=millis();
   g_ulSelectT0_ms=millis();
+  g_flgBlink_500ms=false;
+
+  tmrBlink500mS.start();
+  tmrAlive.start();
 }
 
 void readHumidity(void)
@@ -368,17 +383,11 @@ void loop()
 
   delay(10);
 
-  unsigned long delta;
-  unsigned long t=millis();
-  if (t>=g_ulLastAliveT0_ms)
-    delta=t-g_ulLastAliveT0_ms;
-  else
-    delta=0xFFFFFFFF-g_ulLastAliveT0_ms+t;
-    
-  if (delta>10000)
+  tmrAlive.tick();
+  if (tmrAlive.isRunning()==false)
   {
     g_ctrl=0;
-    digitalWrite(LED_BUILTIN,LOW);
+    digitalWrite(LED_BUILTIN,LOW);    
   }
   else
   {
@@ -389,6 +398,17 @@ void loop()
   digitalWrite(PIN_CMD_P1, (g_ctrl&CTRL_P1)==CTRL_P1 ? HIGH:LOW);
   digitalWrite(PIN_CMD_P2, (g_ctrl&CTRL_P2)==CTRL_P2 ? HIGH:LOW);
   digitalWrite(PIN_CMD_P3, (g_ctrl&CTRL_P3)==CTRL_P3 ? HIGH:LOW);
+
+  if ((g_voyants&OUP_GREEN)==OUP_GREEN)
+  {
+    if ((g_voyants&OUP_GREEN_BLINK)==OUP_GREEN_BLINK)
+      digitalWrite(PIN_LED_GREEN,g_flgBlink_500ms);
+    else
+      digitalWrite(PIN_LED_GREEN,HIGH);    
+  }
+  else
+    digitalWrite(PIN_LED_GREEN,LOW);
+  
 
   if ( (g_ctrl&CTRL_5V)==CTRL_5V)
   {
@@ -409,9 +429,12 @@ void loop()
   if (cycle++>100)
   {
     Serial.print("CTRL: ");Serial.print(g_ctrl,HEX);
-    Serial.print(" Modes: ");Serial.print(g_modeA&0x0F);Serial.print(" ");Serial.print((g_modeA>>4)&0x0F);Serial.print(" ");Serial.print((g_modeB>>4)&0x0F);
+    Serial.print(" Modes: ");Serial.print(g_modeA&0x0F);Serial.print(" ");Serial.print((g_modeA>>4)&0x0F);Serial.print(" ");Serial.print(g_modeB&0x0F);
     Serial.print(" Lvl: ");Serial.print(g_level);
     Serial.print(" IN: ");Serial.println(g_inputs,HEX);
     cycle=0;
   }
+
+  if (tmrBlink500mS.tick()==true)
+    g_flgBlink_500ms=!g_flgBlink_500ms;
 }
