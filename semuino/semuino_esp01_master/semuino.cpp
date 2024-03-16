@@ -297,11 +297,11 @@ bool inputInterrupteur()
         {
           for (int i=0;i<10;i++)
           {
-            _out.leds|=OUP_GREEN;
+            _out.voyants|=OUP_GREEN;
             master_set_out_values(&_out);
             master_loop();
             delay(100);
-            _out.leds&=~OUP_GREEN;
+            _out.voyants&=~OUP_GREEN;
             master_set_out_values(&_out);
             master_loop();
             delay(100);
@@ -315,7 +315,7 @@ bool inputInterrupteur()
           
           Serial.println("Exit Config");
 
-          _out.leds&=~OUP_GREEN;
+          _out.voyants&=~OUP_GREEN;
           while ((_in.inputs&INP_SELECTOR)==INP_SELECTOR)
           {
             delay(200);
@@ -367,7 +367,7 @@ void semuino_init(void)
   _out.modeRGB1=0;
   _out.modeRGB2=0;
   _out.modeRGB3=0;  
-  _out.leds=0;
+  _out.voyants=0;
 
   master_set_out_values(&_out);
 

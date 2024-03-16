@@ -13,6 +13,7 @@
 #define REG_MODE_RGB_A  (3)       ///< Id du registre contenant le mode d'éclairage du bandeau RGB 1 et du bandeau RGB 2
 #define REG_MODE_RGB_B  (4)       ///< Id du registre contenant le mode d'éclairage du bandeau RGB 3
 #define REG_EEP_WRITE   (5)       ///< Id du registre pour écrire dans l'EEPROM
+#define REG_VOYANTS     (6)       ///< Id du registre pour piloter les voyants (LED verte)
 
 #define REG_INPUTS      (10)      ///< Id du registre ou lire l'état des entrées
 #define REG_TEMP        (11)      ///< Id du registre ou lire la température dans le boîtier (indisponible)

@@ -13,18 +13,22 @@ typedef struct
 {
   unsigned char ctrl;        ///< Contenu du registre de contrôle
   unsigned char level;       ///< Niveau RGB [0..255]
-  unsigned char modeRGB1;    ///< Mode du bandeau RGB 1 [0..15]
-  unsigned char modeRGB2;    ///< Mode du bandeau RGB 2 [0..15]
-  unsigned char modeRGB3;    ///< Mode du bandeau RGB 3 [0..15] -- Non utilise car indisponible
-  unsigned char leds;        ///< Etat de la LED verte
+  unsigned char modeRGB1;    ///< Mode du bandeau RGB 1 (bas) [0..15]
+  unsigned char modeRGB2;    ///< Mode du bandeau RGB 2 (haut) [0..15]
+  unsigned char modeRGB3;    ///< Mode du bandeau RGB 3 (dessus) [0..15] -- Non utilise car indisponible
+  unsigned char voyants;     ///< Etat de la LED verte
 } T_OUT;
 
+/**
+ * @struct T_IN
+ * @brief Valeurs des entrées lues sur l'esclave nano
+*/
 typedef struct
 {
- unsigned char h1; 
- unsigned char h2;
- unsigned char h3;
- unsigned char inputs;
+ unsigned char h1;          ///< Humidite du sol (bas)
+ unsigned char h2;          ///< Humidité du sol (haut)
+ unsigned char h3;          ///< Humidité du sol (dessus)
+ unsigned char inputs;      ///< Etat des entrees
 } T_IN;
 
 
