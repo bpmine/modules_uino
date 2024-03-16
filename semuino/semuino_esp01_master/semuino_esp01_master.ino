@@ -8,9 +8,8 @@
  * PIN OUT:
  *   - D1: SCL
  *   - D2: SDA
- *   - 5V: Aliment? par un 7805
+ *   - 3.3V: Alimentation a partir du 3.3V de la carte semuino
  *   - GND: Masse
- *   
 */
 #include <ESP8266WiFi.h>
 #include <WiFiClient.h>
@@ -24,9 +23,10 @@
 
 #define VERSION "V0.0"
 
-//#define MODE_SIMU
-#define MODE_AP
-//#define USE_OTA
+#define MODE_SIMU     ///< Pour simuler le semuino (sans l'esclave nano, aussi appellé mode "Paul")
+
+#define MODE_AP         ///<Wifi en Access point
+//#define USE_OTA       ///< Activer la mise à jour à distance du soft
 
 #ifdef USE_OTA
   #include <ArduinoOTA.h>
@@ -51,11 +51,15 @@
 */
 void setup(void)
 { 
-  Serial.begin(115200);
+  /// @remark Port serie
+  Serial.begin(9600);
+
+  /// @remark Affichage de la version au boot
   char tmp[20];
-  sprintf(tmp,"BOOT %s",VERSION);
+  sprintf(tmp,"Semuino %s",VERSION);
   Serial.println(tmp);
 
+  /// @remark Activation I2C
   Wire.begin();
   Wire.setClock(10000);
   
@@ -141,7 +145,10 @@ void loop()
   #endif
 
   wsctrl_loop();
-  //semuino_loop();  // Code de Bernard commente en attendant qu'il soit fini....
+
+  #ifndef MODE_SIMU
+    semuino_loop();
+  #endif
   
   delay(1);
 }

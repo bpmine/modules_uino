@@ -298,7 +298,7 @@ POST /semuino/mode
 
 ```
 
-Les deux modes possibles sont `manual` et `auto`.
+Les trois modes possibles sont `manual`, `off` et `auto`.
 En mode manuel, l'utilisateur pilote directement le semuino en postant des commandes avec `/semuino/cmds`.
 En mode automatique, l'utilisateur peut modifier le reste de la configuration (heure, mode, ...) avec `/semuino/set`.
 

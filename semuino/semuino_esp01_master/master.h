@@ -28,4 +28,7 @@ extern void master_loop(void);
 extern void master_get_in_values(T_IN *pIN);
 extern void master_set_out_values(T_OUT *pOUT);
 
+extern unsigned char master_read_eep(unsigned char addr);
+extern void master_write_eep(int addr,unsigned char val);
+
 #endif

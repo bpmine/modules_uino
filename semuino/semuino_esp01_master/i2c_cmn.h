@@ -33,6 +33,7 @@
 #define CTRL_RESERVED   (0x80)
 
 #define INP_SELECTOR    (0x01)
+#define INP_SEL_LONG    (0x02)
 #define OUP_GREEN       (0x01)
 
 #define RGB_MOD_OFF     (1)

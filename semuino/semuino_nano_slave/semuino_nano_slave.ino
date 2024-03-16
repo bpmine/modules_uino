@@ -60,6 +60,8 @@ unsigned char g_modeB=0;
 unsigned char g_level=255;                  ///< Puissance
 unsigned char g_ctrl_old=0;
 
+unsigned long g_ulSelectT0_ms=0;
+
 /**
  * @brief Applique une couleur a tout un etage
  * @param pLeds Tableau de LEDs de l'etage
@@ -173,8 +175,8 @@ void receiveEvent(int howMany)
       case REG_CTRL:
       {
         g_ctrl=Wire.read();
-        Serial.print("Rec CTRL: ");
-        Serial.println(g_ctrl,HEX);
+        //Serial.print("Rec CTRL: ");
+        //Serial.println(g_ctrl,HEX);
         break;        
       }
       case REG_LEVEL:
@@ -260,6 +262,7 @@ void setup()
   FastLED.show();
 
   g_ulLastAliveT0_ms=millis();
+  g_ulSelectT0_ms=millis();
 }
 
 void readHumidity(void)
@@ -331,15 +334,34 @@ void set_leds_by_mode(CRGB *pLeds,int mode)
   }
 }
 
+int cycle=0;
+
 /**
  * @brief BOUCLE PRINCIPALE ARDUINO
 */
 void loop() 
 {
   if (digitalRead(PIN_SELECT_BTN)==HIGH)
-     g_inputs|=INP_SELECTOR;
-  else
-     g_inputs&=~INP_SELECTOR;
+  {
+    g_ulSelectT0_ms=millis();
+    g_inputs&=~INP_SEL_LONG;
+    g_inputs&=~INP_SELECTOR;
+  }
+  
+  if (digitalRead(PIN_SELECT_BTN)==LOW)
+  {
+    g_inputs|=INP_SELECTOR;
+    
+    unsigned long delta;
+    unsigned long t=millis();
+    if (t>=g_ulSelectT0_ms)
+      delta=t-g_ulSelectT0_ms;
+    else
+      delta=0xFFFFFFFF-g_ulSelectT0_ms+t;
+
+    if (delta>4000)
+      g_inputs|=INP_SEL_LONG;
+  }
 
   readHumidity();
   //readDHT();  ///< Marche pas car bloque trop longtemps
@@ -382,5 +404,14 @@ void loop()
 
     FastLED.setBrightness(g_level);
     FastLED.show();    
+  }
+
+  if (cycle++>100)
+  {
+    Serial.print("CTRL: ");Serial.print(g_ctrl,HEX);
+    Serial.print(" Modes: ");Serial.print(g_modeA&0x0F);Serial.print(" ");Serial.print((g_modeA>>4)&0x0F);Serial.print(" ");Serial.print((g_modeB>>4)&0x0F);
+    Serial.print(" Lvl: ");Serial.print(g_level);
+    Serial.print(" IN: ");Serial.println(g_inputs,HEX);
+    cycle=0;
   }
 }

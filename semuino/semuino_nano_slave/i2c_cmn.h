@@ -1,14 +1,14 @@
 /**
  * @file i2c_cmn.h
- * @brief Interface commune entre le maître et l'esclave I²C
+ * @brief Interface commune entre le maï¿½tre et l'esclave Iï¿½C
 */
 #ifndef I2C_CMN_HEADER_INCLUDED
 #define I2C_CMN_HEADER_INCLUDED
 
 #define ADDR_SLAVE      (0xA)     ///< Adresse de l'esclave semuino (le nano)
 
-#define REG_CTRL        (1)       ///< Id du registre de contrôle
-#define REG_LEVEL       (2)       ///< Id du registre contenant le niveau d'éclairage
+#define REG_CTRL        (1)       ///< Id du registre de contrï¿½le
+#define REG_LEVEL       (2)       ///< Id du registre contenant le niveau d'ï¿½clairage
 #define REG_MODE_RGB_A  (3)
 #define REG_MODE_RGB_B  (4)
 #define REG_EEP_WRITE   (5)
@@ -33,6 +33,7 @@
 #define CTRL_RESERVED   (0x80)
 
 #define INP_SELECTOR    (0x01)
+#define INP_SEL_LONG    (0x02)
 #define OUP_GREEN       (0x01)
 
 #define RGB_MOD_OFF     (1)
