@@ -313,7 +313,10 @@ GET /semuino/state
   "hum":70,
   "hum1":100,
   "hum2":111,
-  "hum3":45  
+  "hum3":45,
+
+  "sunrise":"07:00",
+  "sunset":"22:00"
 }
 
 ```
@@ -338,6 +341,8 @@ hum | 0..100 | Taux d'humidité ambiant (en %)
 hum1 | 0..255 | Valeur lue sur le capteur d'humidité 1
 hum2 | 0..255 | Valeur lue sur le capteur d'humidité 2
 hum3 | 0..255 | Valeur lue sur le capteur d'humidité 3
+sunrise | HH:MM | Heure du lever de soleil
+sunset | HH:MM | Heure du coucher de soleil
 
 ### Choix du mode manuel/auto
 
