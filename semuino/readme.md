@@ -283,6 +283,62 @@ GET /semuino/info
 
 ```
 
+### Etat du semuino en temps réèl
+
+GET /semuino/state
+
+```
+
+{
+  "type":"semuino_state",
+
+  "date":"12/12/2023",
+  "time":"10:45:01",
+  
+  "mode":"auto",
+
+  "cmdp1":true,
+  "cmdp2":false,
+  "cmdp3":false,
+
+  "cmd5v":true,
+  "rgb1":false,
+  "rgb2":true,
+  "rgb3":false,
+  "modergb1":2,
+  "modergb2":1,
+  "modergb3":1,
+
+  "temp":25,
+  "hum":70,
+  "hum1":100,
+  "hum2":111,
+  "hum3":45  
+}
+
+```
+
+Champ | Plage | Description
+--- | --- | ---
+date | dd/mm/yyyy | Date du module RTC
+time | HH:MM:SS | Heure du module RTC
+mode | off/auto/manual | Mode de fonctionnement du semuino
+cmd5v | false..true | Active ou non l'alimentation 5V des LEDs RGB
+rgb1 | false..true | Active le bandeau RGB1
+rgb2 | false..true | Active le bandeau RGB2
+rgb3 | false..true | Active le bandeau RGB3
+modergb1 | 0..15 | Défini le mode de fonctionnement du bandeau RGB 1 (Voir section I²C)
+modergb2 | 0..15 | Défini le mode de fonctionnement du bandeau RGB 2 (Voir section I²C)
+modergb3 | 0..15 | Défini le mode de fonctionnement du bandeau RGB 3 (Voir section I²C)
+cmdp1 | false..true | Active le bandeau de LED 12V n°1
+cmdp2 | false..true | Active le bandeau de LED 12V n°2
+cmdp3 | false..true | Active le bandeau de LED 12V n°3
+temp | -40..100 | Température ambiante (en °C)
+hum | 0..100 | Taux d'humidité ambiant (en %)
+hum1 | 0..255 | Valeur lue sur le capteur d'humidité 1
+hum2 | 0..255 | Valeur lue sur le capteur d'humidité 2
+hum3 | 0..255 | Valeur lue sur le capteur d'humidité 3
+
 ### Choix du mode manuel/auto
 
 GET /semuino/mode
@@ -334,9 +390,9 @@ cmd5v | false..true | Active ou non l'alimentation 5V des LEDs RGB
 rgb1 | false..true | Active le bandeau RGB1
 rgb2 | false..true | Active le bandeau RGB2
 rgb3 | false..true | Active le bandeau RGB3
-modergb1 | 0..15 | Défini le mode de fonctionnement du bandeau RGB 1
-modergb2 | 0..15 | Défini le mode de fonctionnement du bandeau RGB 2
-modergb3 | 0..15 | Défini le mode de fonctionnement du bandeau RGB 3
+modergb1 | 0..15 | Défini le mode de fonctionnement du bandeau RGB 1 (Voir section I²C)
+modergb2 | 0..15 | Défini le mode de fonctionnement du bandeau RGB 2 (Voir section I²C)
+modergb3 | 0..15 | Défini le mode de fonctionnement du bandeau RGB 3 (Voir section I²C)
 cmdp1 | false..true | Active le bandeau de LED 12V n°1
 cmdp2 | false..true | Active le bandeau de LED 12V n°2
 cmdp3 | false..true | Active le bandeau de LED 12V n°3
