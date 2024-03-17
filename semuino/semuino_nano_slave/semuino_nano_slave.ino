@@ -256,6 +256,8 @@ void setup()
   digitalWrite(PIN_DATA_LED_HAUT,LOW);
   pinMode(PIN_DATA_LED_DESSUS, OUTPUT);
   digitalWrite(PIN_DATA_LED_DESSUS,LOW);
+  pinMode(PIN_LED_GREEN,OUTPUT);
+  digitalWrite(PIN_LED_GREEN,LOW);
 
   FastLED.addLeds<NEOPIXEL, PIN_DATA_LED_BAS>(leds_bas, NUM_LEDS); 
   FastLED.addLeds<NEOPIXEL, PIN_DATA_LED_HAUT>(leds_haut, NUM_LEDS); 
@@ -294,7 +296,7 @@ void setup()
 
   tmrBlink500mS.start();
   tmrAlive.start();
-  tmrSelLong.start();
+  tmrSelLong.start();  
 }
 
 /**
@@ -468,7 +470,8 @@ void loop()
     Serial.print("CTRL: ");Serial.print(g_ctrl,HEX);
     Serial.print(" Modes: ");Serial.print(g_modeA&0x0F);Serial.print(" ");Serial.print((g_modeA>>4)&0x0F);Serial.print(" ");Serial.print(g_modeB&0x0F);
     Serial.print(" Lvl: ");Serial.print(g_level);
-    Serial.print(" IN: ");Serial.println(g_inputs,HEX);
+    Serial.print(" IN: ");Serial.print(g_inputs,HEX);
+    Serial.print(" LD: ");Serial.println(g_voyants,HEX);
     cycle=0;
   }
 

@@ -25,7 +25,7 @@
 #define ST_LED_P2   (0x02)
 #define ST_LED_P3   (0x04)
 
-#define MAX_MODE  3         ///< Nombre de modes
+#define MAX_MODE  2         ///< Nombre de modes
 DS1307 rtc;
 bool g_blink_1s=false;
 bool g_blink_2s=false;
@@ -214,6 +214,8 @@ void taskConfig(void)
     _out.ctrl|=CTRL_P2;
   if ((g_config.states&ST_LED_P3)==ST_LED_P3)
     _out.ctrl|=CTRL_P3;  
+
+  _out.voyants|=OUP_GREEN;
 }
 
 /**
@@ -274,6 +276,23 @@ void taskSemuino(void)
       break;
     }
   }
+
+  _out.voyants&=~OUP_GREEN;
+}
+
+void display_mode(int mode)
+{
+  for (int i=0;i<mode;i++)
+  {
+    _out.voyants|=OUP_GREEN;
+    master_set_out_values(&_out);
+    master_loop();
+    delay(500);
+    _out.voyants&=~OUP_GREEN;
+    master_set_out_values(&_out);
+    master_loop();
+    delay(500);    
+  }
 }
 
 /**
@@ -295,7 +314,7 @@ bool inputInterrupteur()
         Serial.println("Config mode");
         if (g_mode_config==false)
         {
-          for (int i=0;i<10;i++)
+          for (int i=0;i<6;i++)
           {
             _out.voyants|=OUP_GREEN;
             master_set_out_values(&_out);
@@ -316,15 +335,19 @@ bool inputInterrupteur()
           Serial.println("Exit Config");
 
           _out.voyants&=~OUP_GREEN;
-          while ((_in.inputs&INP_SELECTOR)==INP_SELECTOR)
-          {
-            delay(200);
-            master_set_out_values(&_out);
-            master_loop();
-            master_get_in_values(&_in);
-          }
         }
         
+        while ((_in.inputs&INP_SELECTOR)==INP_SELECTOR)
+        {
+          delay(200);
+          master_set_out_values(&_out);
+          master_loop();
+          master_get_in_values(&_in);
+        }
+
+        if (g_mode_config==false)
+          display_mode(g_config.mode);
+
         break;
       }
       else if ((_in.inputs&INP_SELECTOR)==0)
@@ -338,6 +361,8 @@ bool inputInterrupteur()
   
           //g_config.states=1;
           _save_config();
+          
+          display_mode(g_config.mode);
         }
         else
         {
@@ -399,11 +424,14 @@ void semuino_init(void)
     Serial.println("Date incorrecte !!!");
     while (1)
     {
-      /// @todo Afficher Date incorrecte !
-      //digitalWrite(PIN_LED_GREEN,HIGH);
+      _out.voyants|=OUP_GREEN;
+      master_set_out_values(&_out);
+      master_loop();
       delay(100);
-      //digitalWrite(PIN_LED_GREEN,LOW);
-      //delay(100);
+      _out.voyants&=~OUP_GREEN;
+      master_set_out_values(&_out);
+      master_loop();
+      delay(100);    
     }
   }
 
@@ -412,7 +440,9 @@ void semuino_init(void)
   Serial.print("States: ");
   Serial.println(g_config.states);
 
-  tmrTask.start();  
+  tmrTask.start();
+
+  display_mode(g_config.mode);
 }
 
 int cycles=0;
