@@ -1,7 +1,6 @@
 /**
- * @brief semuino.ino
- * 
- * SEMUINO - Gestion du meuble à semi
+ * @file semuino_nano_slave.ino
+ * @brief SEMUINO - Gestion du meuble à semi
 **/
 #include "FastLED.h"
 #include <EEPROM.h>
