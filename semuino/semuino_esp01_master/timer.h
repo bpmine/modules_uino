@@ -1,6 +1,14 @@
+/**
+ * @file timer.h
+ * @brief Header - Gestion d'un timer en ms
+*/
 #ifndef TIMER_HEADER_INCLUDED
 #define TIMER_HEADER_INCLUDED
 
+/**
+ * @class Timer
+ * @brief Classe de gestion d'un timer en ms
+*/
 class Timer
 {
   private:

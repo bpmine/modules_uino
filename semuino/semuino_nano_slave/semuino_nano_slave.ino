@@ -11,11 +11,12 @@
 #include "i2c_cmn.h"
 #include "timer.h"
 
-#define POWER_MAX         255
-#define POWER_MIN         10
-
 #define NUM_LEDS          (23*7)  ///< Nombre de LEDs a chaque etage (7 rangées de 23 LEDs)
 
+/**
+ * @brief Definition des PINs du Nano
+ * @{
+*/
 #define PIN_SELECT_BTN      (2)   ///< Interrupteur de selection
 #define PIN_LED_GREEN       (4)   ///< LED verte
 
@@ -32,40 +33,50 @@
 #define PIN_HUM1            (A0)  ///< Entree analogique capteur humidité bas
 #define PIN_HUM2            (A1)  ///< Entree analogique capteur humidité haut
 #define PIN_HUM3            (A2)  ///< Entree analogique capteur humidité dessus du meuble
+/**
+ * @}
+*/
 
+/**
+ * @todo Definition des couleurs
+ * @{
+*/
 #define COL_GROWING         CRGB(127,0,32)      ///< Couleur de croissance
 #define COL_WHITE           CRGB(127,127,127)   ///< Blanc
 #define COL_RED             CRGB(127,0,0)  
 #define COL_GREEN           CRGB(0,127,0)  
 #define COL_BLUE            CRGB(0,0,127)
+/**
+ * @}
+*/
 
 CRGB leds_bas[NUM_LEDS];              ///< Tableau des LEDs du bas
 CRGB leds_haut[NUM_LEDS];             ///< Tableau des LEDs du haut
 
-DHT dht(PIN_TEMP, DHT22);
-unsigned char g_alive=0;
+DHT dht(PIN_TEMP, DHT22);             ///< Gestion du DHT (Non utilise car prend trop de temps CPU avec cette lib)
+unsigned char g_alive=0;              ///< Contient la valeur Alive ecrite lors du dernier acces "write"
 
-unsigned char g_reg=0;
-unsigned char g_addr=0;
+unsigned char g_reg=0;                ///< Contient la valeur d'ID de registre ecrite au dernier acces "write"
+unsigned char g_addr=0;               ///< Contient l'adresse EEP ecrite au dernier acces "write"
 
-unsigned char g_inputs=0;
-unsigned char g_hum_pc=0;
-unsigned char g_temp_dg=0;
-unsigned char g_hum1=0;
-unsigned char g_hum2=0;
-unsigned char g_hum3=0;
+unsigned char g_inputs=0;             ///< Etat des entrees lues
+unsigned char g_hum_pc=0;             ///< Derniere valeur d'humidité ambiante lue
+unsigned char g_temp_dg=0;            ///< Derniere valeur de temperature ambiante lue
+unsigned char g_hum1=0;               ///< Derniere valeur lue de capteur d'humidite (bas)
+unsigned char g_hum2=0;               ///< Derniere valeur lue de capteur d'humidite (haut)
+unsigned char g_hum3=0;               ///< Derniere valeur lue de capteur d'humidite (dessus)
 
-unsigned char g_ctrl=0;
-unsigned char g_modeA=0;
-unsigned char g_modeB=0;
-unsigned char g_level=255;                  ///< Puissance
-unsigned char g_voyants=0;
+unsigned char g_ctrl=0;               ///< Etat des dernieres commandes reçues
+unsigned char g_modeA=0;              ///< Contenu du registre A des modes RGB (RGB1 et RGB2)
+unsigned char g_modeB=0;              ///< Contenu du registre A des modes RGB (RGB1 et RGB2)
+unsigned char g_level=255;            ///< Niveau de l'éclairage des RGBs [0..255]
+unsigned char g_voyants=0;            ///< Etat des voayants
 
-unsigned long g_ulSelectT0_ms=0;
+Timer tmrBlink500mS(500,false);       ///< Timer 500ms
+Timer tmrAlive(10000);                ///< Timer de detection d'absence du maître (alive)
+Timer tmrSelLong(4000);               ///< Timer de detection appui long sur Select
 
-Timer tmrAlive(10000);
-Timer tmrBlink500mS(500,false);
-bool g_flgBlink_500ms=false;
+bool g_flgBlink_500ms=false;          ///< Change toutes les 500ms
 
 /**
  * @brief Applique une couleur a tout un etage
@@ -108,7 +119,12 @@ void clearAll()
   clearAll(leds_haut);
 }
 
-void requestEvent() 
+/**
+ * @brief Reception d'une trame I²C de lecture
+ * 
+ * Cette fonction est souvent appellee apres receiveEvent
+*/
+void requestEvent(void) 
 {  
     switch (g_reg)
     {
@@ -162,6 +178,10 @@ void requestEvent()
     }
 }
 
+/**
+ * @brief Reception d'une trame I²C d'écriture
+ * @param[in] howMany Octets reçus
+*/
 void receiveEvent(int howMany) 
 {
   g_reg=Wire.read();
@@ -224,9 +244,7 @@ void receiveEvent(int howMany)
 
 
 /**
- * @brief Setup d'arduino (demarage)
- * 
- * Une petite animation avec test de toutes les LEDs
+ * @brief Setup d'arduino (Demarage)
 */
 void setup() 
 {
@@ -273,25 +291,46 @@ void setup()
   clearAll();
   FastLED.show();
 
-  g_ulSelectT0_ms=millis();
   g_flgBlink_500ms=false;
 
   tmrBlink500mS.start();
   tmrAlive.start();
+  tmrSelLong.start();
 }
 
+/**
+ * @brief Mappe la lecture de l'humidite dans un octet
+ * @param[in] val Valeur lue dans la plage [0..1023]
+ * 
+ * @return Valeur dans la plage [0..255]
+*/
+inline unsigned char _mapHum(int val)
+{
+  unsigned char mapped=(unsigned char)map(val,0,1023,0,255);
+  return mapped;
+}
+
+/**
+ * @brief Lecture des 3 capteurs d'humidité du sol
+*/
 void readHumidity(void)
 {
   int tmp=analogRead(PIN_HUM1);
-  g_hum1=(unsigned char)(tmp*255/1023);
+  //g_hum1=(unsigned char)(tmp*255/1023);
+  g_hum1=_mapHum(tmp);
   
   tmp=analogRead(PIN_HUM2);
-  g_hum2=(unsigned char)(tmp*255/1023);
+  //g_hum2=(unsigned char)(tmp*255/1023);
+  g_hum2=_mapHum(tmp);
 
   tmp=analogRead(PIN_HUM3);
-  g_hum3=(unsigned char)(tmp*255/1023);
+  //g_hum3=(unsigned char)(tmp*255/1023);
+  g_hum3=_mapHum(tmp);
 }
 
+/**
+ * @brief Lecture de la temperature et de l'humidité ambiante
+*/
 void readDHT(void)
 {
   float tauxHumidite = dht.readHumidity();              // Lecture du taux d'humidité (en %)
@@ -307,6 +346,11 @@ void readDHT(void)
     g_temp_dg=(unsigned char)temperatureEnCelsius;  
 }
 
+/**
+ * @brief Command the RGB LEDs strips with the given mode
+ * @param[in] pLeds LEDs array
+ * @param[in] mode Mode to apply [0..15] - (0:off, 1:growing, 2:white, 3:mixed)
+*/
 void set_leds_by_mode(CRGB *pLeds,int mode)
 {
   switch (mode)
@@ -358,7 +402,7 @@ void loop()
 {
   if (digitalRead(PIN_SELECT_BTN)==HIGH)
   {
-    g_ulSelectT0_ms=millis();
+    tmrSelLong.start();
     g_inputs&=~INP_SEL_LONG;
     g_inputs&=~INP_SELECTOR;
   }
@@ -366,24 +410,18 @@ void loop()
   if (digitalRead(PIN_SELECT_BTN)==LOW)
   {
     g_inputs|=INP_SELECTOR;
-    
-    unsigned long delta;
-    unsigned long t=millis();
-    if (t>=g_ulSelectT0_ms)
-      delta=t-g_ulSelectT0_ms;
-    else
-      delta=0xFFFFFFFF-g_ulSelectT0_ms+t;
 
-    if (delta>4000)
+    if (tmrSelLong.isRunning()==false)
+    {
       g_inputs|=INP_SEL_LONG;
+    }
   }
 
   readHumidity();
   //readDHT();  ///< Marche pas car bloque trop longtemps
 
   delay(10);
-
-  tmrAlive.tick();
+  
   if (tmrAlive.isRunning()==false)
   {
     g_ctrl=0;
@@ -437,4 +475,7 @@ void loop()
 
   if (tmrBlink500mS.tick()==true)
     g_flgBlink_500ms=!g_flgBlink_500ms;
+
+  tmrSelLong.tick();
+  tmrAlive.tick();
 }
