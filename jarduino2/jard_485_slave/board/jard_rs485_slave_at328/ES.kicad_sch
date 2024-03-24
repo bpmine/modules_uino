@@ -1219,7 +1219,7 @@
     (property "Datasheet" "~" (at 110.49 82.55 0)
       (effects (font (size 1.27 1.27)) hide)
     )
-    (pin "1" (uuid f9f1ca02-931b-47dc-9460-3190c363f418))
+    (pin "1" (uuid f112a5df-15cf-4c6e-a245-58f646934d26))
     (instances
       (project "jard_rs485_slave_at328"
         (path "/5ae93d62-0543-4c0e-b37d-d67af6219e1b/36e9fbeb-2032-4e73-95af-53e316cf916d"
@@ -1450,8 +1450,8 @@
     (property "Datasheet" "~" (at 60.96 93.98 0)
       (effects (font (size 1.27 1.27)) hide)
     )
-    (pin "1" (uuid 1d14d919-5883-4b68-b416-6050c542fb57))
-    (pin "2" (uuid e9988b93-83a9-482c-9038-ae9b217fce03))
+    (pin "1" (uuid 6e15b952-e37c-4471-99f6-f1d6a3f164c5))
+    (pin "2" (uuid 62f4ce01-8370-452c-b288-d3e1a0727207))
     (instances
       (project "jard_rs485_slave_at328"
         (path "/5ae93d62-0543-4c0e-b37d-d67af6219e1b"
@@ -1514,9 +1514,9 @@
     (property "Datasheet" "~" (at 33.02 85.09 0)
       (effects (font (size 1.27 1.27)) hide)
     )
-    (pin "1" (uuid fddffc2c-1a13-498a-aa34-93e001293b4a))
-    (pin "2" (uuid 6ff80dde-9349-4aa2-a12f-bf52d50759da))
-    (pin "3" (uuid 5233f104-8f2a-47f8-8c68-6ce527a63db5))
+    (pin "1" (uuid d5a9d7b1-2116-4066-b77c-f575aec964fb))
+    (pin "2" (uuid a7a64b02-641b-4713-877d-f30a0abff34d))
+    (pin "3" (uuid 45737785-023b-4d29-a97e-c6ad6d4e8ed0))
     (instances
       (project "jard_rs485_slave_at328"
         (path "/5ae93d62-0543-4c0e-b37d-d67af6219e1b"
@@ -1605,7 +1605,7 @@
     (property "Datasheet" "" (at 49.53 71.12 0)
       (effects (font (size 1.27 1.27)) hide)
     )
-    (pin "1" (uuid 4415ffa3-03fe-45d9-add9-cf2ec689cf11))
+    (pin "1" (uuid 5e17a419-2207-4b35-8476-5b4a51640b7d))
     (instances
       (project "jard_rs485_slave_at328"
         (path "/5ae93d62-0543-4c0e-b37d-d67af6219e1b/36e9fbeb-2032-4e73-95af-53e316cf916d"
@@ -1690,9 +1690,9 @@
     (property "Datasheet" "https://assets.nexperia.com/documents/data-sheet/BAV99_SER.pdf" (at 60.96 76.2 0)
       (effects (font (size 1.27 1.27)) hide)
     )
-    (pin "1" (uuid 819de24e-bec1-4fba-a279-28e1183b497a))
-    (pin "2" (uuid 82e15b04-361d-42b8-af73-8b40267d9179))
-    (pin "3" (uuid 7bb089e9-c0f8-4bb8-8077-e5d9224c024a))
+    (pin "1" (uuid fd2650b6-7d32-46d1-a4d7-df5dbbfc7894))
+    (pin "2" (uuid 9674c64e-3988-46fe-ba25-8798fe98276c))
+    (pin "3" (uuid a0d5a67d-9c59-4daf-a56e-1de01927b273))
     (instances
       (project "jard_rs485_slave_at328"
         (path "/5ae93d62-0543-4c0e-b37d-d67af6219e1b"
@@ -1749,7 +1749,7 @@
     (property "Datasheet" "" (at 49.53 104.14 0)
       (effects (font (size 1.27 1.27)) hide)
     )
-    (pin "1" (uuid 7bb59949-a267-41fc-bc0c-61f616a526d6))
+    (pin "1" (uuid 43d07f11-1efc-43eb-be5d-f8be1ccc3b2a))
     (instances
       (project "jard_rs485_slave_at328"
         (path "/5ae93d62-0543-4c0e-b37d-d67af6219e1b/36e9fbeb-2032-4e73-95af-53e316cf916d"
@@ -1951,7 +1951,7 @@
     (property "Datasheet" "" (at 71.12 76.2 0)
       (effects (font (size 1.27 1.27)) hide)
     )
-    (pin "1" (uuid d0510178-ed54-4da6-acf7-0476379941bb))
+    (pin "1" (uuid f68057ec-745e-4c8f-8b44-49f55a185400))
     (instances
       (project "jard_rs485_slave_at328"
         (path "/5ae93d62-0543-4c0e-b37d-d67af6219e1b"
@@ -1979,7 +1979,7 @@
     (property "Datasheet" "~" (at 91.44 78.74 0)
       (effects (font (size 1.27 1.27)) hide)
     )
-    (pin "1" (uuid 0e888197-8bae-4752-916d-e0860ec78b14))
+    (pin "1" (uuid 3fb18354-8438-40f0-96d2-1888154f9766))
     (instances
       (project "jard_rs485_slave_at328"
         (path "/5ae93d62-0543-4c0e-b37d-d67af6219e1b/36e9fbeb-2032-4e73-95af-53e316cf916d"
@@ -2007,7 +2007,7 @@
     (property "Datasheet" "" (at 40.64 82.55 0)
       (effects (font (size 1.27 1.27)) hide)
     )
-    (pin "1" (uuid 1cdfbcb5-aac4-4842-9f8b-848368393bac))
+    (pin "1" (uuid 8d738f25-fb4d-4eb1-9a4c-92b3176582bb))
     (instances
       (project "jard_rs485_slave_at328"
         (path "/5ae93d62-0543-4c0e-b37d-d67af6219e1b"
@@ -2091,7 +2091,7 @@
     (property "Datasheet" "" (at 71.12 106.68 0)
       (effects (font (size 1.27 1.27)) hide)
     )
-    (pin "1" (uuid 78ccfcc5-88f5-4f10-bc6e-2ef122b4dd65))
+    (pin "1" (uuid ffe3c85c-2d2c-4974-aa8a-632cf8d9f39c))
     (instances
       (project "jard_rs485_slave_at328"
         (path "/5ae93d62-0543-4c0e-b37d-d67af6219e1b"
@@ -2210,8 +2210,8 @@
     (property "Datasheet" "~" (at 52.07 85.09 0)
       (effects (font (size 1.27 1.27)) hide)
     )
-    (pin "1" (uuid 96b5807f-a1ea-442e-892b-b5222e19cedd))
-    (pin "2" (uuid 3a9db53c-46aa-4057-9286-79e87cdad05e))
+    (pin "1" (uuid bcd0a741-7784-408a-ba37-ff552d929e53))
+    (pin "2" (uuid e005323c-c7c2-44f5-8077-55bc4479b353))
     (instances
       (project "jard_rs485_slave_at328"
         (path "/5ae93d62-0543-4c0e-b37d-d67af6219e1b"
@@ -2351,9 +2351,9 @@
     (property "Datasheet" "https://assets.nexperia.com/documents/data-sheet/BAV99_SER.pdf" (at 60.96 106.68 0)
       (effects (font (size 1.27 1.27)) hide)
     )
-    (pin "1" (uuid b237ce27-2194-4aa4-b883-f7eb440fbd67))
-    (pin "2" (uuid 45a3622e-f5b9-4129-9677-ea845af54fe9))
-    (pin "3" (uuid f0c5b8ea-a01d-465a-a637-d3823c3a2212))
+    (pin "1" (uuid e0cf4e68-8687-4830-bd4a-370618614113))
+    (pin "2" (uuid c0cc6ff1-658f-4b1c-97c7-864bf44b8f64))
+    (pin "3" (uuid 48cca5c0-3644-47d6-b603-45249a2fd1a5))
     (instances
       (project "jard_rs485_slave_at328"
         (path "/5ae93d62-0543-4c0e-b37d-d67af6219e1b"
