@@ -5,6 +5,16 @@
   )
 
   (paper "A4")
+  (title_block
+    (title "Carte de commande d'un OYA par RS485")
+    (date "2024-03-29")
+    (rev "D0")
+    (company "BPC")
+    (comment 1 "Technologie CMS basée sur ATMEGA328")
+    (comment 2 "Monitoring de tension d'alimentation")
+    (comment 3 "1 sortie 12V/5A - 2 entrées TOR (niveaux) - 1 débimètre - 1 LED - Temp - RS485")
+  )
+
   (layers
     (0 "F.Cu" signal)
     (31 "B.Cu" signal)
