@@ -4,6 +4,16 @@
 
   (paper "A4")
 
+  (title_block
+    (title "Carte de commande d'un Oya par RS485")
+    (date "2024-03-29")
+    (rev "D0")
+    (company "BPC")
+    (comment 1 "Technologie CMD basée sur ATMEGA328")
+    (comment 2 "Monitoring de tension d'alimentation")
+    (comment 3 "1 sortie 12V/5A - 2 entrées TOR - 1 débimètre - 1 LED - Temp -RS485")
+  )
+
   (lib_symbols
     (symbol "Connector:TestPoint" (pin_numbers hide) (pin_names (offset 0.762) hide) (in_bom yes) (on_board yes)
       (property "Reference" "TP" (at 0 6.858 0)
@@ -2367,10 +2377,13 @@
     (property "Value" "10µF" (at 133.731 46.363 0)
       (effects (font (size 1.27 1.27)) (justify right))
     )
-    (property "Footprint" "Capacitor_SMD:CP_Elec_5x5.8" (at 129.8448 40.64 0)
+    (property "Footprint" "Capacitor_SMD:CP_Elec_6.3x5.2" (at 129.8448 40.64 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Datasheet" "~" (at 130.81 44.45 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (property "Farnell" "9265759" (at 130.81 44.45 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (pin "1" (uuid 4464138c-1847-4fcc-8e62-2de2a5ecbc88))
@@ -2519,7 +2532,7 @@
     (property "Reference" "D?" (at 72.39 33.25 0)
       (effects (font (size 1.27 1.27)))
     )
-    (property "Value" "D" (at 72.39 35.298 0)
+    (property "Value" "SR560" (at 72.39 35.298 0)
       (effects (font (size 1.27 1.27)))
     )
     (property "Footprint" "Diode_THT:D_A-405_P7.62mm_Horizontal" (at 72.39 38.1 0)

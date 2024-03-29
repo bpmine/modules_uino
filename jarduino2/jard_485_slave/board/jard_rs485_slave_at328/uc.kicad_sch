@@ -4,6 +4,16 @@
 
   (paper "A4")
 
+  (title_block
+    (title "Carte de commande d'un Oya par RS485")
+    (date "2024-03-29")
+    (rev "D0")
+    (company "BPC")
+    (comment 1 "Technologie CMD basée sur ATMEGA328")
+    (comment 2 "Monitoring de tension d'alimentation")
+    (comment 3 "1 sortie 12V/5A - 2 entrées TOR - 1 débimètre - 1 LED - Temp -RS485")
+  )
+
   (lib_symbols
     (symbol "Device:C" (pin_numbers hide) (pin_names (offset 0.254)) (in_bom yes) (on_board yes)
       (property "Reference" "C" (at 0.635 2.54 0)
@@ -710,7 +720,6 @@
   (no_connect (at 148.59 97.79) (uuid 5f7969c0-5a7a-4097-88e9-e086edd8a715))
   (no_connect (at 118.11 100.33) (uuid 788e59b8-24a2-4990-aa42-e15b1c008646))
   (no_connect (at 148.59 118.11) (uuid 838c2677-986c-4cda-86e3-6673de2954a1))
-  (no_connect (at 50.8 105.41) (uuid 94e0c857-1ec4-411c-b9ea-434cf8f65081))
   (no_connect (at 148.59 151.13) (uuid f75a5846-50de-4ce3-a71b-d1e71099a066))
 
   (wire (pts (xy 148.59 107.95) (xy 151.13 107.95))
@@ -1301,6 +1310,38 @@
     )
   )
 
+  (symbol (lib_id "Device:C") (at 143.51 69.85 270) (unit 1)
+    (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
+    (uuid 2fdc86ca-1420-44ad-ae9e-8921645f0349)
+    (property "Reference" "C?" (at 144.534 72.771 0)
+      (effects (font (size 1.27 1.27)) (justify left))
+    )
+    (property "Value" "100nF" (at 142.486 72.771 0)
+      (effects (font (size 1.27 1.27)) (justify left))
+    )
+    (property "Footprint" "Capacitor_SMD:C_0603_1608Metric" (at 139.7 70.8152 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (property "Datasheet" "~" (at 143.51 69.85 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (pin "1" (uuid 3c8a0f99-1c03-44f7-b147-c2d44149df60))
+    (pin "2" (uuid 42bc2e2c-863b-47a8-b585-90bb4ed32e2c))
+    (instances
+      (project "jard_rs485_slave_at328"
+        (path "/5ae93d62-0543-4c0e-b37d-d67af6219e1b"
+          (reference "C?") (unit 1)
+        )
+        (path "/5ae93d62-0543-4c0e-b37d-d67af6219e1b/dd36e5af-5314-42bf-9b88-ba8e41ec06f7"
+          (reference "C?") (unit 1)
+        )
+        (path "/5ae93d62-0543-4c0e-b37d-d67af6219e1b/36e9fbeb-2032-4e73-95af-53e316cf916d"
+          (reference "C9") (unit 1)
+        )
+      )
+    )
+  )
+
   (symbol (lib_id "Device:C") (at 53.34 158.75 90) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid 3672803f-ee3b-421d-9402-b29d65fdce51)
@@ -1693,6 +1734,38 @@
     )
   )
 
+  (symbol (lib_id "Device:C") (at 143.51 46.99 270) (unit 1)
+    (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
+    (uuid c6cccc10-8ed2-44a3-b7c2-cbd479c058e7)
+    (property "Reference" "C?" (at 144.534 49.911 0)
+      (effects (font (size 1.27 1.27)) (justify left))
+    )
+    (property "Value" "100nF" (at 142.486 49.911 0)
+      (effects (font (size 1.27 1.27)) (justify left))
+    )
+    (property "Footprint" "Capacitor_SMD:C_0603_1608Metric" (at 139.7 47.9552 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (property "Datasheet" "~" (at 143.51 46.99 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (pin "1" (uuid a1caf907-776d-4f6d-8af6-faab815a2cd8))
+    (pin "2" (uuid 18987fcf-889d-46ac-b77d-4a9273dededa))
+    (instances
+      (project "jard_rs485_slave_at328"
+        (path "/5ae93d62-0543-4c0e-b37d-d67af6219e1b"
+          (reference "C?") (unit 1)
+        )
+        (path "/5ae93d62-0543-4c0e-b37d-d67af6219e1b/dd36e5af-5314-42bf-9b88-ba8e41ec06f7"
+          (reference "C?") (unit 1)
+        )
+        (path "/5ae93d62-0543-4c0e-b37d-d67af6219e1b/36e9fbeb-2032-4e73-95af-53e316cf916d"
+          (reference "C5") (unit 1)
+        )
+      )
+    )
+  )
+
   (symbol (lib_id "Device:R") (at 158.75 95.25 90) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid ce405a44-6e7f-47fa-8b09-6c5bd30ef02b)
@@ -1714,38 +1787,6 @@
       (project "jard_rs485_slave_at328"
         (path "/5ae93d62-0543-4c0e-b37d-d67af6219e1b/36e9fbeb-2032-4e73-95af-53e316cf916d"
           (reference "R12") (unit 1)
-        )
-      )
-    )
-  )
-
-  (symbol (lib_id "Device:C") (at 143.51 69.85 270) (unit 1)
-    (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
-    (uuid d0fd3edc-7513-4ca6-8582-689f71336027)
-    (property "Reference" "C?" (at 144.534 72.771 0)
-      (effects (font (size 1.27 1.27)) (justify left))
-    )
-    (property "Value" "1nF" (at 142.486 72.771 0)
-      (effects (font (size 1.27 1.27)) (justify left))
-    )
-    (property "Footprint" "Capacitor_SMD:C_0603_1608Metric" (at 139.7 70.8152 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Datasheet" "~" (at 143.51 69.85 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (pin "1" (uuid 7eadc8ea-cb18-49e0-b148-d687cccd8e42))
-    (pin "2" (uuid 8bc5dde8-483e-4214-b9e5-c21f25423230))
-    (instances
-      (project "jard_rs485_slave_at328"
-        (path "/5ae93d62-0543-4c0e-b37d-d67af6219e1b"
-          (reference "C?") (unit 1)
-        )
-        (path "/5ae93d62-0543-4c0e-b37d-d67af6219e1b/dd36e5af-5314-42bf-9b88-ba8e41ec06f7"
-          (reference "C?") (unit 1)
-        )
-        (path "/5ae93d62-0543-4c0e-b37d-d67af6219e1b/36e9fbeb-2032-4e73-95af-53e316cf916d"
-          (reference "C5") (unit 1)
         )
       )
     )
@@ -1822,38 +1863,6 @@
       (project "jard_rs485_slave_at328"
         (path "/5ae93d62-0543-4c0e-b37d-d67af6219e1b/36e9fbeb-2032-4e73-95af-53e316cf916d"
           (reference "D3") (unit 1)
-        )
-      )
-    )
-  )
-
-  (symbol (lib_id "Device:C") (at 143.51 46.99 270) (unit 1)
-    (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
-    (uuid ee753c2d-66d4-47ac-a80c-f283b1f36633)
-    (property "Reference" "C?" (at 144.534 49.911 0)
-      (effects (font (size 1.27 1.27)) (justify left))
-    )
-    (property "Value" "100nF" (at 142.486 49.911 0)
-      (effects (font (size 1.27 1.27)) (justify left))
-    )
-    (property "Footprint" "Capacitor_SMD:C_0603_1608Metric" (at 139.7 47.9552 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Datasheet" "~" (at 143.51 46.99 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (pin "1" (uuid 47ecec87-492c-4d5d-a71b-c0e93f0c3914))
-    (pin "2" (uuid 392ac020-d24f-4a2a-a37a-be2a75e86554))
-    (instances
-      (project "jard_rs485_slave_at328"
-        (path "/5ae93d62-0543-4c0e-b37d-d67af6219e1b"
-          (reference "C?") (unit 1)
-        )
-        (path "/5ae93d62-0543-4c0e-b37d-d67af6219e1b/dd36e5af-5314-42bf-9b88-ba8e41ec06f7"
-          (reference "C?") (unit 1)
-        )
-        (path "/5ae93d62-0543-4c0e-b37d-d67af6219e1b/36e9fbeb-2032-4e73-95af-53e316cf916d"
-          (reference "C9") (unit 1)
         )
       )
     )
