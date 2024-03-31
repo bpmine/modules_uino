@@ -6,7 +6,7 @@
 
   (title_block
     (title "Commande des OYA - Maître RS485")
-    (date "2024-03-30")
+    (date "2024-03-31")
     (rev "A0")
     (company "BPC")
     (comment 1 "Extension Wifi (ESP01)")
@@ -905,6 +905,10 @@
     (stroke (width 0) (type default))
     (uuid a1ddd860-7614-4b8e-b822-b7dff4987792)
   )
+  (wire (pts (xy 114.3 154.94) (xy 114.3 158.75))
+    (stroke (width 0) (type default))
+    (uuid a21f7138-9760-4fcb-a80d-3000f016ba51)
+  )
   (wire (pts (xy 68.58 54.61) (xy 68.58 55.88))
     (stroke (width 0) (type default))
     (uuid a4df3d9b-0efb-4ac4-bde4-87783d02c449)
@@ -1073,6 +1077,31 @@
       (project "board_rs485_master"
         (path "/27904310-f1aa-47e2-a2a6-8db936442bd1/2eaa2441-998c-4f1a-b526-09e479f565d5"
           (reference "U5") (unit 1)
+        )
+      )
+    )
+  )
+
+  (symbol (lib_id "power:PWR_FLAG") (at 114.3 154.94 0) (unit 1)
+    (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
+    (uuid 0ce96d44-cfb9-44ee-97c3-77c00706d393)
+    (property "Reference" "#FLG03" (at 114.3 153.035 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (property "Value" "PWR_FLAG" (at 114.3 150.995 0)
+      (effects (font (size 1.27 1.27)))
+    )
+    (property "Footprint" "" (at 114.3 154.94 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (property "Datasheet" "~" (at 114.3 154.94 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (pin "1" (uuid fce47dcb-bbf0-4628-a443-43657785ffb1))
+    (instances
+      (project "board_rs485_master"
+        (path "/27904310-f1aa-47e2-a2a6-8db936442bd1/2eaa2441-998c-4f1a-b526-09e479f565d5"
+          (reference "#FLG03") (unit 1)
         )
       )
     )
