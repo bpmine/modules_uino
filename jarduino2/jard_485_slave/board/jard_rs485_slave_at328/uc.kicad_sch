@@ -5,8 +5,8 @@
   (paper "A4")
 
   (title_block
-    (title "Carte de commande d'un OYA par RS485")
-    (date "2024-03-29")
+    (title "Carte de commande d'un OYA - Esclave RS485")
+    (date "2024-03-31")
     (rev "D0")
     (company "BPC")
     (comment 1 "Technologie CMS basée sur ATMEGA328")
