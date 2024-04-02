@@ -6,8 +6,8 @@
 
   (title_block
     (title "Carte de commande d'un OYA - Esclave RS485")
-    (date "2024-04-01")
-    (rev "D0")
+    (date "2024-04-02")
+    (rev "E0")
     (company "BPC")
     (comment 1 "Technologie CMS basée sur ATMEGA328")
     (comment 2 "Monitoring de tension d'alimentation")
