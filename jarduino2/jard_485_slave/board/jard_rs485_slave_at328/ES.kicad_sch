@@ -2308,7 +2308,7 @@
     (property "Reference" "D?" (at 238.76 100.33 90)
       (effects (font (size 1.27 1.27)) (justify left))
     )
-    (property "Value" "D" (at 241.3 102.87 90)
+    (property "Value" "1N4007G" (at 233.68 102.87 90)
       (effects (font (size 1.27 1.27)) (justify left))
     )
     (property "Footprint" "Diode_THT:D_A-405_P5.08mm_Vertical_KathodeUp" (at 245.11 101.6 0)

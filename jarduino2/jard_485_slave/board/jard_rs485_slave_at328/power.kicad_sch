@@ -3636,7 +3636,7 @@
   )
 
   (symbol (lib_id "bpc:BPC_Alim5V") (at 86.36 38.1 0) (unit 1)
-    (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
+    (in_bom yes) (on_board yes) (dnp no)
     (uuid ffd13be3-7416-449b-b56b-d93d119a6b92)
     (property "Reference" "U?" (at 92.71 31.75 0)
       (effects (font (size 1.27 1.27)))
