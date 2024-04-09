@@ -6,8 +6,8 @@
 
   (title_block
     (title "Commande des OYA - Maître RS485")
-    (date "2024-03-31")
-    (rev "A0")
+    (date "2024-04-09")
+    (rev "B0")
     (company "BPC")
     (comment 1 "Extension Wifi (ESP01)")
     (comment 2 "Inteface LEDs RGB - Bouton - RTC")
@@ -18,6 +18,14 @@
   (lib_symbols
   )
 
+
+  (text_box "Version Bx:\n  - Agrandissement trous D1 et D3\n  - Correction erreur type de Q2 (Mos P GDS)\n  - Agrandissement empreintes de R5, R7, R13 et R10 + montage vertical\n  - Ajout instructions pour rework MOD485\n  - Ajout d'une interface 5V A B Gnd pour adapter le bus\n"
+    (at 25.4 167.64 0) (size 80.01 20.32)
+    (stroke (width 0) (type default))
+    (fill (type none))
+    (effects (font (size 1.27 1.27)) (justify left top))
+    (uuid ce42a06c-0733-4bf9-88ff-0399399f9632)
+  )
 
   (text "BUS RS485 + Sortie alim 12V" (at 130.81 139.7 0)
     (effects (font (face "Arial") (size 4 4) bold) (justify left bottom))

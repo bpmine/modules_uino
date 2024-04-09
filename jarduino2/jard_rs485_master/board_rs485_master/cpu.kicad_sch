@@ -6,8 +6,8 @@
 
   (title_block
     (title "Commande des OYA - Maître RS485")
-    (date "2024-03-31")
-    (rev "A0")
+    (date "2024-04-09")
+    (rev "B0")
     (company "BPC")
     (comment 1 "Extension Wifi (ESP01)")
     (comment 2 "Inteface LEDs RGB - Bouton - RTC")
