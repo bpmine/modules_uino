@@ -18,20 +18,20 @@
   )
 
 
-  (text "Carte de commande d'un Oya\nEsclave RS485 (Avec ATMEGA328)"
-    (at 39.37 62.23 0)
+  (text "Carte de commande d'un Oya\nEsclave RS485 (Avec Modules)\nPetite Carte"
+    (at 46.99 71.12 0)
     (effects (font (face "Arial") (size 10 10)) (justify left bottom))
     (uuid 0e447c3c-77e0-461e-99ca-dbe4a82c2c76)
   )
 
-  (sheet (at 92.71 95.25) (size 54.61 39.37) (fields_autoplaced)
+  (sheet (at 92.71 105.41) (size 54.61 39.37) (fields_autoplaced)
     (stroke (width 0.1524) (type solid))
     (fill (color 255 194 126 1.0000))
     (uuid 36e9fbeb-2032-4e73-95af-53e316cf916d)
-    (property "Sheetname" "UC" (at 92.71 94.5384 0)
+    (property "Sheetname" "UC" (at 92.71 104.6984 0)
       (effects (font (size 1.27 1.27)) (justify left bottom))
     )
-    (property "Sheetfile" "uc.kicad_sch" (at 92.71 135.2046 0)
+    (property "Sheetfile" "uc.kicad_sch" (at 92.71 145.3646 0)
       (effects (font (size 1.27 1.27)) (justify left top))
     )
     (instances
@@ -41,14 +41,14 @@
     )
   )
 
-  (sheet (at 171.45 95.25) (size 41.91 38.1) (fields_autoplaced)
+  (sheet (at 171.45 105.41) (size 41.91 38.1) (fields_autoplaced)
     (stroke (width 0.1524) (type solid))
     (fill (color 153 145 255 1.0000))
     (uuid dec80786-a2aa-49f2-be55-5994d7e13863)
-    (property "Sheetname" "ES" (at 171.45 94.5384 0)
+    (property "Sheetname" "ES" (at 171.45 104.6984 0)
       (effects (font (size 1.27 1.27)) (justify left bottom))
     )
-    (property "Sheetfile" "ES.kicad_sch" (at 171.45 133.9346 0)
+    (property "Sheetfile" "ES.kicad_sch" (at 171.45 144.0946 0)
       (effects (font (size 1.27 1.27)) (justify left top))
     )
     (instances
