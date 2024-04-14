@@ -57,9 +57,7 @@
       ],
       "drc_exclusions": [
         "silk_edge_clearance|113475000|88223134|88ae7dfd-4e95-4d70-8d54-3ce7b4ae6340|eb9482ca-538d-42a7-be35-122ccb9346eb",
-        "silk_edge_clearance|113775194|87620000|88ae7dfd-4e95-4d70-8d54-3ce7b4ae6340|99463442-a592-4092-8c03-d81a1a3c9613",
-        "silk_overlap|131000000|103120000|daa81566-dc0d-4a18-8a1e-5b4b04d749db|14f47dae-3c53-4984-98b7-af5cf4108aa2",
-        "silk_overlap|135454819|103214285|4f5cca29-6ee3-48e8-9aed-b1054a488ebb|14f47dae-3c53-4984-98b7-af5cf4108aa2"
+        "silk_edge_clearance|113775194|87620000|88ae7dfd-4e95-4d70-8d54-3ce7b4ae6340|99463442-a592-4092-8c03-d81a1a3c9613"
       ],
       "meta": {
         "version": 2
@@ -488,7 +486,7 @@
     "pinned_symbol_libs": []
   },
   "meta": {
-    "filename": "jard_rs485_slave_shield_nano.kicad_pro",
+    "filename": "jard_rs485_slave_mods2.kicad_pro",
     "version": 1
   },
   "net_settings": {
