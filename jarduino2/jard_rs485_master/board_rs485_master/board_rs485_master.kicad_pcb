@@ -7,7 +7,7 @@
   (paper "A4")
   (title_block
     (title "Commande des OYAs - Maître RS485 - \"Maître des OYAs\"")
-    (date "2024-04-09")
+    (date "2024-04-24")
     (rev "B0")
     (company "BPC")
     (comment 1 "Extension Wifi (ESP01)")
@@ -5343,7 +5343,7 @@
   (gr_text "Bus OYAs" (at 205.04 79.92 90) (layer "F.SilkS") (tstamp 724a84b2-afd3-4abd-b625-7e28954e61ba)
     (effects (font (size 1.4 1.4) (thickness 0.3) bold) (justify left bottom))
   )
-  (gr_text "09/04/2024" (at 180.89 118.05 40) (layer "F.SilkS") (tstamp 7982632b-8ac3-46ff-8bb1-7591563db251)
+  (gr_text "24/04/2024" (at 180.89 118.05 40) (layer "F.SilkS") (tstamp 7982632b-8ac3-46ff-8bb1-7591563db251)
     (effects (font (size 0.8 0.8) (thickness 0.1)) (justify left bottom))
   )
   (gr_text "A" (at 201.34 77.4 90) (layer "F.SilkS") (tstamp 84b751ec-0873-462c-80b8-f0eb7f006142)
