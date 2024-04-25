@@ -15,6 +15,7 @@ static DS1307 _rtc;
 #define STEP_BUTTON (3)
 #define STEP_12V    (4)
 #define STEP_33V    (5)
+#define STEP_WIFI   (6)
 
 void test_set_led(int inx,int r=0,int g=255,int b=0)
 {
@@ -110,7 +111,8 @@ void test_send_rs485(void)
   Serial.println("Send and receive MOTIF...");
   digitalWrite(PIN_TX_EN,HIGH);
   delay(10);
-  Serial3.flush();
+  while (Serial3.available()>0)
+    Serial3.read();  
   Serial1.print("MOTIF");
   delay(100);
 
@@ -126,7 +128,8 @@ void test_send_rs485(void)
   digitalWrite(PIN_TX_EN,LOW);
   delay(50);
 
-  Serial3.flush();
+  while (Serial3.available()>0)
+    Serial3.read();  
   Serial1.println("DESACTIVE");
   delay(100);
   if (Serial3.available()!=0)
@@ -177,6 +180,30 @@ void test_pwr_33V(void)
   test_set_led(STEP_33V,0,255,0);
 }
 
+void test_wifi_comm(void)
+{
+  test_set_led(STEP_WIFI,0,0,255);
+  Serial.println("Test comm wifi...");
+  Serial2.begin(9600);
+  digitalWrite(PIN_PWR_WIFI,LOW);
+  delay(5000);
+  while (Serial2.available()>0)
+    Serial2.read();    
+  Serial.println("Send ping...");
+  Serial2.print("ping\n");
+  delay(1000);
+  if (Serial2.available()<5)
+    go_in_error(STEP_WIFI);
+  
+  String recv=Serial2.readString();
+  Serial.print("Receive: ");
+  Serial.println(recv);
+  if (memcmp(recv.c_str(),"pong",4)!=0)
+    go_in_error(STEP_WIFI);
+
+  digitalWrite(PIN_PWR_WIFI,HIGH);
+  test_set_led(STEP_WIFI,0,255,0);
+}
 
 void setup() 
 {
@@ -219,6 +246,7 @@ void setup()
   test_button();
   test_pwr_12V();  
   test_pwr_33V();
+  test_wifi_comm();
 
   Serial.println("_________");
   Serial.println("TEST OK !");
