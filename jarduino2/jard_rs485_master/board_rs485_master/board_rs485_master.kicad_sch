@@ -19,8 +19,8 @@
   )
 
 
-  (text_box "Version Bx:\n  - Agrandissement trous D1 et D3\n  - Correction erreur type de Q2 (Mos P GDS)\n  - Agrandissement empreintes de R5, R7, R13 et R10 + montage vertical\n  - Ajout instructions pour rework MOD485\n  - Ajout d'une interface 5V A B Gnd pour adapter le bus\n  - Déplacement de C13 pour éviter CC avec l'USB de la MEGA 2560\n  - Inversion TX/RX du ESP01\n  - Inversion logique de commande PWR de Wifi et LEDs (+npn)\n"
-    (at 25.4 167.64 0) (size 80.01 20.32)
+  (text_box "Version Bx:\n  - Agrandissement trous de D1 et D3\n  - Correction erreur type de Q2 (Mos P GDS)\n  - Agrandissement empreintes de R5, R7, R13 et R10 + montage vertical\n  - Ajout instructions pour rework MOD485\n  - Ajout d'une interface 5V A B Gnd pour adapter le bus\n  - Déplacement de C13 pour éviter CC avec l'USB de la MEGA 2560\n  - Inversion TX/RX du ESP01\n  - Inversion logique de commande PWR de Wifi et LEDs (+npn) pour optimiser la veille\n"
+    (at 25.4 167.64 0) (size 95.25 20.32)
     (stroke (width 0) (type default))
     (fill (type none))
     (effects (font (size 1.27 1.27)) (justify left top))
@@ -35,7 +35,7 @@
     (effects (font (face "Arial") (size 4 4) bold) (justify left bottom))
     (uuid 2fc8a4c0-a0b4-4084-ae0a-a36dea1f7b25)
   )
-  (text "Alimentation" (at 72.39 110.49 0)
+  (text "Alimentations" (at 72.39 110.49 0)
     (effects (font (face "Arial") (size 4 4) bold) (justify left bottom))
     (uuid 50685880-e466-43f0-b060-5146ac34a256)
   )

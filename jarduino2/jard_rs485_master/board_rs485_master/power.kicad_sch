@@ -1214,6 +1214,11 @@
     (uuid f8aec56f-be4d-4b67-b96f-eeced6100233)
   )
 
+  (text "Alimentations 5V" (at 16.51 25.4 0)
+    (effects (font (size 5.08 5.08) (thickness 2.54) bold) (justify left bottom))
+    (uuid 223edc2c-5531-403f-9c21-52d77ac04857)
+  )
+
   (global_label "DATA_LEDS" (shape input) (at 215.9 97.79 180)
     (effects (font (size 1.27 1.27)) (justify right))
     (uuid 6b7c6099-7fb5-425b-96f5-9fb8ca9eca82)

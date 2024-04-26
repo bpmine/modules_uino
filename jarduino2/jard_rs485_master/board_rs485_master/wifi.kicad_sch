@@ -287,6 +287,11 @@
     (uuid fd4f4701-a4de-4097-a96b-ff2909b9baea)
   )
 
+  (text "Wifi ESP01" (at 19.05 27.94 0)
+    (effects (font (size 5.08 5.08) (thickness 2.54) bold) (justify left bottom))
+    (uuid a23d435b-7f0d-465a-923c-5734a83e98a3)
+  )
+
   (global_label "TX_WIFI" (shape input) (at 102.87 100.33 180) (fields_autoplaced)
     (effects (font (size 1.27 1.27)) (justify right))
     (uuid 1d51693e-2518-4370-84f3-de99ebd96319)
