@@ -6,7 +6,7 @@
 
   (title_block
     (title "Commande des OYA - Maître RS485")
-    (date "2024-04-24")
+    (date "2024-04-26")
     (rev "B0")
     (company "BPC")
     (comment 1 "Extension Wifi (ESP01)")
@@ -19,7 +19,7 @@
   )
 
 
-  (text_box "Version Bx:\n  - Agrandissement trous D1 et D3\n  - Correction erreur type de Q2 (Mos P GDS)\n  - Agrandissement empreintes de R5, R7, R13 et R10 + montage vertical\n  - Ajout instructions pour rework MOD485\n  - Ajout d'une interface 5V A B Gnd pour adapter le bus\n  - Déplacement de C13 pour éviter CC avec l'USB de la MEGA 2560\n  - Inversion TX/RX du ESP01\n"
+  (text_box "Version Bx:\n  - Agrandissement trous D1 et D3\n  - Correction erreur type de Q2 (Mos P GDS)\n  - Agrandissement empreintes de R5, R7, R13 et R10 + montage vertical\n  - Ajout instructions pour rework MOD485\n  - Ajout d'une interface 5V A B Gnd pour adapter le bus\n  - Déplacement de C13 pour éviter CC avec l'USB de la MEGA 2560\n  - Inversion TX/RX du ESP01\n  - Inversion logique de commande PWR de Wifi et LEDs (+npn)\n"
     (at 25.4 167.64 0) (size 80.01 20.32)
     (stroke (width 0) (type default))
     (fill (type none))
