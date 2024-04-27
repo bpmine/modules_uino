@@ -6,8 +6,8 @@
 
   (title_block
     (title "Carte de commande d'un OYA - Esclave RS485")
-    (date "2024-04-13")
-    (rev "E0")
+    (date "2024-04-27")
+    (rev "F0")
     (company "BPC")
     (comment 1 "Technologie avec modules Arduino / Petite carte")
     (comment 2 "Monitoring de tension d'alimentation")
