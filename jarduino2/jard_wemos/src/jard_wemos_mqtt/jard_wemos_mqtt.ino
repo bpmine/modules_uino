@@ -2,6 +2,7 @@
 #include <EspMQTTClient.h>
 
 #include "timer.h"
+#include "analog.hpp"
 
 //#define NODE_MAIN
 #define NODE_PAUL
@@ -39,13 +40,14 @@
 #define TOPIC_LOG     "log"
 
 bool g_comm_ok=false;
-int g_pwr_value=0;
 bool g_lvl_1=false;
 bool g_lvl_2=false;
 bool g_lvl_3=false;
 int g_rssi=0;
 bool g_cmd_pump=false;
 unsigned long g_tick_s=0;
+
+Analog anVoltage=Analog();
 
 Timer tmrComm((unsigned long)TIMEOUT_COMM_S*1000UL,false);
 Timer tmrCycle((unsigned long)TIME_CYCLE_MS,false);
@@ -93,7 +95,7 @@ void sendLog(char *strMsg)
   mqttClient.publish(strTopicLog, strMsg);
 }
 
-void addBool(char *strJson,char *strKey,bool val)
+void addBool(char *strJson,const char *strKey,bool val)
 {
   strcat(strJson,"\"");
   strcat(strJson,strKey);
@@ -104,7 +106,7 @@ void addBool(char *strJson,char *strKey,bool val)
     strcat(strJson,"false");  
 }
 
-void addInt(char *strJson,char *strKey,int val)
+void addInt(char *strJson,const char *strKey,int val)
 {
   strcat(strJson,"\"");
   strcat(strJson,strKey);
@@ -114,7 +116,17 @@ void addInt(char *strJson,char *strKey,int val)
   strcat(strJson,tmp);
 }
 
-void addULong(char *strJson,char *strKey,unsigned long val)
+void addUshort(char *strJson,const char *strKey,unsigned short val)
+{
+  strcat(strJson,"\"");
+  strcat(strJson,strKey);
+  strcat(strJson,"\":");
+  char tmp[15];
+  sprintf(tmp,"%d",val);
+  strcat(strJson,tmp);
+}
+
+void addULong(char *strJson,const char *strKey,unsigned long val)
 {
   strcat(strJson,"\"");
   strcat(strJson,strKey);
@@ -143,7 +155,8 @@ void sendData(void)
   strcat(strData,",");
   addInt(strData,"rssi",g_rssi);
   strcat(strData,",");
-  addInt(strData,"pwr",g_pwr_value);
+  unsigned short dxvolt=120*anVoltage.get()/939;
+  addUshort(strData,"pwr",dxvolt);
   strcat(strData,",");
   addULong(strData,"tick",g_tick_s);
   strcat(strData,"}");
@@ -243,7 +256,8 @@ void loop()
 
    if (tmrCycle.tick())
    {
-     g_pwr_value=analogRead(PIN_ANALOG_POW);     
+     unsigned short tmp=analogRead(PIN_ANALOG_POW);     
+     anVoltage.latch(tmp);
 
      if (digitalRead(PIN_IN_N1)==LOW)
         g_lvl_1=true;
