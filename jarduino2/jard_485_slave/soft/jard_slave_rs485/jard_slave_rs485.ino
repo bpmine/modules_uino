@@ -5,6 +5,7 @@
 #include "flow.hpp" 
 #include "eep_slave.hpp" 
 #include "slavearduino.hpp"
+#include "timer.h"
 
 #include <DHT.h>
 
@@ -30,8 +31,6 @@
 #define PIN_ADDR_A3       (A5)
 #define PIN_ADDR_A4       (A3)
 
-//#define DELTA_ALIVE_MS    (4000UL)
-
 bool g_on=false;
 bool g_cpt_low=false;
 bool g_cpt_high=false;
@@ -45,45 +44,7 @@ unsigned short g_errors=0;
 
 Analog anMesV;
 DHT dht(PIN_DHT22, DHT22);
-
-
-/*bool set_slave_addr(unsigned char bNewAddr)
-{
-  uint8_t a;
-  uint8_t b;
-  
-  g_bAddr=bNewAddr;
-
-  if (Eep::readID(&a,&b)==false)
-  {
-    Eep::writeID(bNewAddr,g_bFct);
-  }
-  else
-  {
-    Eep::writeAddr(g_bAddr);
-  }  
-
-  return true;
-}
-
-bool set_slave_function(unsigned char bNewFunction)
-{
-  uint8_t a;
-  uint8_t b;
-
-  g_bFct=bNewFunction;
-  
-  if (Eep::readID(&a,&b)==false)
-  {
-    Eep::writeID(g_bAddr,g_bFct);
-  }
-  else
-  {
-    Eep::writeAddr(g_bAddr);
-  }  
-
-  return true;
-}*/
+Timer tmrSec(1000,true);
 
 unsigned char getSlaveAddress(void)
 {
@@ -125,23 +86,6 @@ void setup()
     force_init=true;
   #endif
 
-  /*if ( (Eep::readID(&g_bAddr,&g_bFct)==false) || (force_init==true) )
-  {
-    g_bAddr=INIT_ADDR;
-    g_bFct=INIT_FCT;
-   *g_enabled=true;
-    g_pump_s=0;
-
-    Eep::writeID(g_bAddr,g_bFct);
-    Eep::writeEnabled(g_enabled);
-    Eep::writeCounter(g_pump_s);
-  }
-  else
-  {
-    g_enabled=Eep::readEnabled();
-    g_pump_s=Eep::readCounter();
-  }*/
-
   g_cpt_low=false;
   g_cpt_high=false;
   g_on=false;
@@ -150,35 +94,47 @@ void setup()
   g_total_s=0;
   g_errors=0;
 
-
-  /*#ifdef DEBUG_TRACE
-    Serial.begin(9600);
-    Serial.print("BOOT:");
-    char str[5]="";
-    sprintf(str,"%c",g_bAddr);
-    Serial.print(str);
-    Serial.print(" ");
-    sprintf(str,"%c",g_bFct);
-    Serial.print(str);
-    Serial.print(" ");
-    Serial.println(g_enabled==true?"EN":"X");
-  #endif*/
-  
-  #ifdef FORCE_INIT
-    Serial.println("FORCE INIT!");
-  #endif
-
   dht.begin();
   Flow.begin(PIN_CPT_FLOW);
+
+  #ifdef INIT_AND_SET_ADDR
+    Serial.print("FORCE ADDRESS INIT: ");
+    Serial.println(INIT_ADDR);
+    unsigned char tmp;
+    Eep::readID(&tmp); /// Pour etre sûr EEP bien init
+    Eep::writeID(INIT_ADDR);
+  #endif
 
   unsigned char addr=getSlaveAddress();
   if (addr==15)
   {
-	/// Lire EEPROM
+    /// Si le selecteur d'adresse est sur 'F', on lit l'adresse en EEPROM
+    Eep::readID(&addr);
   }
 
   Slave.begin(PIN_TX_EN,addr);
+  g_total_s=Eep::readCounter();
 
+  #ifdef DEBUG_TRACE
+    Serial.print("Boot @");
+    Serial.println(addr);
+    for (int i=0;i<500;i++)
+    {
+      delay(1);
+      yield();
+    }
+    
+    Serial.print("Total: ");
+    Serial.print(g_total_s);
+    Serial.println(" s");
+    for (int i=0;i<500;i++)
+    {
+      delay(1);
+      yield();
+    }
+  #endif
+
+  tmrSec.start();
 }
 
 void serialEvent()
@@ -188,9 +144,10 @@ void serialEvent()
 
 void loop() 
 {
-  #ifdef FORCE_INIT
+  #ifdef INIT_AND_SET_ADDR
     digitalWrite(PIN_LED1,HIGH);
     digitalWrite(LED_BUILTIN,HIGH);
+    
     return;
   #endif
   
@@ -218,23 +175,30 @@ void loop()
 
   if (!Slave.isAlive())
   {
-	g_on=false;
+	  g_on=false;
   }
   else
   {
-	g_on=Slave.isCmd();
+	  g_on=Slave.isCmd();
   }
 
-
+  Flow.tick();
+  
+  if (tmrSec.tick()==true)
+  {
+    if (g_on==true)
+    {
+      g_total_s++;
+      Eep::writeCounter(g_total_s);
+    }
+  }
+  
   digitalWrite(PIN_CMD_EV,g_on==true?HIGH:LOW);
   digitalWrite(LED_BUILTIN,Slave.isAlive()?HIGH:LOW);
-
-  Flow.tick();
 }
 
-/*void reset_stats(void)
+void reset_time(void)
 {
-  g_pump_s=0;
-  Eep::writeCounter(g_pump_s);
-}*/
-
+  g_total_s=0;
+  Eep::writeCounter(g_total_s);
+}

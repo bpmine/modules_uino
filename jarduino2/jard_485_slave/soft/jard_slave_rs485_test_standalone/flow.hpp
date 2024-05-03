@@ -1,7 +1,7 @@
 #ifndef FLOW_HEADER_INCLUDED
 #define FLOW_HEADER_INCLUDED
 
-static volatile int _count;
+static volatile int _count=0;
 void isr_flow(void)
 {
   _count++;

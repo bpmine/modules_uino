@@ -196,70 +196,71 @@ unsigned char * FrameBuilder::build(FramePump *pFramePump)
 	return buffer;
 }
 
-E_FRAME_ERR FrameBuilder::recv(unsigned char byte)
+E_FRAME_ERR FrameBuilder::recv(unsigned char b)
 {
-  if ( (pos==0) && (byte==SOH) )
+  if ( (pos==0) && (b==SOH) )
   {
-		pack(byte);
+		pack(b);
 		return PENDING;
   }
   else if ( (pos==1) || (pos==2) )
   {
-	  if ((byte == SOH) || (byte == STX))
+	  if ((b == SOH) || (b == STX))
 	  {
 		  reset();
-		  if (byte==SOH)
-			  pack(byte);
+		  if (b==SOH)
+			  pack(b);
 
 		  return BAD_FRAME;
 	  }
 	  else
 	  {
-		  pack(byte);
+		  pack(b);
 		  return PENDING;
 	  }
   }
   else if ((pos>2) && (pos< MAX_BUFFER_SIZE))
   {
-	pack(byte);
-	if (byte==STX)
-	{
-		unsigned char sz = decode_hex_byte(buffer[1], buffer[2]);
-		if (sz != pos - 4)
-		{
-			reset();
-			return BAD_FRAME;
-		}
-		else
-		{
-			unsigned char cs = decode_hex_byte(buffer[pos-3], buffer[pos-2]);
-			unsigned char cs_calc = 0;
-			for (int i = 0; i < sz-2;i++)
-			{
-				cs_calc += buffer[3 + i];
-			}
-
-			if (cs_calc != cs)
-			{
-				reset();
-				return BAD_CS;
-			}
-			else
-			{
-				bool ret=OnFrameDecode();
-				reset();
-				return ret==true?FRAME_OK:UNHANDLED_FRAME;
-			}
-		}
-	}
-	else if (byte == SOH)
-	{
-		reset();
-		pack(byte);
-		return BAD_FRAME;
-	}
-
-	return PENDING;
+  	pack(b);
+  	if (b==STX)
+  	{
+  		unsigned char sz = decode_hex_byte(buffer[1], buffer[2]);
+  		if (sz != pos - 4)
+  		{
+  			reset();
+  			return BAD_FRAME;
+  		}
+  		else
+  		{
+  			unsigned char cs = decode_hex_byte(buffer[pos-3], buffer[pos-2]);
+  			unsigned char cs_calc = 0;
+  			for (int i = 0; i < sz-2;i++)
+  			{
+  				cs_calc += buffer[3 + i];
+  			}
+  
+  			if (cs_calc != cs)
+  			{
+  				reset();
+  				return BAD_CS;
+  			}
+  			else
+  			{ 
+        //Serial.println(cs_calc,HEX)         ;
+  				bool ret=OnFrameDecode();
+  				reset();
+  				return ret==true?FRAME_OK:UNHANDLED_FRAME;
+  			}
+  		}
+  	}
+  	else if (b == SOH)
+  	{
+  		reset();
+  		pack(b);
+  		return BAD_FRAME;
+  	}
+  
+  	return PENDING;
   }
   else
   {
@@ -360,12 +361,12 @@ void FrameBuilder::setReceiver(IFrameReceiver *pReceiver)
 bool FrameBuilder::OnFrameDecode(void)
 {
   if (pReceiver==nullptr)
-	return false;
+	  return false;
 
   char msg;
   int cur=first_read();
   if (read_char(&msg, cur)==false)
-	return false;
+	  return false;
 
   if ( msg==MSG_CMD )
   {

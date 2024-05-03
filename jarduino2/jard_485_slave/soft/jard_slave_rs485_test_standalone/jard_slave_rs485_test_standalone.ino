@@ -75,17 +75,11 @@ void serialEvent()
 int g_flow_mLpMin=0;
 bool g_cpt_low=false;
 bool g_cpt_high=false;
-int valV=0;
 int g_temp=0;
 int g_hum=0;
 
 void loop() 
-{
-  //g_flow_mLpMin=Flow.getFlow();
-  /*g_cpt_low=digitalRead(PIN_CPT_LOW)==HIGH?false:true;
-  g_cpt_high=digitalRead(PIN_CPT_HIGH)==HIGH?false:true;
-  valV=analogRead(PIN_MES_V);*/
-
+{  
   Serial.println("____________________");
 
    float tmp = dht.readHumidity(); 
@@ -124,11 +118,27 @@ void loop()
 
    delay(100);
 
-   valV=analogRead(PIN_MES_V);
+   unsigned long v=analogRead(PIN_MES_V);
+   v=v*1200/669;
    Serial.print("Tension     : ");
-   Serial.print(valV);   
-   Serial.println("");
+   Serial.print((float)((float)v/100.0));
+   Serial.println("V");
 
-   delay(1000);
+   Flow.tick();
+   g_flow_mLpMin=Flow.getFlow();
+   Serial.print("Flow        : ");
+   Serial.print(g_flow_mLpMin);   
+   Serial.println("L/min");   
+   
+   g_cpt_low=digitalRead(PIN_CPT_LOW)==HIGH?false:true;
+   Serial.print("Low         : ");
+   Serial.println(g_cpt_low);   
+   g_cpt_high=digitalRead(PIN_CPT_HIGH)==HIGH?false:true;
+   Serial.print("High        : ");
+   Serial.println(g_cpt_high);   
+
+   digitalWrite(PIN_CMD_EV,!digitalRead(PIN_CMD_EV));
+   
+   delay(2000);
     
 }

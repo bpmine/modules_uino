@@ -1,5 +1,7 @@
-/*
- * globals.h
+/**
+ * @file globals.h
+ * 
+ * Variables globales (partagees entre gestion esclave et main)
  */
 #ifndef GLOBALS_INCLUDED
 #define GLOBALS_INCLUDED
@@ -16,5 +18,6 @@ extern char g_hum_pc;
 extern unsigned short g_total_s;
 extern unsigned short g_errors;
 
+extern void reset_time(void);
 
 #endif
