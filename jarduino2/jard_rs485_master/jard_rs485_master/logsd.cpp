@@ -21,7 +21,7 @@ bool logsd_init(void)
   return true;
 }
 
-bool logsd_log(DateTime &now,OyasList &list,Pump &pump)
+/*bool logsd_log(DateTime &now,OyasList &list,Pump &pump)
 {
   char strDteTime[25];
   sprintf(strDteTime,"%02d/%02d/%04d;%02d:%02d:%02d",
@@ -96,4 +96,4 @@ bool logsd_log(DateTime &now,OyasList &list,Pump &pump)
   myFile.close();
 
   return true;
-}
+}*/

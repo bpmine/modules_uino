@@ -1,44 +1,41 @@
 #ifndef MASTER_HEADER_INCLUDED
 #define MASTER_HEADER_INCLUDED
 
-#include "request.hpp"
+#include "slaves.hpp"
+#include "framebuilder.h"
+#include "frames.hpp"
+#include "timer.h"
 
-#include <arduino.h>
+#define BUS_RS485_SPEED		(9600)
+#define TIMEOUT_MS		    (200UL)
 
-
-class Master
+class Master : public IFrameReceiver
 {
   private:
-    HardwareSerial *pStr;
-    int txen;
     unsigned long nbcycles;
 
-    enum {OFF,IDLE,SEND,RECV,NEXT,END} eState;
-    
-    uint8_t buffer[DATA_SIZE+10];
+    SlavesList list;
     int pos;
-    unsigned long m_tick0;
-
-    uint8_t calc_cs(uint8_t *datas,uint8_t len);
-    uint8_t hex_val(uint8_t hex);
-
-    uint8_t decode_hex_byte(uint8_t a,uint8_t b);
     
-    char tohexchar(uint8_t b);
-  
-    int curReq;
+    enum {OFF,IDLE,SEND,RECV,NEXT,WAIT,END} eState;
+    unsigned short commands;
+    Slave *pCurSlave;
+    FrameBuilder rxFrame;
+    Timer tmrAnswer=Timer(200);
+    Timer tmrWait=Timer(10);
 
-    bool nextRequest(void);
-    Request * getCurRequest(void);
-    Request * itNext(int &Pos);
     bool flgTrace;
+
+  protected:
+    virtual void sendBytes(unsigned char* buffer, int size) = 0;
+    virtual int available(void) = 0;
+    virtual int readByte(void) = 0;
 
   public:
     Master();
+    virtual ~Master();
     
     void init();    
-    void send(Request *pReq);
-    void begin(HardwareSerial *pSerial,int txen);
     void start_cycle(void);
     void setEnable(bool enable);  
     bool loop(void);
@@ -46,8 +43,6 @@ class Master
     bool isRunning(void);
     unsigned long cycles(void);
     
-    Request *getRequestFrom(char addr);    
-
     void setTrace(bool flgEnabled);
 };
 

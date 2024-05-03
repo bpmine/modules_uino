@@ -4,19 +4,19 @@
 #define SOH (0x01)
 #define STX (0x02)
 
-#define ST_LVL_LOW    (0x01)
-#define ST_LVL_HIGH   (0x02)
-#define ST_CMD_ON     (0x04)
-#define ST_ENABLED    (0x08)
+#define STATUS_CMD     		(0x01)
+#define STATUS_ON     		(0x02)
+#define STATUS_LVL_LOW    	(0x04)
+#define STATUS_LVL_HIGH   	(0x08)
 
-#define FCT_PUMP        '1'
-#define FCT_OYA         '2'
-#define FCT_ADDR        '@'
-#define FCT_ENABLE      'e'
-#define FCT_READ_TIME   's'
-#define FCT_RAZ_TIME    'S'
-#define FCT_READ_ERR    'r'
-#define FCT_RAZ_ERR     'R'
-#define FCT_PING        'p'
+#define MSG_CMD        	'm'		///< Commande [ST1][ST2][@]
+#define MSG_PUMP        'p'		///< Infos etat pompe [@][ST][TEMP][HUM][TIME_LSB][TIME_MSB][ERRS_LSB][ERRS_MSB][FLOW_LSB][FLOW_MSB]
+#define MSG_OYA         'o'		///< Infos etat oya [@][ST][TEMP][HUM][TIME_LSB][TIME_MSB][ERRS_LSB][ERRS_MSB]
+#define MSG_PING        'i'		///< Demande de ping [@][Id]
+#define MSG_PONG        'y'		///< Reponse de ping (pong) [@][~Id]
+#define MSG_RAZ_TIME    't'		///< RAZ du temps total [@][Id]
+#define MSG_RAZ_ERR		'z'		///< RAZ du nombre d'erreurs [@][Id]
+
+#define ADDR_SYNC		'S'		///< Synchro fin de cycle (pour laisser du temps aux esclave de faire leur traitement)
 
 #endif

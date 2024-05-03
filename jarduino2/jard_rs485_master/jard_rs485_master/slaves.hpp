@@ -1,22 +1,20 @@
 /**
  * @file slaves.hpp
- * @brief Representation des états des esclaves (Pompe et Oyas)
+ * @brief Representation des etats des esclaves (Pompe et Oyas)
 */
 #ifndef SLAVES_HEADER_INCLUDED
 #define SLAVES_HEADER_INCLUDED
 
-#include <arduino.h>
-
 class Slave
 {
   public:
-    char addr;
-    bool on;
-    int temp_dg;
-    int hum_pc;
-    bool enabled;
+    char addr;		///< Adresse de l'esclave (A -> O. A est la pompe.)
+    bool on;		///< Etat reel de l'esclave ON/OFF
+    int temp_dg;	///< Temperature remontee
+    int hum_pc;		///< Humidite remontee
+    bool enabled;	///< Esclave active ou non
 
-    bool comm_ok;
+    bool comm_ok;	///< Communication ok (ou pas)
     
     unsigned long cycles_since_off;
     unsigned long cycles_since_on;
@@ -24,11 +22,14 @@ class Slave
     unsigned long cycles_since_ok;
     unsigned long cycles_errors;
 
-    bool cmd;
+    bool cmd;		///< Derniere commande envoyee a l'esclave
 
-    Slave(char addr)
+    unsigned short last_slave_tick_ms;
+    unsigned short total_slave_on_s;
+    unsigned short total_slave_errs;
+
+    virtual void init(void)
     {
-      this->addr=addr;
       on=false;
       temp_dg=-1;
       hum_pc=-1;
@@ -42,6 +43,25 @@ class Slave
       cycles_errors=0;
 
       cmd=false;
+
+      last_slave_tick_ms=0;
+      total_slave_on_s=0;
+      total_slave_errs=0;
+    }
+
+    void init(char addr)
+    {
+      this->addr=addr;
+      init();
+    }
+
+    Slave(char addr)
+    {
+      init(addr);
+    }
+
+    virtual ~Slave()
+    {
     }
 
     void setEnabled(bool en)
@@ -133,7 +153,14 @@ class Pump : public Slave
   public:
     int flow;
 
+    virtual void init(void) override
+	{
+      Slave::init();
+      flow=0;
+	}
+
     Pump(char addr):Slave(addr) {flow=0;}
+    ~Pump() {}
 
     void setFlow(int flow) {this->flow=flow;}
 };
@@ -145,86 +172,107 @@ class Oya : public Slave
     bool high;
     bool low;
 
-    Oya(char addr) : Slave(addr) {}  
+    virtual void init() override
+	{
+      Slave::init();
+      high=false;
+      low=false;
+	}
+
+    Oya(char addr) : Slave(addr) {high=false;low=false;}
+    ~Oya() {}
 
     void setHigh(bool high) {this->high=high;}
     void setLow(bool low) {this->low=low;}
 };
 
-
-class OyasList
+#define NUM_SLAVES_MAX	(15)
+class SlavesList
 {
   private:
-    Oya **oyas;
-    int nbOyas;
+    Slave *slaves[NUM_SLAVES_MAX];
+
+    unsigned short flgEnabledOyas;
 
   public:
-    OyasList(Oya **listOyas,int nbOyas)
+    SlavesList()
     {
-      this->oyas=listOyas;
-      this->nbOyas=nbOyas;
+      flgEnabledOyas=0;
+      for (int i=0;i<NUM_SLAVES_MAX;i++)
+      {
+    	if (i==0)
+    	  slaves[i]=new Pump('A');
+    	else
+    	  slaves[i]=new Oya('A'+i);
+      }
     }
 
-    Oya * itNext(int &pos)
+    void init_all(void)
     {
-      if (oyas==NULL)
-        return NULL;
-        
-      if (pos<nbOyas)
-      {
-        return oyas[pos++];
-      }
+      for (int i=0;i<NUM_SLAVES_MAX;i++)
+    	slaves[i]->init();
+    }
+
+    Slave *getSlave(char addr)
+    {
+      if ((addr<'A') || (addr>('A'+NUM_SLAVES_MAX)) )
+    	  return nullptr;
+
+      char mask=0x01<< (addr-'A');
+
+      if ((mask&flgEnabledOyas)==mask)
+    	return slaves[addr-'A'];
       else
-      {
-        return NULL;
-      }
+    	return nullptr;
     }
 
-    bool hasOneOyaOn(void)
+    Pump *getPump(void)
     {
-      if (oyas==NULL)
-        return false;
-        
-      for (int i=0;i<nbOyas;i++)
-      {
-        if (oyas[i]->on==true)
-        return true;
-      }
-
-      return false;
-    }
-    
-    int count()
-    {
-      return nbOyas;
+      return (Pump *)getSlave('A');
     }
 
-    bool SetOn(char addr,bool on)
+    Oya *getOya(char addr)
     {
-      int pos=0;
-      Oya *p=itNext(pos);
-      while (p!=NULL)
+      if (addr=='A')
+    	  return nullptr;
+
+      return (Oya *)getSlave(addr);
+    }
+
+    Slave * findFirstSlave(int &pos)
+    {
+      pos=-1;
+      return findNextSlave(pos);
+    }
+
+    Slave * findNextSlave(int &pos)
+    {
+      if (pos<0)
+    	return nullptr;
+
+      while (pos<NUM_SLAVES_MAX)
       {
-        if (p->addr==addr)
-        {
-          p->on=on;
-          return true;
-        }
-        p=itNext(pos);
+    	pos++;
+        char mask=0x01<< pos;
+        if ((mask&flgEnabledOyas)==mask)
+          return slaves[pos];
       }
 
-      return false;
+      return nullptr;
     }
 
-    Oya *getOya(int pos)
+    Oya * findFirstOya(int &pos)
     {
-      if ( (oyas==NULL) || (nbOyas==0) )
-        return NULL;
+      pos=0;
+      return findNextOya(pos);
+    }
 
-      if (pos<nbOyas)
-        return oyas[pos];
-      else
-        return NULL;
+    Oya * findNextOya(int &pos)
+    {
+      if (pos<0)
+    	return nullptr;
+
+      return (Oya *)findNextSlave(pos);
     }
 };
 

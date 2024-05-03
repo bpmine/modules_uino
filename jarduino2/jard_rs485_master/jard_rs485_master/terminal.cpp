@@ -7,10 +7,10 @@
 #ifndef TERMINAL_HEADER_INCLUDED
 #define TERMINAL_HEADER_INCLUDED
 
-#include "app.h"
+//#include "app.h"
 #include <arduino.h>
 
-char _bufferTerm[200];
+/*char _bufferTerm[200];
 int _posBufferTerm=0;
 
 static void _help(void)
@@ -267,7 +267,7 @@ void serialEvent(void)
       _execCmd(st.substring(0,inx).c_str(),st.substring(inx+1).c_str());
     }
   }
-}
+}*/
 
 
 #endif
