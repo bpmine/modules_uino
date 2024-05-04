@@ -10,7 +10,7 @@ extern bool g_on;
 extern bool g_cpt_low;
 extern bool g_cpt_high;
 
-extern unsigned short g_mes_cv;
+extern unsigned char g_mes_cv;
 extern int g_flow_mLpMin;
 extern char g_temp_dg;
 extern char g_hum_pc;

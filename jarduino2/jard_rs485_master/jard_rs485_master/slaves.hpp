@@ -9,7 +9,7 @@ class Slave
 {
   public:
     char addr;		///< Adresse de l'esclave (A -> O. A est la pompe.)
-    bool on;		///< Etat reel de l'esclave ON/OFF
+    bool on;		  ///< Etat reel de l'esclave ON/OFF
     int temp_dg;	///< Temperature remontee
     int hum_pc;		///< Humidite remontee
     bool enabled;	///< Esclave active ou non
@@ -192,19 +192,24 @@ class SlavesList
   private:
     Slave *slaves[NUM_SLAVES_MAX];
 
-    unsigned short flgEnabledOyas;
+    unsigned short flgEnabledSlaves;
 
   public:
     SlavesList()
     {
-      flgEnabledOyas=0;
+      flgEnabledSlaves=0;
       for (int i=0;i<NUM_SLAVES_MAX;i++)
       {
     	if (i==0)
-    	  slaves[i]=new Pump('A');
+    	  slaves[i]=new Pump(1);
     	else
-    	  slaves[i]=new Oya('A'+i);
+    	  slaves[i]=new Oya(2+i);
       }
+    }
+
+    void enable_slaves(unsigned short ens)
+    {
+      flgEnabledSlaves=ens;
     }
 
     void init_all(void)
@@ -213,27 +218,27 @@ class SlavesList
     	slaves[i]->init();
     }
 
-    Slave *getSlave(char addr)
+    Slave *getSlave(unsigned char addr)
     {
-      if ((addr<'A') || (addr>('A'+NUM_SLAVES_MAX)) )
+      if ((addr<1) || (addr>NUM_SLAVES_MAX) )
     	  return nullptr;
 
-      char mask=0x01<< (addr-'A');
+      unsigned short mask=0x01<< (addr-1);
 
-      if ((mask&flgEnabledOyas)==mask)
-    	return slaves[addr-'A'];
+      if ((mask&flgEnabledSlaves)==mask)
+    	return slaves[addr-1];
       else
     	return nullptr;
     }
 
     Pump *getPump(void)
     {
-      return (Pump *)getSlave('A');
+      return (Pump *)getSlave(0);
     }
 
     Oya *getOya(char addr)
     {
-      if (addr=='A')
+      if ( (addr<2) || (addr>NUM_SLAVES_MAX-1) )
     	  return nullptr;
 
       return (Oya *)getSlave(addr);
@@ -247,14 +252,14 @@ class SlavesList
 
     Slave * findNextSlave(int &pos)
     {
-      if (pos<0)
-    	return nullptr;
+      if (pos<-1)
+    	  return nullptr;
 
       while (pos<NUM_SLAVES_MAX)
       {
-    	pos++;
-        char mask=0x01<< pos;
-        if ((mask&flgEnabledOyas)==mask)
+    	  pos++;
+        unsigned short mask=0x01<< pos;
+        if ((mask&flgEnabledSlaves)==mask)
           return slaves[pos];
       }
 
@@ -270,7 +275,7 @@ class SlavesList
     Oya * findNextOya(int &pos)
     {
       if (pos<0)
-    	return nullptr;
+    	  return nullptr;
 
       return (Oya *)findNextSlave(pos);
     }

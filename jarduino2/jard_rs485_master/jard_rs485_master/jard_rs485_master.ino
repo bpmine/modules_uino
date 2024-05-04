@@ -1,5 +1,8 @@
 #include "masterarduino.hpp"
 #include "pins.h"
+#include "timer.h"
+
+Timer tmrCycle(2000,false);
 
 void setup() 
 {
@@ -14,7 +17,7 @@ void setup()
   digitalWrite(PIN_PWR_LEDS,HIGH);
 
   pinMode(PIN_PWR_WIFI,OUTPUT);
-  digitalWrite(PIN_PWR_ON,HIGH);
+  digitalWrite(PIN_PWR_WIFI,HIGH);
   
   pinMode(LED_BUILTIN,OUTPUT);
   digitalWrite(LED_BUILTIN,LOW);
@@ -31,10 +34,24 @@ void setup()
   Serial.begin(9600);  
   Serial.println("Boot");
 
-  Master.begin(&Serial2, PIN_TX_EN);
+  Master.begin(&Serial1, PIN_TX_EN);
+  Master.setEnable(true);
+  Master.enable_slaves(0x01);
+
+  tmrCycle.start();
+  digitalWrite(PIN_PWR_ON,HIGH);
 } 
 
 void loop() 
 {
- Master.loop();
+  if (tmrCycle.tick()==true)
+  {
+    Serial.println("Cycle");
+    Master.start_cycle();    
+  }
+  
+  if (Master.loop()==true)
+  {
+    Serial.println("Sync");
+  }
 }

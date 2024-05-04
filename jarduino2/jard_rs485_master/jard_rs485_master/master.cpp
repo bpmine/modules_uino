@@ -3,13 +3,15 @@
 
 void Master::init()
 {
-  int pos=-1;
+  pos=-1;
+  pCurSlave=nullptr;
 
   list.init_all();
   nbcycles=0;
   tmrAnswer.stop();
-  tmrWait.stop();
-  pCurSlave=nullptr;
+  tmrWait.stop();  
+
+  rxFrame.setReceiver(this);
 }
     
 Master::Master()
@@ -32,6 +34,11 @@ void Master::start_cycle(void)
   }
 }
 
+void Master::enable_slaves(unsigned short ens)
+{
+  list.enable_slaves(ens);
+}
+
 void Master::setEnable(bool enable)
 {
   if (enable==false)
@@ -42,9 +49,29 @@ void Master::setEnable(bool enable)
     eState=IDLE;
   }
 }
+
+bool Master::OnFrameReceive(FramePump *pump)
+{
+  log("Pompe");
+  return false;
+}
+
+bool Master::OnFrameReceive(FrameOya *oya)
+{
+  log("Oya");
+  return false;
+}
+   
+bool Master::OnFrameReceive(FramePong *pong)
+{
+  log("pong");
+  return false;
+}
   
 bool Master::loop(void)
 {
+  recv();
+  
   switch (eState)
   {
     case OFF:
@@ -60,7 +87,7 @@ bool Master::loop(void)
     }
 
     case SEND:
-    {
+    {      
       if (pCurSlave==nullptr)
       {
     	  eState=IDLE;
@@ -88,16 +115,7 @@ bool Master::loop(void)
     {
       if (tmrAnswer.tick()==true)
       {
-        /*if (flgTrace==true)
-        {        
-          char tmp[15];
-          if (pCurSlave!=nullptr)
-        	sprintf(tmp,"TMT: %c",pCurSlave->addr);
-          else
-        	strcpy(tmp,"TMT: X");
-
-          Serial.println(tmp);
-        }*/
+        log("tmt");
 
         if (pCurSlave!=nullptr)
           pCurSlave->comm_ok=false;
@@ -112,9 +130,9 @@ bool Master::loop(void)
     case WAIT:
     {
       if (tmrWait.tick()==true)
-    	eState=NEXT;
-      break;
-    }
+      	eState=NEXT;
+        break;
+      }
 
     case NEXT:
     {
@@ -131,7 +149,6 @@ bool Master::loop(void)
           
       break;          
     }
-
 
     case END:
     {
@@ -160,9 +177,10 @@ void Master::recv(void)
     if ((b > 0) && (b < 255))
     {
       E_FRAME_ERR res = rxFrame.recv(b);
-      if (res == FRAME_OK)
+      if ( (res == FRAME_OK) || (res == UNHANDLED_FRAME) )
       {
         eState = WAIT;
+        tmrWait.start();
       }
     }
   }

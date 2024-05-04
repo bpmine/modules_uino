@@ -2,6 +2,8 @@
 
 #include <FastLED.h>
 
+//#define INIT_TIME
+
 #define NUM_LEDS  (16)
 static CRGB _leds[NUM_LEDS];  ///< Tableau des LEDs
 

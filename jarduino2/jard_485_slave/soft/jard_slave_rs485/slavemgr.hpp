@@ -22,6 +22,7 @@ class SlaveMgr : IFrameReceiver
   	  pFrmSlave->addr=addr;
   	  pFrmSlave->hum=g_hum_pc;
   	  pFrmSlave->temp=g_temp_dg;
+      pFrmSlave->voltage=g_mes_cv;
   	  pFrmSlave->tick_ms=getTick()%0xFFFF;
   	  pFrmSlave->total_time_s=g_total_s;
   	  pFrmSlave->total_errs=g_errors;

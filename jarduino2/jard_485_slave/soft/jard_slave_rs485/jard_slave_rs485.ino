@@ -9,12 +9,11 @@
 
 #include <DHT.h>
 
-//#define FORCE_INIT
-#define DEBUG_TRACE
+//#define DEBUG_TRACE
 
-#define INIT_AND_SET_ADDR
+//#define INIT_AND_SET_ADDR
 #ifdef INIT_AND_SET_ADDR
-  #define INIT_ADDR (1)
+  #define INIT_ADDR 'Z'
 #endif
 
 #define PIN_CPT_LVL_LOW   (2)
@@ -34,7 +33,7 @@
 bool g_on=false;
 bool g_cpt_low=false;
 bool g_cpt_high=false;
-unsigned short g_mes_cv;
+unsigned char g_mes_cv;
 
 int g_flow_mLpMin=-1;
 char g_temp_dg=0;
@@ -75,6 +74,11 @@ void setup()
 
   pinMode(PIN_MES_V,INPUT);
 
+  pinMode(PIN_ADDR_A1,INPUT_PULLUP);
+  pinMode(PIN_ADDR_A2,INPUT_PULLUP);
+  pinMode(PIN_ADDR_A3,INPUT_PULLUP);
+  pinMode(PIN_ADDR_A4,INPUT_PULLUP);
+
   pinMode(LED_BUILTIN,OUTPUT);
   digitalWrite(LED_BUILTIN,LOW);
 
@@ -98,8 +102,6 @@ void setup()
   Flow.begin(PIN_CPT_FLOW);
 
   #ifdef INIT_AND_SET_ADDR
-    Serial.print("FORCE ADDRESS INIT: ");
-    Serial.println(INIT_ADDR);
     unsigned char tmp;
     Eep::readID(&tmp); /// Pour etre sûr EEP bien init
     Eep::writeID(INIT_ADDR);
@@ -133,6 +135,16 @@ void setup()
       yield();
     }
   #endif
+
+  #ifdef INIT_AND_SET_ADDR
+    Serial.print("FORCE ADDRESS INIT: ");
+    Serial.println(INIT_ADDR);
+    for (int i=0;i<500;i++)
+    {
+      delay(1);
+      yield();
+    }
+  #endif 
 
   tmrSec.start();
 }
@@ -170,7 +182,11 @@ void loop()
 	   else
 	     g_temp_dg=(char)trunc(tmp);
 
-	   g_mes_cv=anMesV.get();
+	   unsigned long v=(unsigned long)anMesV.get();    
+     v=v*120/669;
+     if (v>255)
+      v=255;
+     g_mes_cv=(unsigned char)v;
   }
 
   if (!Slave.isAlive())

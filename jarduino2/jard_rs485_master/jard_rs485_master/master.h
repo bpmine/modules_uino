@@ -21,15 +21,20 @@ class Master : public IFrameReceiver
     unsigned short commands;
     Slave *pCurSlave;
     FrameBuilder rxFrame;
-    Timer tmrAnswer=Timer(200);
+    Timer tmrAnswer=Timer(2000);
     Timer tmrWait=Timer(10);
 
     bool flgTrace;
+
+    bool Master::OnFrameReceive(FramePump *pump) override;
+    bool Master::OnFrameReceive(FrameOya *oya) override;
+    bool Master::OnFrameReceive(FramePong *pong) override;
 
   protected:
     virtual void sendBytes(unsigned char* buffer, int size) = 0;
     virtual int available(void) = 0;
     virtual int readByte(void) = 0;
+    virtual void log(char *msg) = 0;
 
   public:
     Master();
@@ -42,6 +47,8 @@ class Master : public IFrameReceiver
     void recv(void);
     bool isRunning(void);
     unsigned long cycles(void);
+
+    void enable_slaves(unsigned short ens);
     
     void setTrace(bool flgEnabled);
 };
