@@ -6,10 +6,10 @@
 
   (title_block
     (title "Carte de commande d'un OYA - Esclave RS485")
-    (date "2024-05-04")
-    (rev "F0")
+    (date "2024-05-05")
+    (rev "G0")
     (company "BPC")
-    (comment 1 "Technologie avec modules Arduino / Petite carte")
+    (comment 1 "Technologie avec modules Arduino Nano / Petite carte")
     (comment 2 "Monitoring de tension d'alimentation")
     (comment 3 "1 sortie 12V/5A - 2 entrées TOR - 1 débimètre - 1 LED - Temp - RS485")
   )
@@ -26,7 +26,7 @@
     (uuid 215aacd4-2fab-4df4-a6a6-8611767bb469)
   )
 
-  (text "Carte de commande d'un Oya\nEsclave RS485 (Avec Modules)\nPetite Carte"
+  (text "Carte de commande d'un Oya\nEsclave RS485 (Avec Module Nano)\nPetite Carte"
     (at 46.99 71.12 0)
     (effects (font (face "Arial") (size 10 10)) (justify left bottom))
     (uuid 0e447c3c-77e0-461e-99ca-dbe4a82c2c76)
