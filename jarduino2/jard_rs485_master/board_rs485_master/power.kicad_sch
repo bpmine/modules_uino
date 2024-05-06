@@ -6,7 +6,7 @@
 
   (title_block
     (title "Commande des OYA - Maître RS485")
-    (date "2024-04-26")
+    (date "2024-05-06")
     (rev "B0")
     (company "BPC")
     (comment 1 "Extension Wifi (ESP01)")
@@ -1492,9 +1492,6 @@
         (path "/27904310-f1aa-47e2-a2a6-8db936442bd1/ad7fcf36-7748-47c7-b2d8-753e3fd3e3b0"
           (reference "C8") (unit 1)
         )
-        (path "/27904310-f1aa-47e2-a2a6-8db936442bd1/41a39135-3725-490c-abfb-c5b2d926b4a7"
-          (reference "C14") (unit 1)
-        )
       )
     )
   )
@@ -1688,9 +1685,6 @@
         )
         (path "/27904310-f1aa-47e2-a2a6-8db936442bd1/ad7fcf36-7748-47c7-b2d8-753e3fd3e3b0"
           (reference "C8") (unit 1)
-        )
-        (path "/27904310-f1aa-47e2-a2a6-8db936442bd1/41a39135-3725-490c-abfb-c5b2d926b4a7"
-          (reference "C14") (unit 1)
         )
       )
     )

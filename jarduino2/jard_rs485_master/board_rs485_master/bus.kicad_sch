@@ -6,7 +6,7 @@
 
   (title_block
     (title "Commande des OYA - Maître RS485")
-    (date "2024-04-26")
+    (date "2024-05-06")
     (rev "B0")
     (company "BPC")
     (comment 1 "Extension Wifi (ESP01)")
@@ -2254,7 +2254,7 @@
     (effects (font (size 1.27 1.27)) (justify left bottom))
     (uuid 632a56c3-fceb-4fd1-8417-f56c3a42c1c7)
   )
-  (text "BUS 485 + Alim 12V" (at 17.78 27.94 0)
+  (text "BUS 485 + Sortie Alim 12V" (at 17.78 27.94 0)
     (effects (font (size 5.08 5.08) (thickness 2.54) bold) (justify left bottom))
     (uuid 9bce7ab3-79a8-46f3-8b23-8d9c9612a896)
   )
