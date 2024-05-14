@@ -3,7 +3,7 @@ import time
 import re
 import threading
 
-PORT='COM5'
+PORT='COM10'
 SIMU=False
 
 def calcCS(buff):
@@ -53,6 +53,24 @@ def sendPing(ser,addr,val):
     pong=decodePong(msg)
     print(pong)
 
+def sendRazT(ser,addr):
+    cmd=''
+    cmd+=chr(1)
+    cmd+="05"
+    cmd+='t'
+    cmd+='%02X' % (addr)
+    dta=cmd[3:]
+    cs=calcCS(dta)
+    cmd+='%02X' % cs
+    cmd+=chr(2)
+
+    req=bytes(cmd,'ascii')
+    print('Send> %s' % (req))
+    ser.write(req)
+    msg=ser.read_until(b'\x02')
+    pong=decodePong(msg)
+    print(pong)
+    
 def decodeInfo(msg):
     pCmdResp=re.compile(r'\x01([0-9A-F]{2})([po])([0-9A-F]{2})([0-9A-F]{2})([0-9A-F]{4})([0-9A-F]{2})([0-9A-F]{2})([0-9A-F]{2})([0-9A-F]{4})([0-9A-F]{4})([0-9A-F]{0,4})([0-9A-F]{2})\x02')
     print('Recv> %s' % msg)
@@ -129,13 +147,28 @@ def test_one_slave():
     print(res)
 
 
-    #sendPing(ser,1,254)
-    sendCmd(ser,0x1,ord('S'))
-    sendCmd(ser,0x1,ord('S'))
-    sendCmd(ser,0x1,ord('S'))
-    sendCmd(ser,0x1,ord('S'))
-    sendCmd(ser,0x1,1)
+    sendPing(ser,2,254)
+        
+    for i in range(0,5):
+        sendCmd(ser,0x4,2)    
+        sendCmd(ser,0x4,ord('S'))
+        time.sleep(1)
+
+    for i in range(0,5):
+        sendCmd(ser,0x0,2)    
+        sendCmd(ser,0x0,ord('S'))
+        time.sleep(1)
+
+    for i in range(0,10):
+        sendCmd(ser,0x0,2)    
+        time.sleep(1)
+
+    sendRazT(ser,2)
+    
+    sendCmd(ser,0x0,2)
+    sendCmd(ser,0x0,ord('S'))
 
     ser.close()
 
-test_recv()
+#test_recv()
+test_one_slave()

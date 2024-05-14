@@ -33,7 +33,7 @@ unsigned char FrameBuilder::decode_hex_byte(unsigned char a, unsigned char b)
 char FrameBuilder::tohexchar(unsigned char b)
 {
 	b = b & 0xF;
-	if ((b >= 0) && (b <= 9))
+	if (b <= 9)
 	{
 		return '0' + b;
 	}
@@ -151,6 +151,15 @@ unsigned char* FrameBuilder::build(FramePong *pFramePong)
   end_build();
 
 	return buffer;
+}
+
+unsigned char* FrameBuilder::build(FrameRazT *pFrameRazT)
+{
+  start_build(MSG_RAZ_TIME);
+  pack_byte(pFrameRazT->addr);
+  end_build();
+
+  return buffer;
 }
 
 unsigned char* FrameBuilder::build(FrameCmd *pFrameCmd)
@@ -433,9 +442,9 @@ bool FrameBuilder::OnFrameDecode(void)
 			return false;
 
 		return pReceiver->OnFrameReceive(&ping);
-		}
-		else if ( msg==MSG_PONG )
-		{
+	}
+	else if ( msg==MSG_PONG )
+	{
 		FramePong pong;
 		if (read_byte(&pong.addr,cur)==false)
 			return false;
@@ -444,6 +453,14 @@ bool FrameBuilder::OnFrameDecode(void)
 
 		return pReceiver->OnFrameReceive(&pong);
   }
+	else if (msg==MSG_RAZ_TIME)
+	{
+	  FrameRazT razT;
+    if (read_byte(&razT.addr,cur)==false)
+      return false;
+
+    return pReceiver->OnFrameReceive(&razT);
+	}
 
   return false;
 }

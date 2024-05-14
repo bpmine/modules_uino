@@ -234,6 +234,22 @@ public:
    }
 };
 
+class FrameRazT : public Frame
+{
+public:
+   unsigned char addr;
+
+   FrameRazT() : Frame()
+   {
+      addr = 0;
+   }
+
+   FrameRazT(char addr) : Frame()
+   {
+       this->addr = addr;
+   }
+};
+
 class IFrameReceiver
 {
 public:
@@ -243,6 +259,7 @@ public:
    virtual bool OnFrameReceive(FrameOya *) {return false;}
    virtual bool OnFrameReceive(FramePing *) {return false;}
    virtual bool OnFrameReceive(FramePong *) {return false;}
+   virtual bool OnFrameReceive(FrameRazT *) {return false;}
 };
 
 #endif

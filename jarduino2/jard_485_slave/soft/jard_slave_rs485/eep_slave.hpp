@@ -12,7 +12,7 @@
 class Eep
 {
   private:
-    static void Eep::eep_write_us(int addr,unsigned short value)
+    static void eep_write_us(int addr,unsigned short value)
     {
       uint8_t a=(value>>8)&0xFF;
       uint8_t b=value&0xFF;
@@ -21,7 +21,7 @@ class Eep
       EEPROM.write(addr+1,b);
     }
     
-    static unsigned short Eep::eep_read_us(int addr)
+    static unsigned short eep_read_us(int addr)
     {
       uint8_t a=EEPROM.read(addr);
       uint8_t b=EEPROM.read(addr+1);
@@ -32,7 +32,7 @@ class Eep
     }
   
   public:
-    static bool Eep::readID(uint8_t *pAddr)
+    static bool readID(uint8_t *pAddr)
     {
       uint8_t m1=EEPROM.read(EEP_ADDR_NODE_M1);
       uint8_t m2=EEPROM.read(EEP_ADDR_NODE_M2);
@@ -50,19 +50,19 @@ class Eep
       return false;
     }
 
-    static void Eep::writeID(uint8_t addr)
+    static void writeID(uint8_t addr)
     {
       EEPROM.write(EEP_ADDR_NODE_M1,0x55);
       EEPROM.write(EEP_ADDR_NODE_ADDR,addr);
       EEPROM.write(EEP_ADDR_NODE_M2,0xAA);
     }
 
-    static uint16_t Eep::readCounter(void)
+    static uint16_t readCounter(void)
     {
       return Eep::eep_read_us(EEP_ADDR_COUNTER);
     }
 
-    static bool Eep::writeCounter(uint16_t tps_s)
+    static void writeCounter(uint16_t tps_s)
     {
       Eep::eep_write_us(EEP_ADDR_COUNTER,tps_s);    
     }

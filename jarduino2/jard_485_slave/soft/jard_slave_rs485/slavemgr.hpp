@@ -4,15 +4,19 @@
 #include "frames.hpp"
 #include "framebuilder.h"
 #include "globals.h"
+#include "timer.h"
 
-#define	SLAVE_CMD_TIMEOUT_MS	(4 * 1000UL)
-#define SERIAL_SPEED          (9600)
+#define	SLAVE_CMD_TIMEOUT_MS	  (4UL*1000UL)
+#define SLAVE_SYNC_TIMEOUT_MS   (4UL*1000UL)
+#define SERIAL_SPEED            (9600)
 
 class SlaveMgr : IFrameReceiver
 {
   private:
-  	unsigned long tick_last_comm_ms;
+    Timer tmrCmd=Timer(SLAVE_CMD_TIMEOUT_MS,true);    ///< Detection timeout de commande (Pas de commande, il faut se mettre en secu)
+    Timer tmrSync=Timer(SLAVE_SYNC_TIMEOUT_MS,true);  ///< Detection timeout de SYNC (Pas de remontee de datas vers le maitre)
   	bool flgCommOk;
+  	bool flgSyncOk;
   	bool flgEndOfCycle;
   	unsigned char addr;
   	bool flgCmd;
@@ -43,8 +47,8 @@ class SlaveMgr : IFrameReceiver
   		flgEndOfCycle=false;
   		addr=0;
   		tx_pin=0;
-  		tick_last_comm_ms=0;
   		flgCommOk=false;
+  		flgSyncOk=false;
   		flgCmd=false;
 	  }
 
@@ -53,6 +57,17 @@ class SlaveMgr : IFrameReceiver
     }
 
     virtual void onSerialEvent(void)=0;
+
+    bool OnFrameReceive(FrameRazT* pRazT) override
+    {
+      if (addr==pRazT->addr)
+      {
+        reset_time();
+        return true;
+      }
+
+      return false;
+    }
 
     bool OnFrameReceive(FramePing* pFrmPing) override
     {
@@ -83,10 +98,10 @@ class SlaveMgr : IFrameReceiver
   		  flgCmd=false;
   		}
 
-  		tick_last_comm_ms=getTick();
+		  tmrCmd.start();
   		flgCommOk=true;
   
-  		/// On rï¿½pond une trame si l'adresse de l'esclave est demandee
+  		/// On répond une trame si l'adresse de l'esclave est demandee
       	if (addr==pFrmCmd->addr)
       	{
       	  if (addr==1)
@@ -115,6 +130,8 @@ class SlaveMgr : IFrameReceiver
       	/// On finalise le cycle si l'adresse est celle de sync (initialement 'S')
       	else if (pFrmCmd->addr==ADDR_SYNC)
       	{
+      	  tmrSync.start();
+      	  flgSyncOk=true;
       	  flgEndOfCycle=true;
       	}
   
@@ -131,6 +148,7 @@ class SlaveMgr : IFrameReceiver
       	  this->addr=0;
   
       	flgCommOk=false;
+      	flgSyncOk=false;
       	flgEndOfCycle=false;
       	flgCmd=false;
         rxFrame.setReceiver(this);
@@ -138,20 +156,21 @@ class SlaveMgr : IFrameReceiver
 
       bool loop(void)
       {
+        if (flgSyncOk==true)
+        {
+          if (tmrSync.tick()==true)
+          {
+            flgSyncOk=false;
+          }
+        }
+
       	if (flgCommOk==true)
       	{
-    		  unsigned long ulTick=getTick();
-    		  unsigned long delta_ms;
-    		  if (ulTick>=tick_last_comm_ms)
-      			delta_ms=ulTick-tick_last_comm_ms;
-    		  else
-      			delta_ms=0xFFFFFFFF-tick_last_comm_ms+ulTick;
-  
-    		  if (delta_ms>SLAVE_CMD_TIMEOUT_MS)
-    		  {
-      			flgCommOk=false;
-      			return false;
-    		  }
+      	  if (tmrCmd.tick()==true)
+      	  {
+            flgCommOk=false;
+            return false;
+      	  }
       	}
 
       	if (flgEndOfCycle==true)
@@ -166,6 +185,11 @@ class SlaveMgr : IFrameReceiver
       bool isAlive(void)
       {
       	return flgCommOk;
+      }
+
+      bool isSyncOk(void)
+      {
+        return flgSyncOk;
       }
 
       bool isCmd(void)
