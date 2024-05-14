@@ -7,10 +7,11 @@
 #ifndef TERMINAL_HEADER_INCLUDED
 #define TERMINAL_HEADER_INCLUDED
 
-//#include "app.h"
+#include "app.h"
 #include <arduino.h>
+#include "master.h"
 
-/*char _bufferTerm[200];
+char _bufferTerm[200];
 int _posBufferTerm=0;
 
 static void _help(void)
@@ -50,38 +51,38 @@ static void _OnOffAns(const char *strTitle,bool on)
 
 static void _term_exec_oya(const char *strParams)
 {
-  char addr;
+  int addr;
   char onoff[20];
   Serial.println(strParams);
-  if ( (strlen(strParams)>19) || (sscanf(strParams,"%c %s",&addr,onoff)!=2) )
+  if ( (strlen(strParams)>19) || (sscanf(strParams,"%X %s",&addr,onoff)!=2) || (addr<2) || (addr>14))
   {
     Serial.println("Format incorrect!");
     return;      
   }
   
   int pos=0;
-  Oya * p=app_term_get_next_oya(pos);
+  Oya * p=app_term_find_first_oya(pos);
   while (p!=NULL)
   {
     if (p->addr==addr)
     {
       char tmp[10];
       bool on=_parseOnOff(onoff,false);
-      p->cmd=on;
-      sprintf(tmp,"Oya %c",addr);
+      app_set_oya(addr, on);
+      sprintf(tmp,"Oya %01X",addr);
       _OnOffAns(tmp,on);      
       return;
     }
-    p=app_term_get_next_oya(pos);
+    p=app_term_find_next_oya(pos);
   }
   
-  Serial.println("Oya non trouvÃ©!");
+  Serial.println("Oya non trouvé!");
 }
 
 static void _term_exec_pump(const char *strParams)
 {
     Pump *p=app_term_get_pump();
-    if (p==NULL)
+    if (p==nullptr)
     {
       Serial.println("Erreur interne: pump est NULL");
       return;
@@ -89,25 +90,30 @@ static void _term_exec_pump(const char *strParams)
 
     if (strParams==NULL)
     {      
-      Serial.println("_____");
+      Serial.println("__________");
       Serial.print("Pompe ");
-      Serial.print(p->addr);
-      Serial.print(": ");
+      Serial.print((int)p->addr);
+      Serial.println(":");
 
       if (p->comm_ok==true)
       {
-        Serial.print(p->on==true?" on":" off");
-        Serial.print(" Flow= ");
-        Serial.print(p->flow);
-        Serial.print(" temp: ");
+        Serial.print("  - Etat : ");
+        Serial.println(p->on==true?"ON":"OFF");
+        Serial.print("  - Flow : ");
+        Serial.println(p->flow);
+        Serial.print("  - temp : ");
         Serial.print(p->temp_dg);
-        Serial.print("Â°C");
-        Serial.print(" hum: ");
+        Serial.println("°C");
+        Serial.print("  - hum  : ");
         Serial.print(p->hum_pc);
         Serial.println("%");
-        Serial.print("enabled=");
-        Serial.print(p->enabled==true?"true":"false");
-        Serial.println("");
+        Serial.print("  - total s    : ");
+        Serial.print(p->total_slave_on_s);
+        Serial.println("s");
+        Serial.print("  - total errs : ");
+        Serial.println(p->total_slave_errs);
+        Serial.print("  - tick       : ");
+        Serial.println(p->last_slave_tick_ms);
       }
       else
       {
@@ -117,21 +123,21 @@ static void _term_exec_pump(const char *strParams)
     else
     {
       bool on=_parseOnOff(strParams,false);
-      p->cmd=on;
+      app_set_pompe(on);
       _OnOffAns("Pompe",on);
-    }  
+    }
 }
 
 static void _term_exec_oyas(void)
 {
     int pos=0;
-    Serial.println("_____");
-    Oya *pOya=app_term_get_next_oya(pos);
+    Serial.println("__________");
+    Oya *pOya=app_term_find_first_oya(pos);
     while (pOya!=NULL)
     {
-      Serial.print("Oya ");
-      Serial.print(pOya->addr);
-      Serial.print(": ");
+      char tmp[12];
+      sprintf(tmp,"Oya @%01X : ",pOya->addr);
+      Serial.print(tmp);
 
       if (pOya->comm_ok==true)
       {
@@ -140,12 +146,10 @@ static void _term_exec_oyas(void)
         Serial.print(pOya->low==true?"":" low");
         Serial.print(" temp: ");
         Serial.print(pOya->temp_dg);
-        Serial.print("Â°C");
+        Serial.print("°C");
         Serial.print(" hum: ");
         Serial.print(pOya->hum_pc);
         Serial.print("% ");
-        Serial.print("enabled=");
-        Serial.print(pOya->enabled==true?"true":"false");
         Serial.println("");
       }
       else
@@ -153,7 +157,7 @@ static void _term_exec_oyas(void)
         Serial.println("NO COMM");
       }
 
-      pOya=app_term_get_next_oya(pos);
+      pOya=app_term_find_next_oya(pos);
     }
     Serial.println();
 }
@@ -161,7 +165,14 @@ static void _term_exec_oyas(void)
 static void _term_disp_slave_stats(Slave *p)
 {
   char tmp[20];
-  sprintf(tmp,"Oya %c: ",p->addr);Serial.print(tmp);
+
+  if (p->addr!=1)
+    sprintf(tmp,"Oya %01X   : ",p->addr);
+  else
+    sprintf(tmp,"Pompe %01X : ",p->addr);
+
+  Serial.print(tmp);
+
   sprintf(tmp," off=%ld ",p->cycles_since_off);Serial.print(tmp);
   sprintf(tmp," on=%ld ",p->cycles_since_on);Serial.print(tmp);
   sprintf(tmp," nok=%ld ",p->cycles_since_nok);Serial.print(tmp);
@@ -175,11 +186,11 @@ static void _term_exec_stats(void)
   Serial.println("___________________");
   Serial.println("Statistiques:");
   int pos=0;
-  Oya *pOya=app_term_get_next_oya(pos);
+  Oya *pOya=app_term_find_first_oya(pos);
   while (pOya!=NULL)
   {
     _term_disp_slave_stats(pOya);
-    pOya=app_term_get_next_oya(pos);
+    pOya=app_term_find_next_oya(pos);
   }
 
   Pump *pPump=app_term_get_pump();
@@ -190,11 +201,11 @@ static void _term_exec_stats(void)
 static void _term_exec_razerrs(void)
 {
   int pos=0;
-  Oya *pOya=app_term_get_next_oya(pos);
+  Oya *pOya=app_term_find_first_oya(pos);
   while (pOya!=NULL)
   {
     pOya->razErrors();
-    pOya=app_term_get_next_oya(pos);
+    pOya=app_term_find_next_oya(pos);
   }
   Pump *pPump=app_term_get_pump();
   if (pPump!=NULL)
@@ -267,7 +278,7 @@ void serialEvent(void)
       _execCmd(st.substring(0,inx).c_str(),st.substring(inx+1).c_str());
     }
   }
-}*/
+}
 
 
 #endif

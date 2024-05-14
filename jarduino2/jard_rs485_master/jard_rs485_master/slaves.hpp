@@ -8,11 +8,10 @@
 class Slave
 {
   public:
-    char addr;		///< Adresse de l'esclave (A -> O. A est la pompe.)
+    char addr;		///< Adresse de l'esclave (1 -> 14. 1 est la pompe.)
     bool on;		  ///< Etat reel de l'esclave ON/OFF
     int temp_dg;	///< Temperature remontee
     int hum_pc;		///< Humidite remontee
-    bool enabled;	///< Esclave active ou non
 
     bool comm_ok;	///< Communication ok (ou pas)
     
@@ -33,7 +32,6 @@ class Slave
       on=false;
       temp_dg=-1;
       hum_pc=-1;
-      enabled=false;
       comm_ok=false;
       
       cycles_since_off=0;
@@ -62,11 +60,6 @@ class Slave
 
     virtual ~Slave()
     {
-    }
-
-    void setEnabled(bool en)
-    {
-      enabled=en;
     }
 
     void setOn(bool flgOn)
@@ -108,16 +101,6 @@ class Slave
       }
 
       comm_ok=flgCommOk;
-    }
-
-    void setTemp_dg(int temp_dg)
-    {
-       this->temp_dg=temp_dg;
-    }
-    
-    void setHum_pc(int hum_pc)
-    {
-       this->hum_pc=hum_pc;
     }
 
     void updCycleStats(void)
@@ -186,7 +169,7 @@ class Oya : public Slave
     void setLow(bool low) {this->low=low;}
 };
 
-#define NUM_SLAVES_MAX	(15)
+#define NUM_SLAVES_MAX	(14)
 class SlavesList
 {
   private:
@@ -203,13 +186,28 @@ class SlavesList
     	if (i==0)
     	  slaves[i]=new Pump(1);
     	else
-    	  slaves[i]=new Oya(2+i);
+    	  slaves[i]=new Oya(1+i);
       }
     }
 
-    void enable_slaves(unsigned short ens)
+    void updCycleStats(void)
+    {
+      for (int i=0;i<NUM_SLAVES_MAX;i++)
+      {
+        unsigned short msk=1<<i;
+        if ((flgEnabledSlaves&msk)==msk)
+          slaves[i]->updCycleStats();
+      }
+    }
+
+    void config_slaves(unsigned short ens)
     {
       flgEnabledSlaves=ens;
+    }
+
+    unsigned short enabled_slaves(void)
+    {
+      return flgEnabledSlaves;
     }
 
     void init_all(void)
@@ -233,7 +231,7 @@ class SlavesList
 
     Pump *getPump(void)
     {
-      return (Pump *)getSlave(0);
+      return (Pump *)slaves[0];
     }
 
     Oya *getOya(char addr)

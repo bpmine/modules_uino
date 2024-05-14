@@ -2,7 +2,7 @@
 #define MASTERARDUINO_HEADER_INCLUDED
 
 #include "master.h"
-
+#include "pins.h"
 #include <arduino.h>
 
 class MasterArduino : public Master
@@ -42,11 +42,26 @@ private:
 	  return pStr->read();
   }
 
-  void log(char *msg) override
+  void setPower(bool on) override
   {
-    Serial.println(msg);    
+    digitalWrite(PIN_PWR_ON,on==true?HIGH:LOW);
   }
 
+  void log(const char *msg) override
+  {
+    if (flgTrace==true)
+      Serial.println(msg);
+  }
+
+  void log(const char *key,int val) override
+  {
+    if (flgTrace==true)
+    {
+      Serial.print(key);
+      Serial.print(": ");
+      Serial.println(val);
+    }
+  }
 
 public:
   MasterArduino()
@@ -66,7 +81,5 @@ public:
     init();
   }
 };
-
-MasterArduino Master;
 
 #endif

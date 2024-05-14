@@ -33,7 +33,7 @@ unsigned char FrameBuilder::decode_hex_byte(unsigned char a, unsigned char b)
 char FrameBuilder::tohexchar(unsigned char b)
 {
 	b = b & 0xF;
-	if ((b >= 0) && (b <= 9))
+	if (b <= 9)
 	{
 		return '0' + b;
 	}

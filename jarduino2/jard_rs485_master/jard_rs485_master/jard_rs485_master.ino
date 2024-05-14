@@ -3,6 +3,7 @@
 #include "timer.h"
 
 Timer tmrCycle(2000,false);
+extern MasterArduino Master;
 
 void setup() 
 {
@@ -14,44 +15,45 @@ void setup()
   digitalWrite(PIN_PWR_ON,LOW);
 
   pinMode(PIN_PWR_LEDS,OUTPUT);
-  digitalWrite(PIN_PWR_LEDS,HIGH);
+  digitalWrite(PIN_PWR_LEDS,LOW);
 
   pinMode(PIN_PWR_WIFI,OUTPUT);
-  digitalWrite(PIN_PWR_WIFI,HIGH);
-  
+  digitalWrite(PIN_PWR_WIFI,LOW);
+
+  pinMode(PIN_PWR_LEDS_INV,OUTPUT);
+  digitalWrite(PIN_PWR_LEDS_INV,HIGH);
+
+  pinMode(PIN_PWR_WIFI_INV,OUTPUT);
+  digitalWrite(PIN_PWR_WIFI_INV,HIGH);
+
   pinMode(LED_BUILTIN,OUTPUT);
   digitalWrite(LED_BUILTIN,LOW);
   
   pinMode(PIN_DATA_LEDS,OUTPUT);
   digitalWrite(PIN_DATA_LEDS,LOW);
  
-  //pinMode(PIN_SD_CS,OUTPUT);
-  //digitalWrite(PIN_SD_CS,LOW);
-  /*pinMode(11,INPUT);
-  pinMode(12,INPUT);
-  pinMode(13,INPUT);*/
-
   Serial.begin(9600);  
   Serial.println("Boot");
 
   Master.begin(&Serial1, PIN_TX_EN);
-  Master.setEnable(true);
-  Master.enable_slaves(0x01);
+  Master.config_slaves(0x07);
 
   tmrCycle.start();
-  digitalWrite(PIN_PWR_ON,HIGH);
+
+  //Master.setEnable(true);
+  //digitalWrite(PIN_PWR_ON,HIGH);
+
+  //Master.set_commands(0x01);
 } 
 
 void loop() 
 {
   if (tmrCycle.tick()==true)
   {
-    Serial.println("Cycle");
     Master.start_cycle();    
   }
   
   if (Master.loop()==true)
   {
-    Serial.println("Sync");
   }
 }

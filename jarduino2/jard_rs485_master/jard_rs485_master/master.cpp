@@ -1,3 +1,7 @@
+/**
+ * @file master.cpp
+ * @brief IMPLEMENTATION - Gestion du maître des OYAs (RS485)
+ * */
 #include "master.h"
 #include "prot.h"
 
@@ -18,6 +22,7 @@ Master::Master()
 {   
   init();
   eState = OFF;
+  flgTrace=false;
 }
 
 Master::~Master()
@@ -28,41 +33,90 @@ void Master::start_cycle(void)
 {
   if ( eState==IDLE )
   {
-	pCurSlave=list.findFirstSlave(pos);
-	if (pCurSlave!=nullptr)
-	  eState=SEND;
+    pCurSlave=list.findFirstSlave(pos);
+    if (pCurSlave!=nullptr)
+    {
+      eState=SEND;
+      if (flgTrace)
+        log("Start cycle");
+    }
   }
 }
 
-void Master::enable_slaves(unsigned short ens)
+void Master::config_slaves(unsigned short ens)
 {
-  list.enable_slaves(ens);
+  list.config_slaves(ens&(0x2FFF));
+}
+
+void Master::set_commands(unsigned short cmds)
+{
+  /// @remark On ne commande que les esclaves actifs sur ce maitre. Les autres sont à 0 (sécurité).
+  commands=(list.enabled_slaves() & cmds)<<1;
 }
 
 void Master::setEnable(bool enable)
 {
   if (enable==false)
+  {
     eState=OFF;
+    setPower(false);
+  }
   else if (eState==OFF)
   {
     init();
     eState=IDLE;
+    setPower(true);
   }
+}
+
+
+void Master::fillSlaveObjFromSlaveFrame(Slave *pSlave,FrameSlave *pFrmSlave)
+{
+  pSlave->hum_pc=pFrmSlave->hum;
+  pSlave->temp_dg=pFrmSlave->temp;
+  pSlave->total_slave_on_s=pFrmSlave->total_time_s;
+  pSlave->total_slave_errs=pFrmSlave->total_errs;
+  pSlave->last_slave_tick_ms=pFrmSlave->tick_ms;
+  pSlave->cmd=pFrmSlave->cmd();
+  pSlave->setOn(pFrmSlave->on());
 }
 
 bool Master::OnFrameReceive(FramePump *pump)
 {
-  log("Pompe");
+  Pump *pmp=list.getPump();
+  if ( (pmp!=nullptr) && (pmp->addr==pump->addr) )
+  {
+    log("Pompe");
+
+    fillSlaveObjFromSlaveFrame(pmp,pump);
+    pmp->setCommOk(true);
+    pmp->setFlow(pump->flow);
+
+    return true;
+  }
+
   return false;
 }
 
 bool Master::OnFrameReceive(FrameOya *oya)
 {
-  log("Oya");
+  Oya *pObjOya=list.getOya(oya->addr);
+  if ( pObjOya != nullptr )
+  {
+    log("Oya");
+
+    fillSlaveObjFromSlaveFrame(pObjOya,oya);
+    pObjOya->setCommOk(true);
+    pObjOya->setHigh(oya->high());
+    pObjOya->setLow(oya->low());
+
+    return true;
+  }
+
   return false;
 }
    
-bool Master::OnFrameReceive(FramePong *pong)
+bool Master::OnFrameReceive(FramePong *)
 {
   log("pong");
   return false;
@@ -77,6 +131,7 @@ bool Master::loop(void)
     case OFF:
     {
       nbcycles=0;
+      commands=0;
       list.init_all();
       break;
     }
@@ -115,10 +170,11 @@ bool Master::loop(void)
     {
       if (tmrAnswer.tick()==true)
       {
-        log("tmt");
-
         if (pCurSlave!=nullptr)
-          pCurSlave->comm_ok=false;
+        {
+          pCurSlave->setCommOk(false);
+          log("Tmt slave ",pCurSlave->addr);
+        }
 
         tmrWait.start();
         eState=WAIT;
@@ -131,8 +187,8 @@ bool Master::loop(void)
     {
       if (tmrWait.tick()==true)
       	eState=NEXT;
-        break;
-      }
+      break;
+    }
 
     case NEXT:
     {
@@ -159,6 +215,11 @@ bool Master::loop(void)
       sendBytes(fb.getBuffer(),fb.size());
       eState=IDLE;
       nbcycles++;
+      list.updCycleStats();
+
+      if (flgTrace)
+        log("SYNC");
+
       return true;
     }
   }
@@ -199,4 +260,29 @@ unsigned long Master::cycles(void)
 void Master::setTrace(bool flgEnabled)
 {
   flgTrace=flgEnabled;
+}
+
+SlavesList & Master::getSlavesList()
+{
+  return list;
+}
+
+void Master::set_pump(bool on)
+{
+  if (on==true)
+    commands|=0x02;
+  else
+    commands&=~0x02;
+}
+
+void Master::set_oya(char addr,bool on)
+{
+  if ( (addr>1) && (addr<15) )
+  {
+    unsigned short mask=0x0001 << (1+addr);
+    if (on==true)
+      commands|=mask;
+    else
+      commands&=~mask;
+  }
 }

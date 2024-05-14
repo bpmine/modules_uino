@@ -1,11 +1,19 @@
+/**
+ * @file btn.hpp
+ * @brief Gestion d'un bouton avec filtrage
+ * */
 #ifndef BTN_HEADER_INCLUDED
 #define BTN_HEADER_INCLUDED
 
 #include <arduino.h>
 
-#define FILTER_BTN_SHORT_US		(2000UL)
-#define FILTER_BTN_LONG_US		(4000000UL)
+#define FILTER_BTN_SHORT_US		(2000UL)      ///< Seuil tempo appui court
+#define FILTER_BTN_LONG_US		(4000000UL)   ///< Seuil tempo appui long
 
+/**
+ * @class Btn
+ * @brief Classe de gestion d'un bouton (avec filtrage)
+ * */
 class Btn
 {
   private:
@@ -54,6 +62,9 @@ class Btn
       t0=micros();
     }
 
+    /**
+     * @brief A appeller aussi souvent que possible
+     * */
     void loop(void)
     {
       if (pin<0)
@@ -106,11 +117,19 @@ class Btn
       }
     }
 
+    /**
+     * @brief Indique que le bouton est (actuellement) presse
+     * @return true si le bouton est presse
+     * */
     bool isPressed()
     {
       return filteredState;
     }
 
+    /**
+     * @brief Indique un front montant (retombe a false au prochain appel)
+     * @return true si front montant
+     * */
     bool isRising(void)
     {
       bool ret=risingEdge;
@@ -118,6 +137,10 @@ class Btn
       return ret;
     }
 
+    /**
+     * @brief Indique un front descendant (retombe a false au prochain appel)
+     * @return true si front descendant
+     * */
     bool isFalling(void)
     {
       bool ret=fallingEdge;
@@ -125,6 +148,10 @@ class Btn
       return ret;
     }
 
+    /**
+     * @brief Indique un appui long
+     * @return true si appui long
+     * */
     bool isLongPressed(void)
     {
       return longState;
