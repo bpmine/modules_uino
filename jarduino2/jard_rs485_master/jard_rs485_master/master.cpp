@@ -279,7 +279,7 @@ void Master::set_oya(char addr,bool on)
 {
   if ( (addr>1) && (addr<15) )
   {
-    unsigned short mask=0x0001 << (1+addr);
+    unsigned short mask=0x0001 << (addr);
     if (on==true)
       commands|=mask;
     else
