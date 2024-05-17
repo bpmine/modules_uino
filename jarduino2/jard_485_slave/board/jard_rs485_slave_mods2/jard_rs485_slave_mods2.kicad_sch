@@ -6,7 +6,7 @@
 
   (title_block
     (title "Carte de commande d'un OYA - Esclave RS485")
-    (date "2024-05-04")
+    (date "2024-05-17")
     (rev "F0")
     (company "BPC")
     (comment 1 "Technologie avec modules Arduino / Petite carte")
@@ -18,7 +18,7 @@
   )
 
 
-  (text_box "Version F0:\n\n- Déplacement piste LED trop proche du bord\n- Inversion TX/RX"
+  (text_box "Version F0:\n\n- Déplacement piste LED trop proche du bord\n- Inversion TX/RX\n- Agrandissement pastilles ModRS485"
     (at 33.02 165.1 0) (size 66.04 13.97)
     (stroke (width 0) (type default))
     (fill (type none))
