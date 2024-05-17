@@ -27,6 +27,10 @@ static void _help(void)
   Serial.println("  - trace on/off");
   Serial.println("  - stats");
   Serial.println("  - razerrs");
+  Serial.println("  - setdate dd/mm/yyyy");
+  Serial.println("  - settime hh:mm:ss");
+  Serial.println("  - time");
+  Serial.println("  - confslaves");
 }
 
 static bool _parseOnOff(const char *params,bool def)
@@ -214,6 +218,119 @@ static void _term_exec_razerrs(void)
   Serial.println("RAZ errors...");
 }
 
+static void _term_exec_time(void)
+{
+  int year,month,day,hour,minute,second,dow;
+
+  const char *dys[]={
+      "Lundi",
+      "Mardi"
+      "Mercredi"
+      "Jeudi"
+      "Vendredi"
+      "Samedi",
+      "Dimanche"
+  };
+
+  app_get_date_hour(day, month, year, hour, minute, second,dow);
+
+  if ( (dow<0) || (dow>6) )
+    dow=0;
+
+  char tmp[50];
+  sprintf(tmp,"%s %02d/%02d/%02d %02d:%02d:%02d",dys[dow],day,month,year,hour,minute,second);
+  Serial.println(tmp);
+}
+
+static void _term_exec_settime(const char *strParams)
+{
+  int hour,minute,second;
+  if ( sscanf(strParams,"%02d:%02d:%02d",&hour,&minute,&second)==3 )
+  {
+    app_set_hour(hour, minute, second);
+    _term_exec_time();
+  }
+  else
+  {
+    Serial.println("Paramètre incorrect!");
+  }
+}
+
+static void _term_exec_setdate(const char *strParams)
+{
+  int day,month,year;
+  if ( sscanf(strParams,"%02d/%02d/%02d",&day,&month,&year)==3 )
+  {
+    app_set_date(day,month,year);
+    _term_exec_time();
+  }
+  else
+  {
+    Serial.println("Paramètre incorrect!");
+  }
+}
+
+static void _term_exec_config_slaves(const char *strParams)
+{
+  if (strParams==NULL)
+  {
+    unsigned short mask=app_get_slaves_config();
+    Serial.print("Config esclaves: ");
+    Serial.println(mask,HEX);
+
+    for (int i=0;i<14;i++)
+    {
+      unsigned short m=1<<i;
+      if ((mask&m)==m)
+      {
+        if (i==0)
+        {
+          Serial.println("  - POMPE @1");
+        }
+        else
+        {
+          Serial.print("  - OYA   @");
+          Serial.println(i+1,HEX);
+          delay(5);
+          yield();
+        }
+      }
+    }
+  }
+  else
+  {
+    int mask;
+    int addr;
+    char cmd[10];
+    if ( ( sscanf(strParams,"%3s %1X",cmd,&addr)==2 ) && (addr>0) && (addr<15) )
+    {
+      if (strcmp(cmd,"add")==0)
+      {
+        unsigned short mask=app_get_slaves_config();
+        mask|=( 1<< (addr-1) );
+        app_set_slaves_config(mask);
+        _term_exec_config_slaves(NULL);
+      }
+      else if (strcmp(cmd,"rm")==0)
+      {
+        unsigned short mask=app_get_slaves_config();
+        mask&=~( 1<< (addr-1) );
+        app_set_slaves_config(mask);
+        _term_exec_config_slaves(NULL);
+      }
+    }
+    else if ( sscanf(strParams,"%X",&mask)==1 )
+    {
+      app_set_slaves_config((unsigned short)mask);
+      _term_exec_config_slaves(NULL);
+    }
+    else
+    {
+      Serial.println("Parametres incorrects");
+    }
+  }
+}
+
 static void _execCmd(const char *strCmd,const char *strParams)
 {
   if (strcmp(strCmd,"test")==0)
@@ -255,6 +372,22 @@ static void _execCmd(const char *strCmd,const char *strParams)
   else if (strcmp(strCmd,"razerrs")==0)
   {
     _term_exec_razerrs();
+  }
+  else if (strcmp(strCmd,"time")==0)
+  {
+    _term_exec_time();
+  }
+  else if (strcmp(strCmd,"setdate")==0)
+  {
+    _term_exec_setdate(strParams);
+  }
+  else if (strcmp(strCmd,"settime")==0)
+  {
+    _term_exec_settime(strParams);
+  }
+  else if (strcmp(strCmd,"confslaves")==0)
+  {
+    _term_exec_config_slaves(strParams);
   }
 }
 

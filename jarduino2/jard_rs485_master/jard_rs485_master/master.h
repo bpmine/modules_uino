@@ -129,7 +129,13 @@ class Master : public IFrameReceiver
      * @brief Active les esclaves souhaités (Bit0 = Esclave @1, Bit1 = Esclave @2, ... Bit14 = Esclave @14)
      * @param[in] ens Bits d'activation des esclaves
      * */
-    void config_slaves(unsigned short ens);
+    void set_config_slaves(unsigned short ens);
+
+    /**
+     * @brief Retourne la configuration des esclaves
+     * @return (Bit0 = Esclave @1, Bit1 = Esclave @2, ... Bit14 = Esclave @14)
+     * */
+    unsigned short get_config_slaves(void);
 
     /**
      * @brief Commande les esclaves souhaités (Bit0 = Esclave @1, Bit1 = Esclave @2, ... Bit14 = Esclave @14)

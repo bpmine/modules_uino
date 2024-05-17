@@ -13,7 +13,7 @@
 
 //#define INIT_AND_SET_ADDR
 #ifdef INIT_AND_SET_ADDR
-  #define INIT_ADDR 2 //'Z'
+  #define INIT_ADDR 'Z'
   #define DEBUG_TRACE
 #endif
 
@@ -162,10 +162,10 @@ void setup()
     {
       digitalWrite(PIN_LED1,HIGH);
       digitalWrite(LED_BUILTIN,HIGH);
-      delay(1000);
+      delay(2000);
       digitalWrite(PIN_LED1,LOW);
       digitalWrite(LED_BUILTIN,LOW);
-      delay(1000);
+      delay(2000);
       yield();
     }
   }

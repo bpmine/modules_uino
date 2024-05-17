@@ -43,9 +43,9 @@ void Master::start_cycle(void)
   }
 }
 
-void Master::config_slaves(unsigned short ens)
+void Master::set_config_slaves(unsigned short ens)
 {
-  list.config_slaves(ens&(0x2FFF));
+  list.config_slaves(ens&(0x3FFF));
 }
 
 void Master::set_commands(unsigned short cmds)
@@ -285,4 +285,9 @@ void Master::set_oya(char addr,bool on)
     else
       commands&=~mask;
   }
+}
+
+unsigned short Master::get_config_slaves(void)
+{
+  return list.enabled_slaves();
 }

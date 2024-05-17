@@ -4,7 +4,7 @@
 
 #define PIN_CPT_LOW       (2)
 #define PIN_CPT_HIGH      (3)
-#define PIN_CPT_FLOW      (4)
+#define PIN_CPT_FLOW      (2)
 #define PIN_TX_EN         (6)
 #define PIN_CMD_EV        (7)
 #define PIN_LED           (8)
@@ -16,7 +16,6 @@
 #define PIN_ADDR_A3       (A5)
 #define PIN_ADDR_A4       (A3)
 
-#define DELTA_ALIVE_MS    (4000UL)
 
 DHT dht(PIN_DHT22, DHT22);
 
@@ -65,23 +64,23 @@ void setup()
   digitalWrite(PIN_TX_EN,LOW);
 
   dht.begin();
-  Flow.begin(PIN_CPT_FLOW);
+  Flow.begin();
+  delay(100);
 }
 
 void serialEvent()
 {  
 }
 
-int g_flow_mLpMin=0;
+int g_flow_LpH=0;
 bool g_cpt_low=false;
 bool g_cpt_high=false;
 int g_temp=0;
 int g_hum=0;
 
+int cnt=0;
 void loop() 
-{  
-  Serial.println("____________________");
-
+{    
    float tmp = dht.readHumidity(); 
    if (isnan(tmp))
      g_hum=-1;
@@ -94,15 +93,23 @@ void loop()
    else
      g_temp=trunc(tmp);
 
+  Flow.start();
+  for (int i=0;i<2500;i++)
+  {
+    Flow.tick();
+    delay(1);
+  } 
+
+  Serial.println("____________________");
    Serial.print("Temperature : ");
    Serial.print(g_temp);
    Serial.println("°C");
    
    Serial.print("Humidite    : ");
    Serial.print(g_hum);
-   Serial.println("%");
-   
+   Serial.println("%");   
 
+  
    unsigned char addr=0;
    if (digitalRead(PIN_ADDR_A1)==LOW)
     addr|=0x01;
@@ -116,19 +123,22 @@ void loop()
    Serial.print("Adresse     : ");
    Serial.println(addr);   
 
-   delay(100);
-
+  for (int i=0;i<100;i++)
+  {
+    Flow.tick();
+    delay(1);
+  }
+  
    unsigned long v=analogRead(PIN_MES_V);
    v=v*1200/669;
    Serial.print("Tension     : ");
    Serial.print((float)((float)v/100.0));
    Serial.println("V");
 
-   Flow.tick();
-   g_flow_mLpMin=Flow.getFlow();
+   g_flow_LpH=Flow.getFlow();
    Serial.print("Flow        : ");
-   Serial.print(g_flow_mLpMin);   
-   Serial.println("L/min");   
+   Serial.print(g_flow_LpH);   
+   Serial.println("L/H");   
    
    g_cpt_low=digitalRead(PIN_CPT_LOW)==HIGH?false:true;
    Serial.print("Low         : ");
@@ -138,7 +148,5 @@ void loop()
    Serial.println(g_cpt_high);   
 
    digitalWrite(PIN_CMD_EV,!digitalRead(PIN_CMD_EV));
-   
-   delay(2000);
-    
+
 }
