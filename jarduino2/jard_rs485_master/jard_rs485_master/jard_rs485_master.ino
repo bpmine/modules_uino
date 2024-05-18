@@ -36,7 +36,7 @@ void setup()
   Serial.println("Boot");
 
   Master.begin(&Serial1, PIN_TX_EN);
-  Master.set_config_slaves(0xFFFF);
+  Master.set_config_slaves(0x003F);
 
   tmrCycle.start();
 

@@ -12,6 +12,7 @@ class Slave
     bool on;		  ///< Etat reel de l'esclave ON/OFF
     int temp_dg;	///< Temperature remontee
     int hum_pc;		///< Humidite remontee
+    int voltage;  ///< Tension
 
     bool comm_ok;	///< Communication ok (ou pas)
     

@@ -111,6 +111,8 @@ static void _term_exec_pump(const char *strParams)
         Serial.print("  - hum  : ");
         Serial.print(p->hum_pc);
         Serial.println("%");
+        Serial.print("  - voltage    : ");
+        Serial.println(p->voltage);
         Serial.print("  - total s    : ");
         Serial.print(p->total_slave_on_s);
         Serial.println("s");
@@ -145,16 +147,19 @@ static void _term_exec_oyas(void)
 
       if (pOya->comm_ok==true)
       {
-        Serial.print(pOya->on==true?" on":" off");
-        Serial.print(pOya->high==true?"":" high");
-        Serial.print(pOya->low==true?"":" low");
-        Serial.print(" temp: ");
-        Serial.print(pOya->temp_dg);
-        Serial.print("°C");
-        Serial.print(" hum: ");
-        Serial.print(pOya->hum_pc);
-        Serial.print("% ");
-        Serial.println("");
+        char info[200];
+        sprintf(info," %-3s %-4s %-4s t:%3d°C h:%3d%% v:%u ton:%us tick:%ums",
+                pOya->on==true?"on":"off",
+                pOya->low==true?"":"low",
+                pOya->high==true?"":"high",
+                pOya->temp_dg,
+                pOya->hum_pc,
+                pOya->voltage,
+                pOya->total_slave_on_s,
+                pOya->last_slave_tick_ms
+                );
+
+        Serial.println(info);
       }
       else
       {

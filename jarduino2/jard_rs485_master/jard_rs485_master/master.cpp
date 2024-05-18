@@ -74,6 +74,7 @@ void Master::fillSlaveObjFromSlaveFrame(Slave *pSlave,FrameSlave *pFrmSlave)
 {
   pSlave->hum_pc=pFrmSlave->hum;
   pSlave->temp_dg=pFrmSlave->temp;
+  pSlave->voltage=pFrmSlave->voltage;
   pSlave->total_slave_on_s=pFrmSlave->total_time_s;
   pSlave->total_slave_errs=pFrmSlave->total_errs;
   pSlave->last_slave_tick_ms=pFrmSlave->tick_ms;
