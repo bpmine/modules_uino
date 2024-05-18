@@ -72,10 +72,10 @@ void setup()
   digitalWrite(PIN_CMD_EV,LOW);
   pinMode(PIN_LED1,OUTPUT);
   digitalWrite(PIN_LED1,LOW);
-  //pinMode(PIN_DHT22,OUTPUT);
 
-  pinMode(PIN_CPT_LVL_LOW,INPUT);
-  pinMode(PIN_CPT_LVL_HIGH,INPUT);
+  /// @warning Les deux entrées LOW/HIGH n'ont pas de pullup externe sur les cartes Rev Ex. Donc il les faut en interne
+  pinMode(PIN_CPT_LVL_LOW,INPUT_PULLUP);
+  pinMode(PIN_CPT_LVL_HIGH,INPUT_PULLUP);
   pinMode(PIN_CPT_FLOW,INPUT);
 
   pinMode(PIN_MES_V,INPUT);
