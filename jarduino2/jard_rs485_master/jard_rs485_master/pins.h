@@ -1,7 +1,11 @@
 /**
  * @file pins.h
+ *
  * @brief Definition des broches de la carte Master RS485
-*/
+ *
+ * Serial2: Wifi
+ * Serial3: Log
+**/
 #ifndef PINS_HEADER_INCLUDED
 #define PINS_HEADER_INCLUDED
 

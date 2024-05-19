@@ -1,3 +1,8 @@
+/**
+ * @file jard_rs485_master.ino
+ *
+ * @brief Programme de gestion du systeme des OYAs
+ **/
 #include "masterarduino.hpp"
 #include "pins.h"
 #include "timer.h"
@@ -46,7 +51,7 @@ void setup()
   //digitalWrite(PIN_PWR_ON,HIGH);
 
   //Master.set_commands(0x01);
-  Comm.begin(&Serial3);
+  Comm.begin(&Serial2);
 
   manager_init();
 } 

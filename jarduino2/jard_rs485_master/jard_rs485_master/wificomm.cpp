@@ -9,6 +9,7 @@
 
 #include "api.h"
 #include "slaves.hpp"
+#include "pins.h"
 
 #define COMM_SOF 1
 #define COMM_EOF 2
@@ -27,7 +28,11 @@ void WifiComm::begin(HardwareSerial* pSerial)
 {
   pStr=pSerial;
   if (pStr!=nullptr)
+  {
     pStr->begin(9600);
+    digitalWrite(PIN_PWR_WIFI,HIGH);
+    digitalWrite(PIN_PWR_WIFI_INV,LOW);
+  }
 
   pos=0;
   flgActive=false;
@@ -40,6 +45,7 @@ void WifiComm::pubMasterInfo(void)
   StaticJsonDocument<150> doc;
 
   doc["type"]="master";
+  doc["config_slaves"]=api_get_slaves_config();
 
   JsonArray list = doc.createNestedArray("slaves");
   for (int i=0;i<15;i++)
@@ -127,7 +133,46 @@ void WifiComm::execCommands(unsigned short cmds)
   StaticJsonDocument<150> doc;
   doc["type"]="cmd";
   doc["cmds"]=cmds;
-  doc["res"]="OK";
+  doc["res"]=true;
+
+  unsigned short ons=0;
+  unsigned short comms_ok=0;
+  Pump *pump=api_get_pump();
+  if (pump!=nullptr)
+  {
+    if (pump->on==true)
+      ons|=0x01;
+    if (pump->comm_ok==true)
+      comms_ok|=0x01;
+    doc["flow"]=pump->flow;
+  }
+
+  int pos;
+  unsigned short lows=0;
+  unsigned short highs=0;
+  Oya *oya=api_find_first_oya(pos);
+  while (oya!=nullptr)
+  {
+    unsigned short mask=1 << (oya->addr);
+    if (oya->on==true)
+      ons|=mask;
+
+    if (oya->low==true)
+      lows|=mask;
+
+    if (oya->high==true)
+      highs|=mask;
+
+    if (oya->comm_ok==true)
+      comms_ok|=mask;
+
+    oya=api_find_next_oya(pos);
+  }
+  doc["ons"]=ons;
+  doc["lows"]=lows;
+  doc["highs"]=highs;
+  doc["comms_ok"]=comms_ok;
+  doc["config_slaves"]=api_get_slaves_config();
 
   char jsonOutput[150];
   serializeJson(doc, jsonOutput);
@@ -135,6 +180,9 @@ void WifiComm::execCommands(unsigned short cmds)
   pStr->print("\x01");
   pStr->print(jsonOutput);
   pStr->print("\x02");
+
+  flgActive=true;
+  tmrComms.start();
 }
 
 bool WifiComm::isActive(void)
@@ -193,11 +241,10 @@ void WifiComm::loop(void)
             return;
           }
 
-          if (strcmp(doc["req"],"test")==0)
+          if (strcmp(doc["req"],"cmds")==0)
           {
-            pStr->print("\x01");
-            pStr->print("OK");
-            pStr->print("\x02");
+            unsigned short cmds=doc["cmds"];
+            execCommands(cmds);
           }
           else if (strcmp(doc["req"],"master")==0)
           {
@@ -211,6 +258,12 @@ void WifiComm::loop(void)
           {
             int addr=doc["addr"];
             pubOyaInfo(addr);
+          }
+          else if (strcmp(doc["req"],"test")==0)
+          {
+            pStr->print("\x01");
+            pStr->print("{\"type\":\"test\",\"res\":\"true\"}");
+            pStr->print("\x02");
           }
         }
       }

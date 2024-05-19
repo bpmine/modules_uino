@@ -18,6 +18,7 @@ extern Oya *api_get_oya(int addr);
 
 extern void api_set_pompe(bool on);
 extern void api_set_oya(char addr,bool on);
+extern void api_set_commands(unsigned short cmds);
 
 extern void api_get_date_hour(int &day,int &month,int &year,int &hour,int &minute,int &second);
 extern void api_get_date_hour(int &day,int &month,int &year,int &hour,int &minute,int &second,int &dow);

@@ -53,6 +53,11 @@ void api_set_oya(char addr,bool on)
   Master.set_oya(addr, on);
 }
 
+void api_set_commands(unsigned short cmds)
+{
+  Master.set_commands(cmds);
+}
+
 void api_get_date_hour(int &day,int &month,int &year,int &hour,int &minute,int &second,int &dow)
 {
   DateTime now = _rtc.now();

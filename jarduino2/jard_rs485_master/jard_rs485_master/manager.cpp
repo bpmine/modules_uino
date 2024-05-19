@@ -35,6 +35,7 @@ class StateWifiComm:public StateGestion
 {
     void onEnter() override
     {
+      Serial.println("Enter");
       api_master(true);
     }
 
@@ -45,12 +46,13 @@ class StateWifiComm:public StateGestion
       else
       {
         unsigned short cmds=Comm.getCommands();
-
+        api_set_commands(cmds);
       }
     }
 
     void onLeave() override
     {
+      Serial.println("Leave");
       api_master(false);
     }
 };
@@ -61,6 +63,7 @@ State * StateGestion::stWifiComm = new StateWifiComm();
 
 void manager_init(void)
 {
+  StateGestion::_machine.setState(StateGestion::stIdle);
 }
 
 void manager_run(void)

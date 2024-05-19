@@ -1,6 +1,10 @@
 states=[
     'Idle',
-    'WifiComm'
+    'WaitMaster',
+    'WaitPump',
+    'WaitSlave',
+    'WaitNextSlave',
+    'SendCmd'
 ]
 
 code=''
