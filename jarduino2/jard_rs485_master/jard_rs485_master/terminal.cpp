@@ -7,8 +7,9 @@
 #ifndef TERMINAL_HEADER_INCLUDED
 #define TERMINAL_HEADER_INCLUDED
 
-#include "app.h"
 #include <arduino.h>
+
+#include "api.h"
 #include "master.h"
 
 char _bufferTerm[200];
@@ -65,19 +66,19 @@ static void _term_exec_oya(const char *strParams)
   }
   
   int pos=0;
-  Oya * p=app_term_find_first_oya(pos);
+  Oya * p=api_find_first_oya(pos);
   while (p!=NULL)
   {
     if (p->addr==addr)
     {
       char tmp[10];
       bool on=_parseOnOff(onoff,false);
-      app_set_oya(addr, on);
+      api_set_oya(addr, on);
       sprintf(tmp,"Oya %01X",addr);
       _OnOffAns(tmp,on);      
       return;
     }
-    p=app_term_find_next_oya(pos);
+    p=api_find_next_oya(pos);
   }
   
   Serial.println("Oya non trouvé!");
@@ -85,7 +86,7 @@ static void _term_exec_oya(const char *strParams)
 
 static void _term_exec_pump(const char *strParams)
 {
-    Pump *p=app_term_get_pump();
+    Pump *p=api_get_pump();
     if (p==nullptr)
     {
       Serial.println("Erreur interne: pump est NULL");
@@ -129,7 +130,7 @@ static void _term_exec_pump(const char *strParams)
     else
     {
       bool on=_parseOnOff(strParams,false);
-      app_set_pompe(on);
+      api_set_pompe(on);
       _OnOffAns("Pompe",on);
     }
 }
@@ -138,7 +139,7 @@ static void _term_exec_oyas(void)
 {
     int pos=0;
     Serial.println("__________");
-    Oya *pOya=app_term_find_first_oya(pos);
+    Oya *pOya=api_find_first_oya(pos);
     while (pOya!=NULL)
     {
       char tmp[12];
@@ -166,7 +167,7 @@ static void _term_exec_oyas(void)
         Serial.println("NO COMM");
       }
 
-      pOya=app_term_find_next_oya(pos);
+      pOya=api_find_next_oya(pos);
     }
     Serial.println();
 }
@@ -195,14 +196,14 @@ static void _term_exec_stats(void)
   Serial.println("___________________");
   Serial.println("Statistiques:");
   int pos=0;
-  Oya *pOya=app_term_find_first_oya(pos);
+  Oya *pOya=api_find_first_oya(pos);
   while (pOya!=NULL)
   {
     _term_disp_slave_stats(pOya);
-    pOya=app_term_find_next_oya(pos);
+    pOya=api_find_next_oya(pos);
   }
 
-  Pump *pPump=app_term_get_pump();
+  Pump *pPump=api_get_pump();
   if (pPump!=NULL)
   _term_disp_slave_stats(pPump);
 }
@@ -210,13 +211,13 @@ static void _term_exec_stats(void)
 static void _term_exec_razerrs(void)
 {
   int pos=0;
-  Oya *pOya=app_term_find_first_oya(pos);
+  Oya *pOya=api_find_first_oya(pos);
   while (pOya!=NULL)
   {
     pOya->razErrors();
-    pOya=app_term_find_next_oya(pos);
+    pOya=api_find_next_oya(pos);
   }
-  Pump *pPump=app_term_get_pump();
+  Pump *pPump=api_get_pump();
   if (pPump!=NULL)
     pPump->razErrors();
   
@@ -237,7 +238,7 @@ static void _term_exec_time(void)
       "Dimanche"
   };
 
-  app_get_date_hour(day, month, year, hour, minute, second,dow);
+  api_get_date_hour(day, month, year, hour, minute, second,dow);
 
   if ( (dow<0) || (dow>6) )
     dow=0;
@@ -252,7 +253,7 @@ static void _term_exec_settime(const char *strParams)
   int hour,minute,second;
   if ( sscanf(strParams,"%02d:%02d:%02d",&hour,&minute,&second)==3 )
   {
-    app_set_hour(hour, minute, second);
+    api_set_hour(hour, minute, second);
     _term_exec_time();
   }
   else
@@ -266,7 +267,7 @@ static void _term_exec_setdate(const char *strParams)
   int day,month,year;
   if ( sscanf(strParams,"%02d/%02d/%02d",&day,&month,&year)==3 )
   {
-    app_set_date(day,month,year);
+    api_set_date(day,month,year);
     _term_exec_time();
   }
   else
@@ -279,7 +280,7 @@ static void _term_exec_config_slaves(const char *strParams)
 {
   if (strParams==NULL)
   {
-    unsigned short mask=app_get_slaves_config();
+    unsigned short mask=api_get_slaves_config();
     Serial.print("Config esclaves: ");
     Serial.println(mask,HEX);
 
@@ -311,22 +312,22 @@ static void _term_exec_config_slaves(const char *strParams)
     {
       if (strcmp(cmd,"add")==0)
       {
-        unsigned short mask=app_get_slaves_config();
+        unsigned short mask=api_get_slaves_config();
         mask|=( 1<< (addr-1) );
-        app_set_slaves_config(mask);
+        api_set_slaves_config(mask);
         _term_exec_config_slaves(NULL);
       }
       else if (strcmp(cmd,"rm")==0)
       {
-        unsigned short mask=app_get_slaves_config();
+        unsigned short mask=api_get_slaves_config();
         mask&=~( 1<< (addr-1) );
-        app_set_slaves_config(mask);
+        api_set_slaves_config(mask);
         _term_exec_config_slaves(NULL);
       }
     }
     else if ( sscanf(strParams,"%X",&mask)==1 )
     {
-      app_set_slaves_config((unsigned short)mask);
+      api_set_slaves_config((unsigned short)mask);
       _term_exec_config_slaves(NULL);
     }
     else
@@ -361,13 +362,13 @@ static void _execCmd(const char *strCmd,const char *strParams)
   else if (strcmp(strCmd,"master")==0)
   {
     bool on=_parseOnOff(strParams,false);
-    app_term_master(on);
+    api_master(on);
     _OnOffAns("Maitre 485",on);
   }
   else if (strcmp(strCmd,"trace")==0)
   {
     bool on=_parseOnOff(strParams,false);
-    app_term_trace(on);
+    api_trace(on);
     _OnOffAns("Traces",on);
   }
   else if (strcmp(strCmd,"stats")==0)

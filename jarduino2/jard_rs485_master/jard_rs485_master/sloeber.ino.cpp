@@ -2,12 +2,14 @@
 //This is a automatic generated file
 //Please do not modify this file
 //If you touch this file your change will be overwritten during the next build
-//This file has been generated on 2024-05-15 23:01:11
+//This file has been generated on 2024-05-19 12:06:57
 
 #include "Arduino.h"
 #include "masterarduino.hpp"
 #include "pins.h"
 #include "timer.h"
+#include "wificomm.h"
+#include "manager.h"
 
 void setup()  ;
 void loop()  ;

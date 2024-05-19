@@ -1,6 +1,8 @@
 #include "masterarduino.hpp"
 #include "pins.h"
 #include "timer.h"
+#include "wificomm.h"
+#include "manager.h"
 
 Timer tmrCycle(2000,false);
 extern MasterArduino Master;
@@ -44,6 +46,9 @@ void setup()
   //digitalWrite(PIN_PWR_ON,HIGH);
 
   //Master.set_commands(0x01);
+  Comm.begin(&Serial3);
+
+  manager_init();
 } 
 
 void loop() 
@@ -56,4 +61,8 @@ void loop()
   if (Master.loop()==true)
   {
   }
+
+  Comm.loop();
+
+  manager_run();
 }
