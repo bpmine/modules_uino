@@ -124,16 +124,25 @@ void WifiComm::pubOyaInfo(int addr)
   pStr->print("\x02");
 }
 
-void WifiComm::execCommands(unsigned short cmds)
+void WifiComm::execCommands(unsigned short cmds,bool active)
 {
   tmrComms.start();
-  commands=cmds;
-  flgActive=true;
 
-  StaticJsonDocument<150> doc;
+  if (active==true)
+  {
+    flgActive=true;
+    commands=cmds;
+  }
+  else
+  {
+    flgActive=false;
+    commands=0;
+  }
+
+  static StaticJsonDocument<200> doc;
   doc["type"]="cmd";
   doc["cmds"]=cmds;
-  doc["res"]=true;
+  doc["ctrl"]=active;
 
   unsigned short ons=0;
   unsigned short comms_ok=0;
@@ -173,16 +182,25 @@ void WifiComm::execCommands(unsigned short cmds)
   doc["highs"]=highs;
   doc["comms_ok"]=comms_ok;
   doc["config_slaves"]=api_get_slaves_config();
+  char dteIso[25];
+  int year,month,day,hour,minute,second;
+  api_get_date_hour(day, month, year, hour, minute, second);
+  sprintf(dteIso,"%02d/%02d/%04dT%02d:%02d:%02dZ",
+      day,
+      month,
+      year,
+      hour,
+      minute,
+      second
+      );
+  doc["date"]=dteIso;
 
-  char jsonOutput[150];
-  serializeJson(doc, jsonOutput);
+  static char jsonOutput[200];
+  serializeJson(doc, jsonOutput,200);
 
   pStr->print("\x01");
-  pStr->print(jsonOutput);
+  pStr->write(jsonOutput);
   pStr->print("\x02");
-
-  flgActive=true;
-  tmrComms.start();
 }
 
 bool WifiComm::isActive(void)
@@ -244,7 +262,8 @@ void WifiComm::loop(void)
           if (strcmp(doc["req"],"cmds")==0)
           {
             unsigned short cmds=doc["cmds"];
-            execCommands(cmds);
+            bool ctrl=doc["ctrl"];
+            execCommands(cmds,ctrl);
           }
           else if (strcmp(doc["req"],"master")==0)
           {

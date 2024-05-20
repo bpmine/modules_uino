@@ -25,7 +25,7 @@ class WifiComm
     void pubPumpInfo(void);
     void pubOyaInfo(int addr);
 
-    void execCommands(unsigned short cmds);
+    void execCommands(unsigned short cmds,bool ctrl);
 
   public:
     WifiComm();
