@@ -140,7 +140,7 @@ void WifiComm::execCommands(unsigned short cmds,bool active)
   }
 
   static StaticJsonDocument<200> doc;
-  doc["type"]="cmd";
+  doc["type"]="cmds";
   doc["cmds"]=cmds;
   doc["ctrl"]=active;
 

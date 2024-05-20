@@ -4,6 +4,7 @@
 #include <ESP8266mDNS.h>
 #include <WiFiUdp.h>
 #include <string.h>
+#include <EspMQTTClient.h>
 
 #include <uri/UriBraces.h>
 
@@ -11,15 +12,30 @@
 
 #include "wifi_code.h"
 #include "wificomm.h"
+#include "timer.h"
 
-#define VERSION "V0.3"
+#define VERSION "V0.0"
 //#define MODE_SIMU
-#define MODE_AP
-//#define USE_OTA
+//#define MODE_AP
+//#define MQTT_TRACE_ON
 
-#ifdef USE_OTA
-  #include <ArduinoOTA.h>
+#define NODE_MASTER_BARBEC
+//#define NODE_MASTER_REDUIT
+
+#ifdef NODE_TEST
+  char NAME[]="test";
 #endif
+#ifdef NODE_MASTER_BARBEC
+  char NAME[]="barbec";
+#endif
+#ifdef NODE_MASTER_REDUIT
+  char NAME[]="reduit";
+#endif
+
+#define TOPIC_PREFIX  "/oyas"
+#define TOPIC_CMD     "cmd"
+#define TOPIC_DATA    "data"
+#define TOPIC_LOG     "log"
 
 #ifdef MODE_AP
   const char ssid[] = "Master";
@@ -29,48 +45,64 @@
   IPAddress gateway(192,168,0,1);
   IPAddress subnet(255,255,255,0);  
 #else
-  const char* ssid = STASSID;      ///< Voir le fichier wifi_code.h
-  const char* password = STAPSK;    ///< Voir le fichier wifi_code.h
+  const char* ssid = WIFI_ID;      ///< Voir le fichier wifi_code.h
+  const char* password = WIFI_PWD; ///< Voir le fichier wifi_code.h
 #endif
 
-ESP8266WebServer server(80);    ///< Instance du serveur HTTP
+Timer tmrBlink=Timer(1000,false);
+bool flgBlink=false;
 
-void handleInfo()
+EspMQTTClient mqttClient(
+  WIFI_ID,
+  WIFI_PWD,
+  MQTT_IP,
+  MQTT_LOGIN,
+  MQTT_PWD,
+  NAME
+);
+
+void setup_mqtt(void)
 {
-  char strList[30];
-    
-  String s="{\n";
-  s+="  \"name\":\"master\",\n";  
-  s+="}\n";
+  static char strName[30];
+  sprintf(strName,"oyas_%s",NAME);
+  mqttClient.setMqttClientName(strName);
   
-  server.send(200, "text/plain", s);
+  mqttClient.enableMQTTPersistence();
+
+  #ifdef MQTT_TRACE_ON
+    mqttClient.enableDebuggingMessages();
+  #endif
 }
 
-char buffer_answer[2000];
-
-void handleState()
+void sendLog(char *strMsg)
 {
-  Comm.getOyasInfo().makeJsonTxt(buffer_answer,2000);
-  server.send(200, "text/plain", buffer_answer);
+  char strTopicLog[50];
+  sprintf(strTopicLog,"%s/%s/%s",TOPIC_PREFIX,TOPIC_LOG,NAME);
+  
+  mqttClient.publish(strTopicLog, strMsg);
 }
 
-/**
- * @brief Controleur WS en cas d'erreur
-*/
-void handleNotFound()
+void sendData(char *strMsg)
 {
-  String message = "File Not Found\n\n";
-  message += "URI: ";
-  message += server.uri();
-  message += "\nMethod: ";
-  message += (server.method() == HTTP_GET) ? "GET" : "POST";
-  message += "\nArguments: ";
-  message += server.args();
-  message += "\n";
-  for (uint8_t i = 0; i < server.args(); i++) {
-    message += " " + server.argName(i) + ": " + server.arg(i) + "\n";
-  }
-  server.send(404, "text/plain", message);
+  char strTopicLog[50];
+  sprintf(strTopicLog,"%s/%s/%s",TOPIC_PREFIX,TOPIC_DATA,NAME);
+  
+  mqttClient.publish(strTopicLog, strMsg);
+}
+
+void onReceiveCmd(const String &payload)
+{
+  Comm.sendMsgToMaster(payload.c_str());
+}
+
+void onConnectionEstablished()
+{
+  char strTopicCmd[50];
+  sprintf(strTopicCmd,"%s/%s/%s",TOPIC_PREFIX,TOPIC_CMD,NAME);
+  mqttClient.subscribe(strTopicCmd,onReceiveCmd);  
+  
+  sendLog("MQTT Connected");
+  //sendData();
 }
 
 void setup(void)
@@ -78,7 +110,7 @@ void setup(void)
   Serial.begin(9600);
   
   pinMode(LED_BUILTIN, OUTPUT);
-  digitalWrite(LED_BUILTIN, LOW);  
+  digitalWrite(LED_BUILTIN, HIGH);  
 
   #ifdef MODE_AP
     if (WiFi.softAP(ssid,password,2,false,8)==false)
@@ -109,18 +141,10 @@ void setup(void)
     Serial.println(WiFi.localIP());
   #endif
 
-  if (MDNS.begin("esp8266")) 
+  /*if (MDNS.begin("esp8266")) 
   {
     //Serial.println("MDNS responder started");
-  }
-
-  server.on(UriBraces("/info"), handleInfo);
-  server.on(UriBraces("/state"), handleState);  
-  server.onNotFound(handleNotFound);
-
-  server.begin();
-  server.enableCORS(true);
-  Serial.println("HTTP server started"); 
+  }*/
 
   for (int i=0;i<10;i++)
   {
@@ -128,7 +152,11 @@ void setup(void)
     yield();
   }
 
+  setup_mqtt();
+
   Comm.begin(&Serial);
+  tmrBlink.start();
+  flgBlink=false;
 }
 
 /**
@@ -136,9 +164,28 @@ void setup(void)
  * */
 void loop()
 {
-  server.handleClient();
-  MDNS.update();
-
+  //MDNS.update();
 
   Comm.loop();
+  mqttClient.loop();
+
+  if (tmrBlink.tick()==true)
+    flgBlink=!flgBlink;
+
+
+  if (Comm.isMqttOk()==false)
+  {
+    digitalWrite(BUILTIN_LED,HIGH);
+  }
+  else
+  {
+    if (Comm.isMasterOk()==false)
+    {
+      digitalWrite(BUILTIN_LED,LOW);
+    }
+    else
+    {
+      digitalWrite(BUILTIN_LED,flgBlink?LOW:HIGH);
+    }
+  }  
 }

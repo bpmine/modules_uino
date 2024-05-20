@@ -2,7 +2,7 @@
 //This is a automatic generated file
 //Please do not modify this file
 //If you touch this file your change will be overwritten during the next build
-//This file has been generated on 2024-05-19 16:01:14
+//This file has been generated on 2024-05-20 15:51:01
 
 #include "Arduino.h"
 #include "masterarduino.hpp"
@@ -10,6 +10,7 @@
 #include "timer.h"
 #include "wificomm.h"
 #include "manager.h"
+#include <FastLED.h>
 
 void setup()  ;
 void loop()  ;

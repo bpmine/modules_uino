@@ -123,7 +123,13 @@ void loop()
           _leds[(unsigned char)oya->addr]=COL_BLACK;
         else
         {
-          CRGB col=oya->high==true?COL_GREEN:oya->low==true?COL_BLUE:COL_RED;
+          CRGB col=COL_RED;
+          if ( (oya->high==true) && (oya->low==false) )
+            col=COL_BLUE;
+          else if ( (oya->high==false) && (oya->low==false) )
+            col=COL_GREEN;
+
+
           if (oya->on==true)
             _leds[(unsigned char)oya->addr]=flgBlink ? col : COL_BLACK;
           else

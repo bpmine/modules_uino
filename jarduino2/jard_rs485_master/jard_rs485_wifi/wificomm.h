@@ -1,41 +1,32 @@
 /**
  * @file wificomm.h
- * @brief EN-TETE - GESTION DE LA COMMUNICATION WIFI
+ * @brief EN-TETE - GESTION DE LA COMMUNICATION WIFI/MAITRE OYA
  **/
 #ifndef COMM_HEADER_INCLUDED
 #define COMM_HEADER_INCLUDED
 
 #define COMM_BUFFER_MAX_SIZE    (255)
-#define TIMEOUT_WIFI_ANSWER_MS  (500)
-#define CYCLE_MS                (5000)
+#define TIMEOUT_MQTT            (8000)
+#define TIMEOUT_MASTER          (800)
 
 #include "timer.h"
-#include "oyas.hpp"
 
 class HardwareSerial;
 class WifiComm
 {
   private:
     HardwareSerial* pStr;
-    OyasInfo curInfos;
-    OyasInfo latchedInfos;
     
     unsigned char buffer[COMM_BUFFER_MAX_SIZE];
     int pos;
+   
+    Timer tmrMqtt= Timer(TIMEOUT_MQTT);
+    Timer tmrMaster= Timer(TIMEOUT_MASTER);
+    bool flgMqtt_ok;
+    bool flgMaster_ok;
 
-    int state;
-    int curAddr;
-
-    unsigned short commands_to_send;
-    unsigned short config_slaves;
-    
-    Timer tmrAnswer= Timer(TIMEOUT_WIFI_ANSWER_MS);
-    Timer tmrCycle= Timer(CYCLE_MS,false);
-    bool flgActive;
-    bool flgCmdActive;
-
-    void cycle_management(void);
-    void recv_management(void);
+    void OnRecvFromMaster(char *msg);
+    void recv_management(void);    
     
   public:
     WifiComm();
@@ -43,9 +34,10 @@ class WifiComm
     void begin(HardwareSerial* pSerial);
     void loop(void);
 
-    void setCommands(unsigned short cmds);
+    void sendMsgToMaster(const char *msg);
 
-    OyasInfo &getOyasInfo(void);
+    bool isMqttOk(void);
+    bool isMasterOk(void);
 };
 
 extern WifiComm Comm;
