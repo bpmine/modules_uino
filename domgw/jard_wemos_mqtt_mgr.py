@@ -90,7 +90,7 @@ class RdWiioSrv(RdApp):
         p.execute()
 
         self.set_app_var('alive',1)
-        self.set_app_var('on',1,None)
+        #self.set_app_var('on',1,None)
 
         self.r.delete('%s.modules' % (self.kApp()))
 
@@ -177,6 +177,10 @@ class RdWiioSrv(RdApp):
             time.sleep(1)
 
             on=self.get_app_var_bool('on')
+            if on==None:
+                on=False
+                self.set_app_var('on',0,None)
+                
             if oldOn!=on:                
                 print("Mise en marche" if on==True else "Arrêt!")
                 oldOn=on
