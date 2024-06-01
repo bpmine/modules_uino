@@ -35,7 +35,6 @@ class SlaveMgr : IFrameReceiver
     }
 
   protected:
-  	int tx_pin;
   	FrameBuilder rxFrame;
   
   	virtual void send(unsigned char *buffer,int size)=0;
@@ -46,7 +45,6 @@ class SlaveMgr : IFrameReceiver
     {
   		flgEndOfCycle=false;
   		addr=0;
-  		tx_pin=0;
   		flgCommOk=false;
   		flgSyncOk=false;
   		flgCmd=false;
@@ -57,12 +55,24 @@ class SlaveMgr : IFrameReceiver
     }
 
     virtual void onSerialEvent(void)=0;
+    virtual void onCmdReceived(bool flgCmd)=0;
 
     bool OnFrameReceive(FrameRazT* pRazT) override
     {
       if (addr==pRazT->addr)
       {
         reset_time();
+        return true;
+      }
+
+      return false;
+    }
+
+    bool OnFrameReceive(FrameRazE* pRazE) override
+    {
+      if (addr==pRazE->addr)
+      {
+        reset_errs();
         return true;
       }
 
@@ -87,82 +97,81 @@ class SlaveMgr : IFrameReceiver
     bool OnFrameReceive(FrameCmd* pFrmCmd) override
     {
     	/// On applique systematiquement les commandes
-		  unsigned short mask = (1<<addr) & (0x7FFE);
+	  unsigned short mask = (1<<addr) & (0x7FFE);
 
-		  if ((pFrmCmd->commands&mask)==mask)
-		  {
-		    flgCmd=true;
-  		}
-  		else
-  		{
-  		  flgCmd=false;
-  		}
+	  if ((pFrmCmd->commands&mask)==mask)
+	  {
+	    flgCmd=true;
+  	  }
+  	  else
+  	  {
+  	    flgCmd=false;
+  	  }
 
-		  tmrCmd.start();
-  		flgCommOk=true;
+	  tmrCmd.start();
+      flgCommOk=true;
+      onCmdReceived(flgCmd);
   
-  		/// On répond une trame si l'adresse de l'esclave est demandee
-      	if (addr==pFrmCmd->addr)
-      	{
-      	  if (addr==1)
-      	  {
-        		FrameBuilder fb;
-        		FramePump pump;
-    
-        		FillInCommonFields(&pump);
-        		pump.flow=g_flow_mLpMin;
-    
-        		fb.build(&pump);
-        		send(fb.getBuffer(),fb.size());
-      	  }
-      	  else if ( (addr>1) && (addr<15) )
-      	  {
-        		FrameBuilder fb;
-        		FrameOya oya;
-    
-        		FillInCommonFields(&oya);
-        		oya.setLow(g_cpt_low).setHigh(g_cpt_high);
-    
-        		fb.build(&oya);
-        		send(fb.getBuffer(),fb.size());
-      	  }
-      	}
-      	/// On finalise le cycle si l'adresse est celle de sync (initialement 'S')
-      	else if (pFrmCmd->addr==ADDR_SYNC)
-      	{
-      	  tmrSync.start();
-      	  flgSyncOk=true;
-      	  flgEndOfCycle=true;
-      	}
-  
-      	return true;
-      }
-
-      virtual void begin(int tx_pin,unsigned char addr)
+  		/// On rï¿½pond une trame si l'adresse de l'esclave est demandee
+      if (addr==pFrmCmd->addr)
       {
-      	this->tx_pin=tx_pin;
+        if (addr==1)
+      	{
+          FrameBuilder fb;
+        	FramePump pump;
+    
+        	FillInCommonFields(&pump);
+        	pump.flow=g_flow_mLpMin;
+    
+        	fb.build(&pump);
+        	send(fb.getBuffer(),fb.size());
+      	}
+      	else if ( (addr>1) && (addr<15) )
+      	{
+        	FrameBuilder fb;
+        	FrameOya oya;
+    
+        	FillInCommonFields(&oya);
+        	oya.setLow(g_cpt_low).setHigh(g_cpt_high);
+    
+        	fb.build(&oya);
+        	send(fb.getBuffer(),fb.size());
+      	}
+    	}
+     	/// On finalise le cycle si l'adresse est celle de sync (initialement 'S')
+     	else if (pFrmCmd->addr==ADDR_SYNC)
+     	{
+     	  tmrSync.start();
+     	  flgSyncOk=true;
+     	  flgEndOfCycle=true;
+     	}
   
-      	if (addr<=15)
-      	  this->addr=addr;
-      	else
-      	  this->addr=0;
-  
-      	flgCommOk=false;
-      	flgSyncOk=false;
-      	flgEndOfCycle=false;
-      	flgCmd=false;
-        rxFrame.setReceiver(this);
-      }
+     	return true;
+    }
 
-      bool loop(void)
+    virtual void begin(unsigned char addr)
+    {
+     	if (addr<=15)
+     	  this->addr=addr;
+     	else
+     	  this->addr=0;
+  
+     	flgCommOk=false;
+     	flgSyncOk=false;
+     	flgEndOfCycle=false;
+     	flgCmd=false;
+      rxFrame.setReceiver(this);
+    }
+
+    bool loop(void)
+    {
+      if (flgSyncOk==true)
       {
-        if (flgSyncOk==true)
+        if (tmrSync.tick()==true)
         {
-          if (tmrSync.tick()==true)
-          {
-            flgSyncOk=false;
-          }
+          flgSyncOk=false;
         }
+      }
 
       	if (flgCommOk==true)
       	{
@@ -179,23 +188,23 @@ class SlaveMgr : IFrameReceiver
       	  return true;
       	}
 
-      	return false;
-      }
+     	return false;
+    }
 
-      bool isAlive(void)
-      {
-      	return flgCommOk;
-      }
+    bool isAlive(void)
+    {
+    	return flgCommOk;
+    }
 
-      bool isSyncOk(void)
-      {
-        return flgSyncOk;
-      }
+    bool isSyncOk(void)
+    {
+      return flgSyncOk;
+    }
 
-      bool isCmd(void)
-      {
-      	return flgCmd;
-      }
+    bool isCmd(void)
+    {
+    	return flgCmd;
+    }
 };
 
 #endif

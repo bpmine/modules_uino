@@ -3,7 +3,7 @@ import time
 import re
 import threading
 
-PORT='COM10'
+PORT='COM21'
 SIMU=False
 
 def calcCS(buff):
@@ -170,5 +170,30 @@ def test_one_slave():
 
     ser.close()
 
+def test_endurance():
+    ser= serial.Serial(port=r"\\.\%s" % PORT,stopbits = 1, bytesize = 8, parity='N',baudrate= 9600,timeout=0.1)
+
+    time.sleep(2)
+    res=ser.read(100)
+    print(res)
+
+    per=0
+    on=False
+    while True:
+        per+=1
+        if per>5:
+            on=not on
+            per=0
+        
+        for i in range(1,15):
+            sendCmd(ser,0x04 if on==True else 0x00,i)
+            
+        sendCmd(ser,0x04 if on==True else 0x00,ord('S'))
+        time.sleep(1)
+
+
+    ser.close()
+    
 #test_recv()
-test_one_slave()
+#test_one_slave()
+test_endurance()

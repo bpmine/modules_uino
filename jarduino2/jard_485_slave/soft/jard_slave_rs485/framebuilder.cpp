@@ -162,6 +162,15 @@ unsigned char* FrameBuilder::build(FrameRazT *pFrameRazT)
   return buffer;
 }
 
+unsigned char* FrameBuilder::build(FrameRazE *pFrameRazE)
+{
+  start_build(MSG_RAZ_ERR);
+  pack_byte(pFrameRazE->addr);
+  end_build();
+
+  return buffer;
+}
+
 unsigned char* FrameBuilder::build(FrameCmd *pFrameCmd)
 {
   start_build(MSG_CMD);
@@ -209,27 +218,36 @@ E_FRAME_ERR FrameBuilder::recv(unsigned char b)
 {
   if ( (pos==0) && (b==SOH) )
   {
+    ///@remark Synchro trame recue, on commence l'analyse de la trame
 		pack(b);
 		return PENDING;
   }
   else if ( (pos==1) || (pos==2) )
   {
-	  if ((b == SOH) || (b == STX))
+    ///@remark Reception de la taille (octets pos 1 et 2)
+	  if (b == SOH)
 	  {
-		  reset();
-		  if (b==SOH)
-			  pack(b);
-
+      ///@remark Recuperation si SOH recu   
+		  reset();        
+			pack(b);
+      return PENDING;
+    }
+    else if (b == STX)
+    {
+      ///@remark Fin en erreur si caractere de fin
+      reset();
 		  return BAD_FRAME;
 	  }
 	  else
 	  {
-		  pack(b);
+      ///@remark Reception taille
+		  pack(b);      
 		  return PENDING;
 	  }
   }
   else if ((pos>2) && (pos< MAX_BUFFER_SIZE))
   {
+    ///@reception du reste (jusqu'au maximum autorise)
   	pack(b);
   	if (b==STX)
   	{
@@ -255,7 +273,7 @@ E_FRAME_ERR FrameBuilder::recv(unsigned char b)
   			}
   			else
   			{ 
-        //Serial.println(cs_calc,HEX)         ;
+          //Serial.println(cs_calc,HEX);
   				bool ret=OnFrameDecode();
   				reset();
   				return ret==true?FRAME_OK:UNHANDLED_FRAME;
@@ -266,7 +284,7 @@ E_FRAME_ERR FrameBuilder::recv(unsigned char b)
   	{
   		reset();
   		pack(b);
-  		return BAD_FRAME;
+  		return PENDING;
   	}
   
   	return PENDING;
@@ -461,6 +479,14 @@ bool FrameBuilder::OnFrameDecode(void)
 
     return pReceiver->OnFrameReceive(&razT);
 	}
+  else if (msg==MSG_RAZ_ERR)
+  {
+    FrameRazE razE;
+    if (read_byte(&razE.addr,cur)==false)
+      return false;
+
+    return pReceiver->OnFrameReceive(&razE);
+  } 
 
   return false;
 }

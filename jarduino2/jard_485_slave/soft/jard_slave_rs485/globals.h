@@ -19,5 +19,6 @@ extern unsigned short g_total_s;
 extern unsigned short g_errors;
 
 extern void reset_time(void);
+extern void reset_errs(void);
 
 #endif

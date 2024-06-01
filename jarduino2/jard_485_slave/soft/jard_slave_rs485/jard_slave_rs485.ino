@@ -1,40 +1,34 @@
-
+/**
+ * @file jard_slave_rs485.ino
+ * @brief Programme d'un esclave RS485 de gestion d'un OYA (ou d'une pompe)
+*/
 #include "client.h"
 #include "globals.h"
 #include "analog.hpp" 
 #include "flow.hpp" 
-#include "eep_slave.hpp" 
+#include "eep_slave.hpp" .
 #include "slavearduino.hpp"
 #include "timer.h"
+#include "pins.h"
 
 #include <DHT.h>
+#include <avr/wdt.h>
 
 //#define DEBUG_TRACE
-
 //#define INIT_AND_SET_ADDR
+//#define ENABLE_WDG
+
 #ifdef INIT_AND_SET_ADDR
-  #define INIT_ADDR 'Z'
+  #define INIT_ADDR 2
+  //#define INIT_ADDR 'Z'
   #define DEBUG_TRACE
 #endif
-
-#define PIN_CPT_LVL_LOW   (2)
-#define PIN_CPT_LVL_HIGH  (3)
-#define PIN_CPT_FLOW      (4)
-#define PIN_TX_EN         (6)
-#define PIN_CMD_EV        (7)
-#define PIN_LED1          (8)
-#define PIN_DHT22         (10)
-
-#define PIN_MES_V         (A1)
-#define PIN_ADDR_A1       (A4)
-#define PIN_ADDR_A2       (A2)
-#define PIN_ADDR_A3       (A5)
-#define PIN_ADDR_A4       (A3)
 
 bool g_on=false;
 bool g_cpt_low=false;
 bool g_cpt_high=false;
 unsigned char g_mes_cv;
+bool g_reset_because_of_wdg=false;
 
 int g_flow_mLpMin=-1;
 char g_temp_dg=0;
@@ -68,6 +62,16 @@ unsigned char getSlaveAddress(void)
 
 void setup() 
 {
+  #ifdef ENABLE_WDG 
+    unsigned char mcusr=MCUSR;
+    if (MCUSR & (1 << WDRF))
+      g_reset_because_of_wdg=true;
+      
+    MCUSR = 0;
+  #endif
+
+  wdt_disable();
+  
   pinMode(PIN_CMD_EV,OUTPUT);
   digitalWrite(PIN_CMD_EV,LOW);
   pinMode(PIN_LED1,OUTPUT);
@@ -91,6 +95,12 @@ void setup()
   pinMode(PIN_TX_EN,OUTPUT);
   digitalWrite(PIN_TX_EN,LOW);
 
+  pinMode(PIN_DGB_SYNC,OUTPUT);
+  digitalWrite(PIN_DGB_SYNC,LOW);
+
+  pinMode(PIN_DGB_CMD,OUTPUT);
+  digitalWrite(PIN_DGB_CMD,LOW);
+
   g_cpt_low=false;
   g_cpt_high=false;
   g_on=false;
@@ -109,17 +119,27 @@ void setup()
   #endif
 
   unsigned char addr=getSlaveAddress();
+  unsigned char laddr=0xFF;
+  do
+  {
+    delay(5);
+    laddr=addr;
+    addr=getSlaveAddress();    
+  } while (addr!=laddr);
+  
   if (addr==0)
   {
     /// Si le selecteur d'adresse est sur '0' (ou non monte), on lit l'adresse en EEPROM
     Eep::readID(&addr);
   }
 
-  if (addr>15)
+  if (addr>=15)
     addr='Z';
 
-  Slave.begin(PIN_TX_EN,addr);
-  g_total_s=Eep::readCounter();
+  Slave.begin(addr);
+
+  g_total_s=Eep::readTotalTimeCtr();
+  g_errors=Eep::readTotalErrCtr();
 
   #ifdef DEBUG_TRACE
     Serial.print("Boot @");
@@ -142,6 +162,14 @@ void setup()
       delay(1);
       yield();
     }
+
+    Serial.print("Errs: ");
+    Serial.println(g_errors);
+    for (int i=0;i<500;i++)
+    {
+      delay(1);
+      yield();
+    }
   #endif
 
   #ifdef INIT_AND_SET_ADDR
@@ -154,10 +182,11 @@ void setup()
     }
   #endif 
 
+  //logSerial
   /// @remark Si adresse Z, on bloque tout en clignotant lentement (1s)
   if (addr=='Z')
   {
-    Serial.println("ESCLAVE BLOQUE!!");
+    //Serial.println("ESCLAVE BLOQUE!!");
     while (1)
     {
       digitalWrite(PIN_LED1,HIGH);
@@ -170,12 +199,25 @@ void setup()
     }
   }
 
+  #ifdef ENABLE_WDG
+    cli();
+    wdt_reset();
+    wdt_enable(WDTO_500MS);
+    sei();
+
+    if (g_reset_because_of_wdg==true)
+    {
+      g_errors++;
+      Eep::writeTotalErrCtr(g_errors);      
+    }
+  #endif
+
   flg200ms=false;
   flg500ms=false;
 
   tmrSec.start();
   tmr500ms.start();
-  tmr200ms.start();
+  tmr200ms.start();  
 }
 
 void serialEvent()
@@ -195,14 +237,20 @@ void loop()
     delay(1000);
     return;
   #endif
-  
+
+  /// @remark Au repos, le niveau doit être high (capteur non branché)
   g_flow_mLpMin=Flow.getFlow();
-  g_cpt_low=digitalRead(PIN_CPT_LVL_LOW)==HIGH?false:true;
-  g_cpt_high=digitalRead(PIN_CPT_LVL_HIGH)==HIGH?false:true;
+  g_cpt_low=digitalRead(PIN_CPT_LVL_LOW)==HIGH?true:false;
+  g_cpt_high=digitalRead(PIN_CPT_LVL_HIGH)==HIGH?true:false;
   anMesV.latch((unsigned short)analogRead(PIN_MES_V));
 
+  digitalWrite(PIN_DGB_SYNC,LOW);
+
+  /// @remark Gestion de la comm de l'esclave. true a chaque fin de cycle / trame "S"
   if (Slave.loop()==true)
   {
+     //digitalWrite(PIN_DGB_SYNC,HIGH);
+     
 	   float tmp = dht.readHumidity();
 	   if ((isnan(tmp)) || (tmp<0) || (tmp>100) )
 	     g_hum_pc=-1;
@@ -220,7 +268,9 @@ void loop()
      if (v>255)
       v=255;
      g_mes_cv=(unsigned char)v;
-  }
+     
+     //digitalWrite(PIN_DGB_SYNC,LOW);
+  }  
 
   if (!Slave.isAlive())
   {
@@ -238,7 +288,7 @@ void loop()
     if (g_on==true)
     {
       g_total_s++;
-      Eep::writeCounter(g_total_s);
+      Eep::writeTotalTimeCtr(g_total_s);
     }
   }
   
@@ -279,10 +329,23 @@ void loop()
     digitalWrite(LED_BUILTIN,LOW);
     digitalWrite(PIN_LED1,LOW);
   }
+
+  //digitalWrite(PIN_DGB_SYNC,!digitalRead(PIN_DGB_SYNC));
+  digitalWrite(PIN_DGB_SYNC,HIGH);
+
+  #ifdef ENABLE_WDG
+    wdt_reset();
+  #endif
 }
 
 void reset_time(void)
 {
   g_total_s=0;
-  Eep::writeCounter(g_total_s);
+  Eep::writeTotalTimeCtr(g_total_s);
+}
+
+void reset_errs(void)
+{
+  g_errors=0;
+  Eep::writeTotalErrCtr(g_errors);
 }
