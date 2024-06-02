@@ -15,7 +15,7 @@
 #define MSG_PING        'i'		///< Demande de ping [@][Id]
 #define MSG_PONG        'y'		///< Reponse de ping (pong) [@][~Id]
 #define MSG_RAZ_TIME    't'		///< RAZ du temps total [@][Id]
-#define MSG_RAZ_ERR		  'z'		///< RAZ du nombre d'erreurs [@][Id]
+#define MSG_RAZ_ERR	    'z'		///< RAZ du nombre d'erreurs [@][Id]
 
 #define ADDR_SYNC		'S'		///< Synchro fin de cycle (pour laisser du temps aux esclave de faire leur traitement)
 

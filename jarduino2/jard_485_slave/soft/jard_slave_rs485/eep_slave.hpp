@@ -6,8 +6,9 @@
 
 #define EEP_ADDR_NODE_M1      (0)
 #define EEP_ADDR_NODE_ADDR    (1)
-#define EEP_ADDR_COUNTER      (2)
-#define EEP_ADDR_NODE_M2      (4)
+#define EEP_ADDR_TIME_CTR     (2)
+#define EEP_ADDR_ERR_CTR      (4)
+#define EEP_ADDR_NODE_M2      (6)
 
 class Eep
 {
@@ -45,7 +46,8 @@ class Eep
       }
 
       writeID('Z');
-      writeCounter(0);
+      writeTotalTimeCtr(0);
+      writeTotalErrCtr(0);
 
       return false;
     }
@@ -57,14 +59,24 @@ class Eep
       EEPROM.write(EEP_ADDR_NODE_M2,0xAA);
     }
 
-    static uint16_t readCounter(void)
+    static uint16_t readTotalTimeCtr(void)
     {
-      return Eep::eep_read_us(EEP_ADDR_COUNTER);
+      return Eep::eep_read_us(EEP_ADDR_TIME_CTR);
     }
 
-    static void writeCounter(uint16_t tps_s)
+    static void writeTotalTimeCtr(uint16_t tps_s)
     {
-      Eep::eep_write_us(EEP_ADDR_COUNTER,tps_s);    
+      Eep::eep_write_us(EEP_ADDR_TIME_CTR,tps_s);    
+    }
+
+    static uint16_t readTotalErrCtr(void)
+    {
+      return Eep::eep_read_us(EEP_ADDR_ERR_CTR);
+    }
+
+    static void writeTotalErrCtr(uint16_t tps_s)
+    {
+      Eep::eep_write_us(EEP_ADDR_ERR_CTR,tps_s);
     }
 };
 

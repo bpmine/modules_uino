@@ -4,23 +4,24 @@
 */
 #include "client.h"
 #include "globals.h"
-#include "analog.hpp" 
-#include "flow.hpp" 
 #include "eep_slave.hpp" .
 #include "slavearduino.hpp"
 #include "timer.h"
 #include "pins.h"
 
-#include <DHT.h>
 #include <avr/wdt.h>
 
 //#define DEBUG_TRACE
 //#define INIT_AND_SET_ADDR
 //#define ENABLE_WDG
 
+#define NO_DHT
+//#define NO_FLOW
+//#define NO_ANALOG
+
 #ifdef INIT_AND_SET_ADDR
-  #define INIT_ADDR 2
-  //#define INIT_ADDR 'Z'
+  //#define INIT_ADDR 2
+  #define INIT_ADDR 'Z'
   #define DEBUG_TRACE
 #endif
 
@@ -36,8 +37,20 @@ char g_hum_pc=0;
 unsigned short g_total_s=0;
 unsigned short g_errors=0;
 
-Analog anMesV;
-DHT dht(PIN_DHT22, DHT22);
+#ifndef NO_DHT
+  #include <DHT.h>
+  DHT dht(PIN_DHT22, DHT22);
+#endif
+
+#ifndef NO_FLOW
+  #include "flow.hpp" 
+#endif
+
+#ifndef NO_ANALOG
+  #include "analog.hpp" 
+  Analog anMesV;
+#endif
+
 Timer tmrSec(1000,false);
 Timer tmr500ms(500,false);
 Timer tmr200ms(200,false);
@@ -109,8 +122,12 @@ void setup()
   g_total_s=0;
   g_errors=0;
 
-  dht.begin();
-  Flow.begin(PIN_CPT_FLOW);
+  #ifndef NO_DHT
+    dht.begin();
+  #endif
+  #ifndef NO_FLOW
+    Flow.begin(PIN_CPT_FLOW);
+  #endif
 
   #ifdef INIT_AND_SET_ADDR
     unsigned char tmp;
@@ -239,39 +256,47 @@ void loop()
   #endif
 
   /// @remark Au repos, le niveau doit être high (capteur non branché)
-  g_flow_mLpMin=Flow.getFlow();
+  #ifndef NO_FLOW
+    g_flow_mLpMin=Flow.getFlow();
+  #endif
   g_cpt_low=digitalRead(PIN_CPT_LVL_LOW)==HIGH?true:false;
   g_cpt_high=digitalRead(PIN_CPT_LVL_HIGH)==HIGH?true:false;
-  anMesV.latch((unsigned short)analogRead(PIN_MES_V));
-
-  digitalWrite(PIN_DGB_SYNC,LOW);
+  #ifndef NO_ANALOG
+    anMesV.latch((unsigned short)analogRead(PIN_MES_V));  
+  #endif  
 
   /// @remark Gestion de la comm de l'esclave. true a chaque fin de cycle / trame "S"
   if (Slave.loop()==true)
   {
      //digitalWrite(PIN_DGB_SYNC,HIGH);
-     
-	   float tmp = dht.readHumidity();
-	   if ((isnan(tmp)) || (tmp<0) || (tmp>100) )
-	     g_hum_pc=-1;
-	   else
-	     g_hum_pc=(char)trunc(tmp);
 
-	   tmp = dht.readTemperature();
-	   if ( (isnan(tmp)) || (tmp<-50) || (tmp>100) )
-	     g_temp_dg=-127;
-	   else
-	     g_temp_dg=(char)trunc(tmp);
+     #ifndef NO_DHT
+  	   float tmp = dht.readHumidity();
+  	   if ((isnan(tmp)) || (tmp<0) || (tmp>100) )
+  	     g_hum_pc=-1;
+  	   else
+  	     g_hum_pc=(char)trunc(tmp);
+  
+  	   tmp = dht.readTemperature();
+  	   if ( (isnan(tmp)) || (tmp<-50) || (tmp>100) )
+  	     g_temp_dg=-127;
+  	   else
+  	     g_temp_dg=(char)trunc(tmp);
+     #endif
 
-	   unsigned long v=(unsigned long)anMesV.get();    
-     v=v*120/669;
-     if (v>255)
-      v=255;
-     g_mes_cv=(unsigned char)v;
+     #ifndef NO_ANALOG
+  	   unsigned long v=(unsigned long)anMesV.get();    
+       v=v*120/669;
+       if (v>255)
+        v=255;
+       g_mes_cv=(unsigned char)v;
+     #endif
      
      //digitalWrite(PIN_DGB_SYNC,LOW);
   }  
 
+  digitalWrite(PIN_DGB_SYNC,LOW);
+  
   if (!Slave.isAlive())
   {
 	  g_on=false;
@@ -281,7 +306,9 @@ void loop()
 	  g_on=Slave.isCmd();
   }
 
-  Flow.tick();
+  #ifndef NO_FLOW
+    Flow.tick();
+  #endif
   
   if (tmrSec.tick()==true)
   {

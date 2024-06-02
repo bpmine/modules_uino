@@ -6,7 +6,7 @@
 #ifndef FRAMEBUILDER_HEADER_INCLUDED
 #define FRAMEBUILDER_HEADER_INCLUDED
 
-#define MAX_BUFFER_SIZE (35)
+#define MAX_BUFFER_SIZE (40)
 
 
 /**
@@ -94,7 +94,7 @@ class FrameBuilder
 	unsigned char* build(FramePing *pFramePing);
 	unsigned char* build(FramePong *pFramePong);
 	unsigned char* build(FrameRazT *pFrameRazT);
-  unsigned char* build(FrameRazE *pFrameRazE);  
+  unsigned char* build(FrameRazE *pFrameRazE);
 	/**
 	* @}
 	*/

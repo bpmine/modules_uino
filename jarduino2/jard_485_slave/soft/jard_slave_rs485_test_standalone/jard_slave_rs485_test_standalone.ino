@@ -1,10 +1,12 @@
 #include <DHT.h>
 
+#define VERY_SIMPLE_TEST
+
 #include "flow.hpp" 
 
 #define PIN_CPT_LOW       (2)
 #define PIN_CPT_HIGH      (3)
-#define PIN_CPT_FLOW      (2)
+#define PIN_CPT_FLOW      (4)
 #define PIN_TX_EN         (6)
 #define PIN_CMD_EV        (7)
 #define PIN_LED           (8)
@@ -15,7 +17,6 @@
 #define PIN_ADDR_A2       (A2)
 #define PIN_ADDR_A3       (A5)
 #define PIN_ADDR_A4       (A3)
-
 
 DHT dht(PIN_DHT22, DHT22);
 
@@ -81,6 +82,53 @@ int g_hum=0;
 int cnt=0;
 void loop() 
 {    
+  #ifdef VERY_SIMPLE_TEST
+    g_cpt_low=digitalRead(PIN_CPT_LOW)==HIGH?false:true;
+    g_cpt_high=digitalRead(PIN_CPT_HIGH)==HIGH?false:true;
+
+
+   bool on=false;
+   if ( (g_cpt_high==true) && (g_cpt_low==true) )
+   {
+    digitalWrite(LED_BUILTIN,HIGH);
+    on=true;
+   }
+   else if ( (g_cpt_high==true) && (g_cpt_low==false) )
+   {
+    digitalWrite(LED_BUILTIN,!digitalRead(LED_BUILTIN));
+    on=true;
+   }
+   else if ( (g_cpt_high==false) && (g_cpt_low==false) )
+   {
+    digitalWrite(LED_BUILTIN,LOW);
+    on=false;
+   }
+   else
+   {
+    on=false;
+    digitalWrite(LED_BUILTIN,LOW);
+   }
+   
+    digitalWrite(PIN_CMD_EV,on? HIGH : LOW );
+
+    cnt++;
+    if (cnt>15)
+    {
+      Serial.println("_______________");
+      Serial.print("Low         : ");
+      Serial.println(g_cpt_low);   
+      Serial.print("High        : ");
+      Serial.println(g_cpt_high);  
+      Serial.print("ON          : ");       
+      Serial.println(on);
+      cnt=0;
+    }    
+
+    delay(200);
+    
+    return;
+  #endif
+  
    float tmp = dht.readHumidity(); 
    if (isnan(tmp))
      g_hum=-1;

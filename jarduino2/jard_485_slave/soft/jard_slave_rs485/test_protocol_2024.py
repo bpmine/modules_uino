@@ -127,8 +127,9 @@ def sendCmd(ser,cmds,addr):
     print('Send %s' % (req))
     ser.write(req)
     msg=ser.read_until(b'\x02')
-    obj=decodeInfo(msg)
-    print(obj)
+    if msg!=b'':
+        obj=decodeInfo(msg)
+        print(obj)
 
 def test_recv():
     ser= serial.Serial(port=r"\\.\%s" % PORT,stopbits = 1, bytesize = 8, parity='N',baudrate= 9600,timeout=0.5)
@@ -171,7 +172,7 @@ def test_one_slave():
     ser.close()
 
 def test_endurance():
-    ser= serial.Serial(port=r"\\.\%s" % PORT,stopbits = 1, bytesize = 8, parity='N',baudrate= 9600,timeout=0.1)
+    ser= serial.Serial(port=r"\\.\%s" % PORT,stopbits = 1, bytesize = 8, parity='N',baudrate= 9600,timeout=0.2)
 
     time.sleep(2)
     res=ser.read(100)
@@ -185,6 +186,8 @@ def test_endurance():
             on=not on
             per=0
         
+        print('_'*60)
+        print('Début cycle (%s):' % on)
         for i in range(1,15):
             sendCmd(ser,0x04 if on==True else 0x00,i)
             
