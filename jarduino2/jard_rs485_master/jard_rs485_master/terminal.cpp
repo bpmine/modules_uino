@@ -151,8 +151,8 @@ static void _term_exec_oyas(void)
         char info[200];
         sprintf(info," %-3s %-4s %-4s t:%3d°C h:%3d%% v:%u ton:%us tick:%ums",
                 pOya->on==true?"on":"off",
-                pOya->low==true?"":"low",
-                pOya->high==true?"":"high",
+                pOya->low==false?"":"low",
+                pOya->high==false?"":"high",
                 pOya->temp_dg,
                 pOya->hum_pc,
                 pOya->voltage,

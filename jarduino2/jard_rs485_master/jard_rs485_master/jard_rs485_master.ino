@@ -62,7 +62,7 @@ void setup()
   Serial.println("Boot");
 
   Master.begin(&Serial1, PIN_TX_EN);
-  Master.set_config_slaves(0x003F);
+  Master.set_config_slaves(0x00FF);
 
   tmrCycle.start();
   tmrLeds.start();
@@ -107,7 +107,7 @@ void loop()
     if ( (pump==nullptr) || (pump->comm_ok==false) )
       _leds[1]=COL_BLACK;
     else if (pump->on==true)
-      _leds[1]=flgBlink?COL_BLACK:COL_BLUE;
+      _leds[1]=flgBlink?COL_BLUE:COL_BLACK;
     else
       _leds[1]=COL_BLUE;
 
@@ -124,9 +124,9 @@ void loop()
         else
         {
           CRGB col=COL_RED;
-          if ( (oya->high==true) && (oya->low==false) )
+          if ( (oya->high==false) && (oya->low==true) )
             col=COL_BLUE;
-          else if ( (oya->high==false) && (oya->low==false) )
+          else if ( (oya->high==true) && (oya->low==true) )
             col=COL_GREEN;
 
 
