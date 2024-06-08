@@ -281,7 +281,7 @@ void loop()
   /// @remark Gestion de la comm de l'esclave. true a chaque fin de cycle / trame "S"
   if (Slave.loop()==true)
   {
-     //digitalWrite(PIN_DGB_SYNC,HIGH);
+     digitalWrite(PIN_DGB_SYNC,HIGH);
 
      #ifndef NO_DHT
   	   float tmp = dht.readHumidity();
@@ -305,11 +305,9 @@ void loop()
        g_mes_cv=(unsigned char)v;
      #endif
      
-     //digitalWrite(PIN_DGB_SYNC,LOW);
+     digitalWrite(PIN_DGB_SYNC,LOW);
   }  
-
-  digitalWrite(PIN_DGB_SYNC,LOW);
-  
+ 
   if (!Slave.isAlive())
   {
 	  g_on=false;
@@ -324,7 +322,7 @@ void loop()
   #endif
   
   if (tmrSec.tick()==true)
-  {
+  {    
     if (g_on==true)
     {
       g_total_s++;
@@ -369,9 +367,6 @@ void loop()
     digitalWrite(LED_BUILTIN,LOW);
     digitalWrite(PIN_LED1,LOW);
   }
-
-  //digitalWrite(PIN_DGB_SYNC,!digitalRead(PIN_DGB_SYNC));
-  digitalWrite(PIN_DGB_SYNC,HIGH);
 
   #ifdef ENABLE_WDG
     wdt_reset();

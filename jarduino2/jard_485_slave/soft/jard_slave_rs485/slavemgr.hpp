@@ -7,7 +7,7 @@
 #include "timer.h"
 
 #define	SLAVE_CMD_TIMEOUT_MS	  (4UL*1000UL)
-#define SLAVE_SYNC_TIMEOUT_MS   (4UL*1000UL)
+#define SLAVE_SYNC_TIMEOUT_MS   (6UL*1000UL)
 #define SERIAL_SPEED            (9600)
 
 class SlaveMgr : IFrameReceiver
@@ -102,11 +102,11 @@ class SlaveMgr : IFrameReceiver
 	  if ((pFrmCmd->commands&mask)==mask)
 	  {
 	    flgCmd=true;
-  	  }
-  	  else
-  	  {
-  	    flgCmd=false;
-  	  }
+  	}
+  	else
+  	{
+  	  flgCmd=false;
+  	}
 
 	  tmrCmd.start();
       flgCommOk=true;
