@@ -12,6 +12,9 @@ public:
    {
       id_msg = 0;
    }
+   virtual ~Frame()
+   {    
+   }
 };
 
 
@@ -89,6 +92,10 @@ public:
        this->total_time_s = total_time_s;
        this->total_errs = total_errs;
    }
+
+   ~FrameSlave()
+   {    
+   }
 };
 
 class FramePump : public FrameSlave
@@ -117,6 +124,10 @@ public:
        this->setCmd(cmd);
        this->setOn(on);
        this->flow = flow;
+   }
+
+   ~FramePump()
+   {    
    }
 };
 
@@ -175,6 +186,10 @@ public:
        this->setLow(low);
        this->setHigh(high);
    }
+
+   ~FrameOya()
+   {    
+   }
 };
 
 class FrameCmd : public Frame
@@ -193,6 +208,10 @@ public:
    {
        this->commands = cmds;
        this->addr = addr;
+   }
+
+   ~FrameCmd()
+   {    
    }
 };
 
@@ -213,6 +232,10 @@ public:
        this->value=value;
        this->addr=addr;
    }
+
+   ~FramePing()
+   {    
+   }
 };
 
 class FramePong : public Frame
@@ -232,6 +255,50 @@ public:
        this->value = value;
        this->addr = addr;
    }
+
+   ~FramePong()
+   {    
+   }
+};
+
+class FrameRazT : public Frame
+{
+public:
+   unsigned char addr;
+
+   FrameRazT() : Frame()
+   {
+      addr = 0;
+   }
+
+   FrameRazT(char addr) : Frame()
+   {
+       this->addr = addr;
+   }
+
+   ~FrameRazT()
+   {    
+   }
+};
+
+class FrameRazE : public Frame
+{
+public:
+   unsigned char addr;
+
+   FrameRazE() : Frame()
+   {
+      addr = 0;
+   }
+
+   FrameRazE(char addr) : Frame()
+   {
+       this->addr = addr;
+   }
+
+   ~FrameRazE()
+   {    
+   }
 };
 
 class IFrameReceiver
@@ -243,6 +310,8 @@ public:
    virtual bool OnFrameReceive(FrameOya *) {return false;}
    virtual bool OnFrameReceive(FramePing *) {return false;}
    virtual bool OnFrameReceive(FramePong *) {return false;}
+   virtual bool OnFrameReceive(FrameRazT *) {return false;}
+   virtual bool OnFrameReceive(FrameRazE *) {return false;}
 };
 
 #endif

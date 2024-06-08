@@ -16,7 +16,7 @@
 #define COL_BLUE    CRGB(0,0,255)
 #define COL_GREEN   CRGB(0,255,0)
 
-Timer tmrCycle(2000,false);
+Timer tmrCycle(3000,false);
 extern MasterArduino Master;
 
 Timer tmrLeds(100,false);

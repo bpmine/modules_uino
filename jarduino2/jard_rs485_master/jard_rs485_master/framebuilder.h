@@ -35,6 +35,8 @@ class FrameOya;
 class FramePump;
 class FramePing;
 class FramePong;
+class FrameRazT;
+class FrameRazE;
 class IFrameReceiver;
 class FrameBuilder
 {
@@ -91,6 +93,8 @@ class FrameBuilder
 	unsigned char* build(FrameOya *pFrameOya);
 	unsigned char* build(FramePing *pFramePing);
 	unsigned char* build(FramePong *pFramePong);
+	unsigned char* build(FrameRazT *pFrameRazT);
+    unsigned char* build(FrameRazE *pFrameRazE);  
 	/**
 	* @}
 	*/
