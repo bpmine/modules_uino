@@ -15,7 +15,7 @@
 //#define INIT_AND_SET_ADDR
 //#define ENABLE_WDG
 
-#define NO_DHT
+//#define NO_DHT
 //#define NO_FLOW
 //#define NO_ANALOG
 
@@ -102,9 +102,6 @@ void setup()
   pinMode(PIN_ADDR_A3,INPUT_PULLUP);
   pinMode(PIN_ADDR_A4,INPUT_PULLUP);
 
-  pinMode(LED_BUILTIN,OUTPUT);
-  digitalWrite(LED_BUILTIN,LOW);
-
   pinMode(PIN_TX_EN,OUTPUT);
   digitalWrite(PIN_TX_EN,LOW);
 
@@ -113,6 +110,20 @@ void setup()
 
   pinMode(PIN_DGB_CMD,OUTPUT);
   digitalWrite(PIN_DGB_CMD,LOW);
+
+  pinMode(LED_BUILTIN,OUTPUT);
+  digitalWrite(LED_BUILTIN,LOW);
+
+  /// @remark On clignote 5 fois rapidement au boot
+  for (int i=0;i<5;i++)
+  {
+    delay(100);
+    digitalWrite(LED_BUILTIN,HIGH);
+    delay(100);
+    digitalWrite(LED_BUILTIN,LOW);
+  }  
+  digitalWrite(LED_BUILTIN,LOW);
+  tmrSec.start();
 
   g_cpt_low=false;
   g_cpt_high=false;
@@ -199,19 +210,21 @@ void setup()
     }
   #endif 
 
-  //logSerial
+  /// @remark Attendre au moins 1s apres le clignotement de boot
+  while (tmrSec.tick()==false);
+  
   /// @remark Si adresse Z, on bloque tout en clignotant lentement (1s)
   if (addr=='Z')
   {
-    //Serial.println("ESCLAVE BLOQUE!!");
+    bool blk=false;
     while (1)
     {
-      digitalWrite(PIN_LED1,HIGH);
-      digitalWrite(LED_BUILTIN,HIGH);
-      delay(2000);
-      digitalWrite(PIN_LED1,LOW);
-      digitalWrite(LED_BUILTIN,LOW);
-      delay(2000);
+      if (tmrSec.tick()==true)
+        blk=!blk;
+        
+      digitalWrite(PIN_LED1,blk?HIGH:LOW);
+      digitalWrite(LED_BUILTIN,blk?HIGH:LOW);
+      
       yield();
     }
   }

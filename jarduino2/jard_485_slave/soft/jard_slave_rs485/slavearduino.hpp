@@ -14,8 +14,8 @@ class SlaveArduino: public SlaveMgr
   	  digitalWrite(PIN_TX_EN,HIGH);
   	  delay(5);
   	  Serial.write(buffer,size);
-  	  while ((UCSR0A & _BV (TXC0)) == 0) {digitalWrite(PIN_DGB_CMD,!digitalRead(PIN_DGB_CMD));}
-  	  delay(5);
+  	  while ((UCSR0A & _BV (TXC0)) == 0) {}
+  	  delay(2);
   	  digitalWrite(PIN_TX_EN,LOW);
   	}
   

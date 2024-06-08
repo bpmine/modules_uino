@@ -1,8 +1,10 @@
 #include <DHT.h>
 
 #define VERY_SIMPLE_TEST
+//#define RS485_TEST
+//#define RS485_ENDURANCE
 
-#include "flow.hpp" 
+//#include "flow.hpp" 
 
 #define PIN_CPT_LOW       (2)
 #define PIN_CPT_HIGH      (3)
@@ -65,12 +67,8 @@ void setup()
   digitalWrite(PIN_TX_EN,LOW);
 
   dht.begin();
-  Flow.begin();
+  //Flow.begin();
   delay(100);
-}
-
-void serialEvent()
-{  
 }
 
 int g_flow_LpH=0;
@@ -80,9 +78,9 @@ int g_temp=0;
 int g_hum=0;
 
 int cnt=0;
-void loop() 
-{    
-  #ifdef VERY_SIMPLE_TEST
+
+void very_simple_test(void)
+{
     g_cpt_low=digitalRead(PIN_CPT_LOW)==HIGH?false:true;
     g_cpt_high=digitalRead(PIN_CPT_HIGH)==HIGH?false:true;
 
@@ -124,9 +122,48 @@ void loop()
       cnt=0;
     }    
 
-    delay(200);
-    
+    delay(200);  
+}
+
+
+void loop() 
+{    
+  #ifdef VERY_SIMPLE_TEST
+    very_simple_test();
     return;
+  #elif defined(RS485_TEST)
+    digitalWrite(PIN_TX_EN,HIGH);
+    delay(2);
+    Serial.println("Test");
+    delay(100);
+    digitalWrite(PIN_TX_EN,LOW);
+    delay(2000);
+    return;  
+  #elif defined(RS485_ENDURANCE)
+    digitalWrite(LED_BUILTIN,!digitalRead(LED_BUILTIN));
+    
+    while (Serial.available()>0)
+    {      
+      int i=Serial.read();
+      if ( (i>=0) && (i<=255) )
+      {
+        if (i==0x02)
+        {
+          digitalWrite(PIN_TX_EN,HIGH);
+          delay(2);
+          Serial.println("Reponse");
+          Serial.flush();
+          //while ((UCSR0A & _BV (TXC0)) == 0) {}
+          delay(2);
+          digitalWrite(PIN_TX_EN,LOW);          
+        }
+      }
+    }
+
+    delay(100);
+    
+    return;  
+    
   #endif
   
    float tmp = dht.readHumidity(); 
@@ -141,10 +178,10 @@ void loop()
    else
      g_temp=trunc(tmp);
 
-  Flow.start();
+  //Flow.start();
   for (int i=0;i<2500;i++)
   {
-    Flow.tick();
+    //Flow.tick();
     delay(1);
   } 
 
@@ -173,7 +210,7 @@ void loop()
 
   for (int i=0;i<100;i++)
   {
-    Flow.tick();
+    //Flow.tick();
     delay(1);
   }
   
@@ -183,7 +220,7 @@ void loop()
    Serial.print((float)((float)v/100.0));
    Serial.println("V");
 
-   g_flow_LpH=Flow.getFlow();
+   //g_flow_LpH=Flow.getFlow();
    Serial.print("Flow        : ");
    Serial.print(g_flow_LpH);   
    Serial.println("L/H");   
