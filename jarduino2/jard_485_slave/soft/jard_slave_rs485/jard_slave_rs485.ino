@@ -245,7 +245,7 @@ void setup()
   flg200ms=false;
   flg500ms=false;
 
-  tmrSec.start();
+  //tmrSec.start();
   tmr500ms.start();
   tmr200ms.start();  
 }

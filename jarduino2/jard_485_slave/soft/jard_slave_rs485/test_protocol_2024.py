@@ -4,7 +4,7 @@ import re
 import threading
 
 PORT='COM14'
-#PORT='COM15'
+#PORT='COM21'
 SIMU=False
 
 def calcCS(buff):
@@ -180,21 +180,24 @@ def test_endurance():
     res=ser.read(100)
     print(res)
 
+    addr=6
     per=0
-    on=False
+    on=True
     while True:
         per+=1
         if per>5:
             on=not on
             per=0
+
+        msk_on=1<<6
         
         print('_'*60)
         print('Début cycle (%s):' % on)
         #sendCmd(ser,0x00,6)
         for i in range(1,7):
-            sendCmd(ser,0x04 if on==True else 0x00,i)
+            sendCmd(ser,msk_on if on==True else 0x00,i)
             
-        sendCmd(ser,0x04 if on==True else 0x00,ord('S'))
+        sendCmd(ser,msk_on if on==True else 0x00,ord('S'))
         time.sleep(2)
 
 
