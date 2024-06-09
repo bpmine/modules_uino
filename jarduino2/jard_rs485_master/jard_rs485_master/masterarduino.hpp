@@ -17,7 +17,7 @@ private:
       return;
 
     digitalWrite(this->txen, HIGH);
-    delay(5);
+    delay(2);
     pStr->write(buffer,size);
     if (pStr==&Serial)
       while ((UCSR0A & _BV (TXC0)) == 0) {}

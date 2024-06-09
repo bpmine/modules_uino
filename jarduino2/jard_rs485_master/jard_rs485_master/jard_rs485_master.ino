@@ -11,12 +11,23 @@
 
 #include <FastLED.h>
 
+//#define NODE_BARBEC
+#define NODE_REDUIT
+
+#if defined(NODE_BARBEC) && !defined(NODE_REDUIT)
+  #warning Noeud BARBEC
+#elif !defined(NODE_BARBEC) && defined(NODE_REDUIT)
+  #warning Noeud REDUIT
+#else
+  #error Aucun noeud defini
+#endif
+
 #define COL_BLACK   CRGB(0,0,0)
 #define COL_RED     CRGB(255,0,0)
 #define COL_BLUE    CRGB(0,0,255)
 #define COL_GREEN   CRGB(0,255,0)
 
-Timer tmrCycle(3000,false);
+Timer tmrCycle(2000,false);
 extern MasterArduino Master;
 
 Timer tmrLeds(100,false);
@@ -62,7 +73,13 @@ void setup()
   Serial.println("Boot");
 
   Master.begin(&Serial1, PIN_TX_EN);
-  Master.set_config_slaves(0x00FF);
+
+  #ifdef NODE_BARBEC
+    Master.set_config_slaves(0x00FF);
+  #endif
+  #ifdef NODE_REDUIT
+    Master.set_config_slaves(0x000F);
+  #endif
 
   tmrCycle.start();
   tmrLeds.start();
