@@ -3,7 +3,7 @@ import time
 import re
 import threading
 
-PORT='COM14'
+PORT='COM15'
 #PORT='COM21'
 SIMU=False
 
@@ -142,7 +142,7 @@ def test_recv():
 
     ser.close()
     
-def test_one_slave():
+def test_one_slave(addr):
     ser= serial.Serial(port=r"\\.\%s" % PORT,stopbits = 1, bytesize = 8, parity='N',baudrate= 9600,timeout=0.5)
 
     time.sleep(2)
@@ -153,22 +153,23 @@ def test_one_slave():
     sendPing(ser,2,254)
         
     for i in range(0,5):
-        sendCmd(ser,0x4,2)    
-        sendCmd(ser,0x4,ord('S'))
+        cmd=1<<addr
+        sendCmd(ser,cmd,addr)    
+        sendCmd(ser,cmd,ord('S'))
         time.sleep(1)
 
     for i in range(0,5):
-        sendCmd(ser,0x0,2)    
+        sendCmd(ser,0x0,addr)    
         sendCmd(ser,0x0,ord('S'))
         time.sleep(1)
 
     for i in range(0,10):
-        sendCmd(ser,0x0,2)    
+        sendCmd(ser,0x0,addr)
         time.sleep(1)
 
-    sendRazT(ser,2)
+    sendRazT(ser,addr)
     
-    sendCmd(ser,0x0,2)
+    sendCmd(ser,0x0,addr)
     sendCmd(ser,0x0,ord('S'))
 
     ser.close()
@@ -204,5 +205,5 @@ def test_endurance():
     ser.close()
     
 #test_recv()
-#test_one_slave()
-test_endurance()
+test_one_slave(5)
+#test_endurance()
