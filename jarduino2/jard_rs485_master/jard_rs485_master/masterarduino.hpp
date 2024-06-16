@@ -82,4 +82,6 @@ public:
   }
 };
 
+extern MasterArduino Master;
+
 #endif

@@ -37,7 +37,14 @@ public:
 
    void run() 
    {
-      if (current_state) current_state->onRun();
+     if (tmrTimeout.tick()==true)
+     {
+       timeout();
+     }
+     else
+     {
+       if (current_state) current_state->onRun();
+     }
    }
 
    void timeout()

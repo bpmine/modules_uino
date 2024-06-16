@@ -1,11 +1,13 @@
 from paho.mqtt import client as mqtt_client
 import time
 import json
+import logging
 
 broker = '192.168.3.200'
 port = 1883
 topic = "/oyas/#"
-client_id = f'test_oyas'
+client_id = f'test_oyas2'
+node='reduit'
 
 
 def on_connect(client, userdata, flags, rc):
@@ -47,7 +49,7 @@ client.on_connect = on_connect
 client.on_disconnect = on_disconnect
 client.connect(broker, port)
 
-client.subscribe("/oyas/data/barbec")
+client.subscribe(f"/oyas/data/{node}")
 client.on_message = on_message
 
 #req={'req':'cmds','cmds':0,'ctrl':False}
@@ -56,10 +58,10 @@ client.on_message = on_message
 
 req={'req':'master'}
 msg=json.dumps(req)
-client.publish('/oyas/cmd/barbec',msg)
+client.publish(f'/oyas/cmd/{node}',msg)
 
 req={'req':'oya','addr':2}
 msg=json.dumps(req)
-client.publish('/oyas/cmd/barbec',msg)
+client.publish(f'/oyas/cmd/{node}',msg)
 
 client.loop_forever()

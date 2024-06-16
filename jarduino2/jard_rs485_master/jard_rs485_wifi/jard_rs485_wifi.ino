@@ -19,17 +19,18 @@
 //#define MODE_AP
 //#define MQTT_TRACE_ON
 
-#define NODE_MASTER_BARBEC
-//#define NODE_MASTER_REDUIT
+//#define NODE_MASTER_BARBEC
+#define NODE_MASTER_REDUIT
+//#define NODE_TEST
 
-#ifdef NODE_TEST
+#if defined(NODE_TEST) && !defined(NODE_MASTER_BARBEC) && !defined(NODE_MASTER_REDUIT)
   char NAME[]="test";
-#endif
-#ifdef NODE_MASTER_BARBEC
+#elif !defined(NODE_TEST) && defined(NODE_MASTER_BARBEC) && !defined(NODE_MASTER_REDUIT)
   char NAME[]="barbec";
-#endif
-#ifdef NODE_MASTER_REDUIT
-  char NAME[]="reduit";
+#elif !defined(NODE_TEST) && !defined(NODE_MASTER_BARBEC) && defined(NODE_MASTER_REDUIT)
+  char NAME[]="reduit";  
+#else
+  #error Noeud non defini
 #endif
 
 #define TOPIC_PREFIX  "/oyas"

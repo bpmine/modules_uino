@@ -23,6 +23,7 @@ class Btn
     int pin;
     bool filteredState;
     bool longState;
+    bool shortState;
     bool risingEdge;
     bool fallingEdge;
 
@@ -34,6 +35,7 @@ class Btn
       t0=micros();
       rawState=false;
       filteredState=false;
+      shortState=false;
       longState=false;
       risingEdge=false;
       fallingEdge=false;
@@ -50,6 +52,7 @@ class Btn
       longState=false;
       risingEdge=false;
       fallingEdge=false;
+      shortState=false;
 
       t0=micros();
     }
@@ -59,6 +62,7 @@ class Btn
       longState=false;
       risingEdge=false;
       fallingEdge=false;
+      shortState=false;
       t0=micros();
     }
 
@@ -72,48 +76,56 @@ class Btn
 
       bool newState=digitalRead(pin)==HIGH?true:false;
       if (inv==true)
-    	newState=!newState;
+        newState=!newState;
 
       unsigned long t=micros();
       unsigned long delta;
       if (t>=t0)
-    	delta=t-t0;
+        delta=t-t0;
       else
-    	delta=0xFFFFFFFF-t0+t;
+        delta=0xFFFFFFFF-t0+t;
 
       if (newState==rawState)
       {
-    	if (rawState==true)
-    	{
-    	  if (delta>FILTER_BTN_SHORT_US)
-    	  {
-    		if (filteredState!=rawState)
-    		  risingEdge=true;
+        if (rawState==true)
+        {
+          if (delta>FILTER_BTN_SHORT_US)
+          {
+            if (filteredState!=rawState)
+            {
+              risingEdge=true;
+              shortState=false;
+            }
 
-    		filteredState=rawState;
-    	  }
+            filteredState=rawState;
+          }
 
-    	  if (delta>FILTER_BTN_LONG_US)
-    		longState=true;
-    	}
+          if (delta>FILTER_BTN_LONG_US)
+            longState=true;
+        }
       }
       else
       {
-    	rawState=newState;
+        rawState=newState;
 
-    	if (rawState==false)
-    	{
-    	  if (filteredState==true)
-    		fallingEdge=true;
+        if (rawState==false)
+        {
+          if (filteredState==true)
+          {
+            fallingEdge=true;
 
-    	  filteredState=false;
-    	}
+            if (longState==false)
+              shortState=true;
+          }
 
-    	longState=false;
-    	risingEdge=false;
-    	fallingEdge=false;
+          filteredState=false;
+        }
 
-    	t0=micros();
+        longState=false;
+        risingEdge=false;
+        fallingEdge=false;
+
+        t0=micros();
       }
     }
 
@@ -156,6 +168,16 @@ class Btn
     {
       return longState;
     }
+
+    /**
+     * @brief Indique un appui court
+     * @return true si appui court
+     * */
+    bool isShortPressed(void)
+    {
+      return shortState;
+    }
+
 };
 
 #endif

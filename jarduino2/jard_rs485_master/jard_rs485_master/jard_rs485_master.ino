@@ -26,9 +26,9 @@
 #define COL_RED     CRGB(255,0,0)
 #define COL_BLUE    CRGB(0,0,255)
 #define COL_GREEN   CRGB(0,255,0)
+#define COL_WHITE   CRGB(255,255,255)
 
 Timer tmrCycle(2000,false);
-extern MasterArduino Master;
 
 Timer tmrLeds(100,false);
 Timer tmrBlink(300,false);
@@ -78,7 +78,7 @@ void setup()
     Master.set_config_slaves(0x00FF);
   #endif
   #ifdef NODE_REDUIT
-    Master.set_config_slaves(0x000F);
+    Master.set_config_slaves(0x0007F);
   #endif
 
   tmrCycle.start();
@@ -118,7 +118,35 @@ void loop()
 
   if (tmrLeds.tick()==true)
   {
-    _leds[0]=COL_RED;
+    switch (mode_aff)
+    {
+      case MODE_AFF_IDLE:
+      {
+        _leds[0]=COL_RED;
+        break;
+      }
+      case MODE_AFF_DISPLAY:
+      {
+        _leds[0]=COL_GREEN;
+        break;
+      }
+      case MODE_AFF_REMOTE:
+      {
+        _leds[0]=flgBlink?COL_WHITE:COL_BLACK;
+        break;
+      }
+      case MODE_AFF_AUTO:
+      {
+        _leds[0]=flgBlink?COL_GREEN:COL_BLACK;
+        break;
+      }
+      default:
+      {
+        _leds[0]=COL_BLACK;
+        break;
+      }
+    }
+
 
     Pump *pump=Master.getSlavesList().getPump();
     if ( (pump==nullptr) || (pump->comm_ok==false) )
@@ -142,9 +170,9 @@ void loop()
         {
           CRGB col=COL_RED;
           if ( (oya->high==false) && (oya->low==true) )
-            col=COL_BLUE;
-          else if ( (oya->high==true) && (oya->low==true) )
             col=COL_GREEN;
+          else if ( (oya->high==true) && (oya->low==true) )
+            col=COL_BLUE;
 
 
           if (oya->on==true)
