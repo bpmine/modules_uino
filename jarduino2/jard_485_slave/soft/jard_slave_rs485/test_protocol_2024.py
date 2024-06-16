@@ -205,5 +205,5 @@ def test_endurance():
     ser.close()
     
 #test_recv()
-test_one_slave(5)
+test_one_slave(6)
 #test_endurance()
