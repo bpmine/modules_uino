@@ -1,3 +1,7 @@
+/**
+ * @file manager.cpp
+ * @brief Machine à états principale: Gestion des menus et des modes de fonctionnement
+ * */
 #include "manager.h"
 
 #include "api.h"
@@ -7,32 +11,45 @@
 #include "pins.h"
 #include "slaves.hpp"
 
-#include <arduino.h>
+#include "filling.hpp"
+#include "logger.h"
+
+#include <RTClib.h>
+static DS1307 _rtc;
+
 
 #define ONE_MINUTE    (1 * 60 * 1000UL)
 #define ONE_SECOND    (1000UL)
 
 #define TIMEOUT_START_EV_MS                 (ONE_SECOND)
-#define TIMEOUT_LOW_MS                      (ONE_MINUTE)
-#define TIMEOUT_FILLING_AFTER_LOW_MS        (ONE_MINUTE)
 #define TIMEOUT_STOP_EV_AFTER_STOP_PUMP_MS  (ONE_SECOND)
 #define TIMEOUT_STAY_IN_DISPLAY_MS          (ONE_MINUTE)
-#define TIMEOUT_WAIT_STEADY_BEFORE_START    (4 * 1000UL)
-
-#define MAX_TIME_PER_OYA_S                  (2*60)
+#define TIMEOUT_WAIT_STEADY_BEFORE_START_MS (8 * 1000UL)
+#define TIMEOUT_STOP_PREV_EV_MS             (500)
+#define TIMEOUT_CHECK_RTC_PERIOD            (30 * 1000UL)
+#define TIMEOUT_CHECK_WIFI_DURATION         (4 * 60 * 1000UL)
 
 Btn _btn;
 int mode_aff=MODE_AFF_IDLE;
 Timer tmr1S(1000,false);
-unsigned long _seconds=0;
+bool _flgRtcTriggered=false;
 
+/**
+ * @class StateGestion
+ * @brief Classe de base à tous les états de cette machine
+ * Contient des références vers tous les états et vers la machine
+ * */
 class StateGestion:public State
 {
+  private:
+      static bool event_1s;
+
    public:
       static StateMachine _machine;
 
       static State* stIdle;
-      static State* stWifiComm;
+      static State* stWifiCheck;
+      static State* stWifiRemote;
       static State* stDisplay;
       static State* stStartFill;
       static State* stStartEV;
@@ -43,31 +60,135 @@ class StateGestion:public State
       static State* stStopPump;
       static State* stStopEV;
 
+      static unsigned long seconds;
+      static bool event1S(void)
+      {
+        if (event_1s==true)
+        {
+          event_1s=false;
+          return true;
+        }
+        return false;
+      }
+
+      static void setEvent1s(void)
+      {
+        seconds++;
+        event_1s=true;
+      }
+
       StateGestion() :State(&StateGestion::_machine) {}
 };
 
 StateMachine StateGestion::_machine;
 
-
+/**
+ * @class StateIdle
+ * @brief Etat d'attente (Bouton, Wifi, ...)
+ * */
 class StateIdle:public StateGestion
 {
+    void onEnter() override
+    {
+      api_master(false);
+      Comm.setPower(false);
+      _machine.startTimeOut(TIMEOUT_CHECK_RTC_PERIOD);
+    }
+
     void onRun() override
     {
       mode_aff=MODE_AFF_IDLE;
 
-      if (Comm.isActive()==true)
-        _machine.setState(stWifiComm);
+      if (Comm.isAlive()==true)
+        _machine.setState(stWifiCheck);
       else if (_btn.isRising())
         _machine.setState(stDisplay);
+    }
+
+    void onTimeout() override
+    {
+      DateTime now = _rtc.now();
+      char strDte[30];
+      sprintf(strDte,"%02d/%02d/%04d %02d:%02d:%02d",
+         now.day(),
+         now.month(),
+         now.year(),
+         now.hour(),
+         now.minute(),
+         now.second()
+      );
+      logger.print("Check RTC: ");
+      logger.println(strDte);
+
+      _machine.startTimeOut(TIMEOUT_CHECK_RTC_PERIOD);
+
+      /// @remark Remplissage tous les Dimanche, mercredi et vendredi
+      if ( ( (now.dayOfWeek()==0) || (now.dayOfWeek()==3) || (now.dayOfWeek()==5) ) && (now.minute()==0) && (now.hour()==12) )
+      {
+        if (!_flgRtcTriggered)
+        {
+          _flgRtcTriggered=true;
+          _machine.setState(stStartFill);
+        }
+      }
+      ///@remark Toutes les heures, check du wifi
+      else if (now.minute()==0)
+      {
+        if (!_flgRtcTriggered)
+        {
+          _flgRtcTriggered=true;
+          _machine.setState(stWifiCheck);
+        }
+      }
+      else
+      {
+        _flgRtcTriggered=false;
+      }
     }
 };
 
 
-class StateWifiComm:public StateGestion
+/**
+ * @class StateWifiCheck
+ * @brief Etat d'attente (Bouton, Wifi, ...)
+ * */
+class StateWifiCheck:public StateGestion
 {
     void onEnter() override
     {
-      Serial.println("Enter wifi");
+      logger.println("Enter WifiCheck...");
+      _machine.startTimeOut(TIMEOUT_CHECK_WIFI_DURATION);
+      Comm.setPower(true);
+    }
+    void onRun() override
+    {
+      mode_aff=MODE_AFF_IDLE;
+
+      if (Comm.isRemoteActive()==true)
+        _machine.setState(stWifiRemote);
+      else if (_btn.isRising())
+        _machine.setState(stDisplay);
+    }
+    void onTimeout() override
+    {
+      if (Comm.isAlive()==true)
+        _machine.startTimeOut(TIMEOUT_CHECK_WIFI_DURATION);
+      else
+        _machine.setState(stIdle);
+    }
+};
+
+/**
+ * @class StateWifiRemote
+ * @brief Mode acces a distance par Wifi
+ * On active le maitre en entrant, on le desactive en sortant
+ * Dans ce mode, on applique les commandes en provenance du reseau
+ * */
+class StateWifiRemote:public StateGestion
+{
+    void onEnter() override
+    {
+      logger.println("Enter Wifi remote");
       api_master(true);
     }
 
@@ -75,8 +196,8 @@ class StateWifiComm:public StateGestion
     {
       mode_aff=MODE_AFF_REMOTE;
 
-      if (Comm.isActive()==false)
-        _machine.setState(stIdle);
+      if (Comm.isRemoteActive()==false)
+        _machine.setState(stWifiCheck);
       else
       {
         unsigned short cmds=Comm.getCommands();
@@ -86,16 +207,25 @@ class StateWifiComm:public StateGestion
 
     void onLeave() override
     {
-      Serial.println("Leave");
+      logger.println("Leave Wifi Remote");
       api_master(false);
     }
 };
 
+/**
+ * @class StateDisplay
+ * @brief Etat d'affichage des OYAs
+ *
+ * Dans cet etat, on ne commande aucun OYA (ni pompe)
+ * On affiche l'état de chaque esclave.
+ * On rend actif l'interface Wifi mais il n'est pas possible de prendre le contrôle à distance
+ **/
 class StateDisplay:public StateGestion
 {
     void onEnter() override
     {
-      Serial.println("Enter display");
+      logger.println("Enter display");
+      Comm.setPower(true);
       api_master(true);
       _machine.startTimeOut(TIMEOUT_STAY_IN_DISPLAY_MS);
     }
@@ -113,7 +243,7 @@ class StateDisplay:public StateGestion
     }
     void onLeave() override
     {
-      Serial.println("Leave display");
+      logger.println("Leave display");
     }
     void onTimeout() override
     {
@@ -122,107 +252,24 @@ class StateDisplay:public StateGestion
     }
 };
 
-#define MAX_OYAS  (15)
-int _ad_oyas_to_fill[MAX_OYAS];
-int _time_oyas_to_fill[MAX_OYAS];
-int _nb_to_fill=0;
-int _inx_to_fill=0;
-bool _up_1s=false;
-
-void _init_to_fill(void)
-{
-  for (int i=0;i<MAX_OYAS;i++)
-  {
-    _time_oyas_to_fill[i]=0;
-    _ad_oyas_to_fill[i]=0;
-    _nb_to_fill=0;
-    _inx_to_fill=0;
-  }
-  _up_1s=false;
-}
-
-int _get_next_addr_to_fill(void)
-{
-  int oldInx=_inx_to_fill;
-  int nxt=oldInx+1;
-
-  while (1)
-  {
-    if (nxt>_nb_to_fill)
-      nxt=0;
-
-    if (nxt==oldInx)
-    {
-      return -1;
-    }
-
-    Oya *o=api_get_oya(_ad_oyas_to_fill[nxt]);
-    if (o!=nullptr)
-    {
-      if ((o->comm_ok==true) && (o->high==false) && (_time_oyas_to_fill[nxt]<MAX_TIME_PER_OYA_S))
-      {
-        return nxt;
-      }
-    }
-
-    nxt++;
-  }
-}
-
-void _add_to_fill(int addr)
-{
-  bool found=false;
-  for (int i=0;i<MAX_OYAS;i++)
-  {
-    if (_ad_oyas_to_fill[i]==addr)
-    {
-      found=true;
-      break;
-    }
-  }
-
-  if (found==false)
-  {
-    _ad_oyas_to_fill[_nb_to_fill]=addr;
-    _time_oyas_to_fill[_nb_to_fill]=0;
-    _nb_to_fill++;
-  }
-}
-
-void _swap(int i,int j)
-{
-  int tmp=_ad_oyas_to_fill[i];
-  _ad_oyas_to_fill[i]=_ad_oyas_to_fill[j];
-  _ad_oyas_to_fill[j]=tmp;
-}
-
-void _reorder_to_fill(void)
-{
-  for (int i=0;i<_nb_to_fill;i++)
-  {
-    for (int j=0;j<_nb_to_fill;j++)
-    {
-      Oya *a=api_get_oya(_ad_oyas_to_fill[i]);
-      Oya *b=api_get_oya(_ad_oyas_to_fill[j]);
-
-      if ( (a!=nullptr) && (b!=nullptr) )
-      {
-        if ( (b->low==true) && (a->low==false) )
-          _swap(i,j);
-        else if ( (b->high==true) && (a->high==false) )
-          _swap(i,j);
-      }
-    }
-  }
-}
-
+/**
+ * @class StateStartFill
+ * @brief Etat de demarrage d'un nouveau processus de remplissage
+ *
+ * - Attente stabilite du reseau
+ * - Initialisation de la liste des contextes de remplissage (OYAs a remplir)
+ * */
 class StateStartFill:public StateGestion
 {
     void onEnter() override
     {
-      Serial.println("Enter Start fill");
-      _machine.startTimeOut(TIMEOUT_WAIT_STEADY_BEFORE_START);
-      _init_to_fill();
+      api_master(true);
+      Comm.setPower(true);
+      logger.println("Enter Start fill");
+      Filling.reset();
+      event1S(); ///< Mettre a 0 l'event 1s (synchro sur la prochaine)
+
+      _machine.startTimeOut(TIMEOUT_WAIT_STEADY_BEFORE_START_MS);
     }
 
     void onRun() override
@@ -235,44 +282,53 @@ class StateStartFill:public StateGestion
 
     void onTimeout() override
     {
+      Filling.createNewFillingList();
+
+      logger.print("Order: ");
       int pos;
-      Oya *oya=api_find_first_oya(pos);
-      while (oya!=nullptr)
+      int ad=Filling.findFirstAddr(pos);
+      while (ad!=-1)
       {
-        _add_to_fill(oya->addr);
-        oya=api_find_next_oya(pos);
+        logger.print("@");
+        logger.print(ad);
+        logger.print(" ");
+        ad=Filling.findNextAddr(pos);
       }
+      logger.println("");
 
-      _reorder_to_fill();
-      _inx_to_fill=0;
-
-      Serial.print("Order: ");
-      for (int i=0;i<_nb_to_fill;i++)
+      if (Filling.hasToFill()==false)
       {
-        int addr=_ad_oyas_to_fill[i];
-        Serial.print("@");
-        Serial.print(addr);
-        Serial.print(" ");
-      }
-      Serial.println();
-
-      if (_nb_to_fill==0)
+        logger.println("Nothing to fill!");
         _machine.setState(stDisplay);
+      }
       else
         _machine.setState(stStartEV);
     }
 };
 
+/**
+ * @class StateStartEV
+ * @brief Etat d'ouverture de l'electrovanne de l'OYA en cours et tempo
+ * */
 class StateStartEV:public StateGestion
 {
     void onEnter() override
     {
-      int addr=_ad_oyas_to_fill[_inx_to_fill];
-      api_set_oya(addr, true);
+      int addr=Filling.getCurAddr();
+      if (addr!=-1)
+      {
+        api_set_oya(addr, true);
 
-      _machine.startTimeOut(TIMEOUT_START_EV_MS);
-      Serial.print("Enter Start EV: @");
-      Serial.println(addr);
+        logger.print("Enter Start EV: @");
+        logger.println(addr);
+
+        _machine.startTimeOut(TIMEOUT_START_EV_MS);
+      }
+      else
+      {
+        logger.println("FIRST OYA NOT FOUND!");
+        _machine.setState(stDisplay);
+      }
     }
     void onTimeout()
     {
@@ -280,39 +336,46 @@ class StateStartEV:public StateGestion
     }
 };
 
+/**
+ * @class StateStartPump
+ * @brief Etat de demarrage de la pompe
+ * */
 class StateStartPump:public StateGestion
 {
     void onEnter() override
     {
+      logger.println("Enter Start Pump");
       api_set_pompe(true);
       _machine.setState(stFillLow);
-      Serial.println("Enter Start Pump");
     }
 };
 
+
+/**
+ * @class StateFillLow
+ * @brief Etat de remplissage de l'OYA jusqu'au niveau LOW (ou timeout)
+ **/
 class StateFillLow:public StateGestion
 {
     void onEnter() override
     {
-      _machine.startTimeOut(TIMEOUT_LOW_MS);
-      Serial.println("Enter Fill until LOW");
-      _up_1s=false;
-
+      _machine.startTimeOut(Filling.getCurLowResetTimeout());
+      logger.print("Enter Fill until LOW (");
+      logger.print(Filling.getCurLowResetTimeout());
+      logger.println(" ms)");
+      event1S();
     }
     void onRun() override
     {
       mode_aff=MODE_AFF_AUTO;
 
-      if (_up_1s==true)
-      {
-        _time_oyas_to_fill[_inx_to_fill]++;
-        _up_1s=false;
-      }
+      if (event1S()==true)
+        Filling.countTime1s();
 
-      if (_btn.isShortPressed())
+      if (_btn.isRising())
         _machine.setState(stStopPump);
 
-      Oya * oya=api_get_oya(_ad_oyas_to_fill[_inx_to_fill]);
+      Oya * oya=api_get_oya(Filling.getCurAddr());
       if (oya!=nullptr)
       {
         if (oya->low==true)
@@ -320,90 +383,118 @@ class StateFillLow:public StateGestion
         else if (oya->high==true)
           _machine.setState(stChangeEV);
       }
-
-      if (_time_oyas_to_fill[_inx_to_fill]>MAX_TIME_PER_OYA_S)
-      {
-        _machine.setState(stChangeEV);
-        Serial.println("Max time reached");
-      }
     }
     void onTimeout()
     {
-      Serial.print("TIMEOUT LOW SLAVE @");
-      Serial.println(_ad_oyas_to_fill[_inx_to_fill]);
+      logger.print("TIMEOUT LOW SLAVE @");
+      logger.println(Filling.getCurAddr());
+      Filling.setLowTimedOut();
       _machine.setState(stChangeEV);
     }
 };
 
+/**
+ * @class StateFillWait
+ * @brief Etat de remplissage chronometre ou HIGH (depuis le LOW)
+ * */
 class StateFillWait:public StateGestion
 {
     void onEnter() override
     {
-      _machine.startTimeOut(TIMEOUT_FILLING_AFTER_LOW_MS);
-      Serial.println("Fill TIMED");
+      _machine.startTimeOut(Filling.getCurFillingAfterLow());
+      logger.print("Fill TIMED: ");
+      logger.print(Filling.getCurFillingAfterLow());
+      logger.println(" ms");
     }
     void onRun() override
     {
       mode_aff=MODE_AFF_AUTO;
 
-      if (_up_1s==true)
-      {
-        _time_oyas_to_fill[_inx_to_fill]++;
-        _up_1s=false;
-      }
+      if (event1S()==true)
+        Filling.countTime1s();
 
-      if (_btn.isShortPressed())
+      if (_btn.isRising())
         _machine.setState(stStopPump);
 
-      Oya * oya=api_get_oya(_ad_oyas_to_fill[_inx_to_fill]);
+      Oya * oya=api_get_oya(Filling.getCurAddr());
       if (oya!=nullptr)
       {
         if (oya->high==true)
+        {
+          Filling.setEnded();
           _machine.setState(stChangeEV);
-      }
-
-      if (_time_oyas_to_fill[_inx_to_fill]>MAX_TIME_PER_OYA_S)
-      {
-        Serial.println("Max time reached");
-        _machine.setState(stChangeEV);
+        }
       }
     }
     void onTimeout()
     {
+      Filling.setEnded();
       _machine.setState(stChangeEV);
     }
 };
 
+/**
+ * @class StateChangeEv
+ * @brief Etat de changement d'electrovanne
+ *
+ * Apres avoir determine la suivante, on actionne l'EV et on arme le timeout
+ * On ferme l'ancienne EV par timeout et on update le Filling
+ **/
 class StateChangeEv:public StateGestion
 {
+    int nxt;
+
     void onEnter() override
     {
-      int nxt=_get_next_addr_to_fill();
+      nxt=Filling.getNextInxToFill();
       if (nxt==-1)
       {
-        Serial.println("Enter change EV: Goto stop Pump");
+        logger.println("Enter change EV: Goto stop Pump");
+
         _machine.setState(stStopPump);
       }
       else
       {
-        api_set_oya(_ad_oyas_to_fill[_inx_to_fill], false);
-        api_set_oya(_ad_oyas_to_fill[nxt], true);
-        Serial.print("Enter change EV: @");
-        Serial.print(_ad_oyas_to_fill[_inx_to_fill]);
-        Serial.print(" -> ");
-        Serial.println(_ad_oyas_to_fill[nxt]);
+        int addr=Filling.getAddrOf(nxt);
+        if (addr!=-1)
+        {
+          api_set_oya(Filling.getAddrOf(nxt), true);
+          logger.print("Enter change EV: Start @");
+          logger.println(Filling.getAddrOf(nxt));
 
-        _inx_to_fill=nxt;
-        _machine.setState(stFillLow);
+          _machine.startTimeOut(TIMEOUT_STOP_PREV_EV_MS);
+        }
+        else
+        {
+          logger.println("ADRESSE INTROUVABLE!");
+
+          _machine.setState(stStopPump);
+        }
       }
+    }
+
+    void onTimeout() override
+    {
+      api_set_oya(Filling.getCurAddr(), false);
+      logger.print("Enter change EV: Stop @");
+      logger.println(Filling.getCurAddr());
+
+      Filling.setInxToFill(nxt);
+      _machine.setState(stFillLow);
     }
 };
 
+/**
+ * @class StateStopPump
+ * @brief Etat de coupure de la pompe
+ *
+ * On coupe la pompe et on attend le timeout avant de couper les electrovannes
+ * */
 class StateStopPump:public StateGestion
 {
     void onEnter() override
     {
-      Serial.println("Enter Stop pump");
+      logger.println("Enter Stop pump");
       api_set_pompe(false);
       _machine.startTimeOut(TIMEOUT_STOP_EV_AFTER_STOP_PUMP_MS);
     }
@@ -413,18 +504,23 @@ class StateStopPump:public StateGestion
     }
 };
 
+/**
+ * @class StateStopEV
+ * @brief Etat de coupure de l'electrovanne (de toutes)
+ * */
 class StateStopEV:public StateGestion
 {
     void onEnter() override
     {
       api_set_commands(0);
-      Serial.println("Enter Stop EV");
+      logger.println("Enter Stop EV");
       _machine.setState(stDisplay);
     }
 };
 
 State * StateGestion::stIdle = new StateIdle();
-State * StateGestion::stWifiComm = new StateWifiComm();
+State * StateGestion::stWifiCheck = new StateWifiCheck();
+State * StateGestion::stWifiRemote = new StateWifiRemote();
 State * StateGestion::stDisplay = new StateDisplay();
 State * StateGestion::stStartFill = new StateStartFill();
 State * StateGestion::stStartEV = new StateStartEV();
@@ -435,7 +531,13 @@ State * StateGestion::stChangeEV = new StateChangeEv();
 State * StateGestion::stStopPump = new StateStopPump();
 State * StateGestion::stStopEV = new StateStopEV();
 
+bool StateGestion::event_1s=false;
+unsigned long StateGestion::seconds=0;
 
+
+/**
+ * @brief Init du manager
+ * */
 void manager_init(void)
 {
   StateGestion::_machine.setState(StateGestion::stIdle);
@@ -443,14 +545,16 @@ void manager_init(void)
   tmr1S.start();
 }
 
+
+/**
+ * @brief A appeller periodiquement pour faire fonctionner la gestion des OYAs
+ */
 void manager_run(void)
 {
   _btn.loop();
+
   if (tmr1S.tick()==true)
-  {
-    _seconds++;
-    _up_1s=true;
-  }
+    StateGestion::setEvent1s();
 
   StateGestion::_machine.run();
 }

@@ -17,8 +17,10 @@ class WifiComm
     HardwareSerial* pStr;
     unsigned char buffer[COMM_BUFFER_MAX_SIZE];
     int pos;
-    Timer tmrComms= Timer(TIMEOUT_WIFI_COMM_MS);
-    bool flgActive;
+    Timer tmrAlive= Timer(TIMEOUT_WIFI_COMM_MS);
+    Timer tmrRemoteActive= Timer(TIMEOUT_WIFI_COMM_MS);
+    bool flgRemoteActive;
+    bool flgAlive;
     unsigned short commands;
 
     void pubMasterInfo(void);
@@ -31,9 +33,11 @@ class WifiComm
     WifiComm();
 
     void begin(HardwareSerial* pSerial);
+    void setPower(bool on);
     void loop(void);
 
-    bool isActive(void);
+    bool isRemoteActive(void);
+    bool isAlive(void);
     unsigned short getCommands(void);
 };
 

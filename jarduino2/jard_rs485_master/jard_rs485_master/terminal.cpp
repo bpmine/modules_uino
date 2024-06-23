@@ -229,13 +229,13 @@ static void _term_exec_time(void)
   int year,month,day,hour,minute,second,dow;
 
   const char *dys[]={
+      "Dimanche",
       "Lundi",
-      "Mardi"
-      "Mercredi"
-      "Jeudi"
-      "Vendredi"
-      "Samedi",
-      "Dimanche"
+      "Mardi",
+      "Mercredi",
+      "Jeudi",
+      "Vendredi",
+      "Samedi"
   };
 
   api_get_date_hour(day, month, year, hour, minute, second,dow);
@@ -265,7 +265,7 @@ static void _term_exec_settime(const char *strParams)
 static void _term_exec_setdate(const char *strParams)
 {
   int day,month,year;
-  if ( sscanf(strParams,"%02d/%02d/%02d",&day,&month,&year)==3 )
+  if ( sscanf(strParams,"%02d/%02d/%04d",&day,&month,&year)==3 )
   {
     api_set_date(day,month,year);
     _term_exec_time();

@@ -3,6 +3,8 @@
  *
  * @brief Programme de gestion du systeme des OYAs
  **/
+#include "globals.h"
+
 #include "masterarduino.hpp"
 #include "pins.h"
 #include "timer.h"
@@ -11,16 +13,6 @@
 
 #include <FastLED.h>
 
-//#define NODE_BARBEC
-#define NODE_REDUIT
-
-#if defined(NODE_BARBEC) && !defined(NODE_REDUIT)
-  #warning Noeud BARBEC
-#elif !defined(NODE_BARBEC) && defined(NODE_REDUIT)
-  #warning Noeud REDUIT
-#else
-  #error Aucun noeud defini
-#endif
 
 #define COL_BLACK   CRGB(0,0,0)
 #define COL_RED     CRGB(255,0,0)
@@ -37,7 +29,10 @@ bool flgBlink;
 #define NUM_LEDS  (16)
 static CRGB _leds[NUM_LEDS];  ///< Tableau des LEDs
 
-void setup() 
+/**
+ * @brief SETUP de l'arduino (initialisation)
+ **/
+void setup(void)
 {
   pinMode(PIN_TX_EN,OUTPUT);
   digitalWrite(PIN_TX_EN,LOW);
@@ -100,7 +95,11 @@ void setup()
   FastLED.setBrightness(50);
 } 
 
-void loop() 
+
+/**
+ * @brief LOOP de l'arduino
+ * */
+void loop(void)
 {
   if (tmrCycle.tick()==true)
   {

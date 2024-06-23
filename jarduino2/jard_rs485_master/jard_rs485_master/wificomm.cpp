@@ -20,7 +20,8 @@ WifiComm::WifiComm()
 {
   pos=0;
   pStr=nullptr;
-  flgActive=false;
+  flgRemoteActive=false;
+  flgAlive=false;
   commands=0;
 }
 
@@ -30,12 +31,32 @@ void WifiComm::begin(HardwareSerial* pSerial)
   if (pStr!=nullptr)
   {
     pStr->begin(9600);
-    digitalWrite(PIN_PWR_WIFI,HIGH);
-    digitalWrite(PIN_PWR_WIFI_INV,LOW);
+    digitalWrite(PIN_PWR_WIFI,LOW);
+    digitalWrite(PIN_PWR_WIFI_INV,HIGH);
   }
 
   pos=0;
-  flgActive=false;
+  flgAlive=false;
+  flgRemoteActive=false;
+  commands=0;
+}
+
+void WifiComm::setPower(bool on)
+{
+  if (on)
+  {
+    digitalWrite(PIN_PWR_WIFI,HIGH);
+    digitalWrite(PIN_PWR_WIFI_INV,LOW);
+  }
+  else
+  {
+    digitalWrite(PIN_PWR_WIFI,LOW);
+    digitalWrite(PIN_PWR_WIFI_INV,HIGH);
+  }
+
+  pos=0;
+  flgAlive=false;
+  flgRemoteActive=false;
   commands=0;
 }
 
@@ -126,16 +147,14 @@ void WifiComm::pubOyaInfo(int addr)
 
 void WifiComm::execCommands(unsigned short cmds,bool active)
 {
-  tmrComms.start();
-
   if (active==true)
   {
-    flgActive=true;
+    flgRemoteActive=true;
     commands=cmds;
   }
   else
   {
-    flgActive=false;
+    flgRemoteActive=false;
     commands=0;
   }
 
@@ -203,11 +222,15 @@ void WifiComm::execCommands(unsigned short cmds,bool active)
   pStr->print("\x02");
 }
 
-bool WifiComm::isActive(void)
+bool WifiComm::isRemoteActive(void)
 {
-  return flgActive;
+  return flgRemoteActive;
 }
 
+bool WifiComm::isAlive(void)
+{
+  return flgAlive;
+}
 unsigned short WifiComm::getCommands(void)
 {
   return commands;
@@ -264,25 +287,31 @@ void WifiComm::loop(void)
             unsigned short cmds=doc["cmds"];
             bool ctrl=doc["ctrl"];
             execCommands(cmds,ctrl);
+            tmrRemoteActive.start();
+            tmrAlive.start();
           }
           else if (strcmp(doc["req"],"master")==0)
           {
             pubMasterInfo();
+            tmrAlive.start();
           }
           else if (strcmp(doc["req"],"pump")==0)
           {
             pubPumpInfo();
+            tmrAlive.start();
           }
           else if (strcmp(doc["req"],"oya")==0)
           {
             int addr=doc["addr"];
             pubOyaInfo(addr);
+            tmrAlive.start();
           }
           else if (strcmp(doc["req"],"test")==0)
           {
             pStr->print("\x01");
             pStr->print("{\"type\":\"test\",\"res\":\"true\"}");
             pStr->print("\x02");
+            tmrAlive.start();
           }
         }
       }
@@ -293,9 +322,14 @@ void WifiComm::loop(void)
     }
   }
 
-  if (tmrComms.tick()==true)
+  if (tmrRemoteActive.tick()==true)
   {
-    flgActive=false;
+    flgRemoteActive=false;
     commands=0;
+  }
+
+  if (tmrAlive.tick()==true)
+  {
+    flgAlive=false;
   }
 }
