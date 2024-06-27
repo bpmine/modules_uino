@@ -1523,6 +1523,12 @@
     (uuid fc48cdf6-551d-4ed6-9cf8-8274a285dbf9)
   )
 
+  (text "A faire:\n\nRelier D0 et RST (réveil de veille)\nPasser en CMS"
+    (at 30.48 181.61 0)
+    (effects (font (size 1.27 1.27)) (justify left bottom))
+    (uuid bd4d6506-91ad-4232-9198-f5637f0f2d33)
+  )
+
   (global_label "LED_ROUGE" (shape output) (at 143.51 139.7 0)
     (effects (font (size 1.27 1.27)) (justify left))
     (uuid 01fad523-5c1e-4ed9-88d4-ee2a607bb5a2)
