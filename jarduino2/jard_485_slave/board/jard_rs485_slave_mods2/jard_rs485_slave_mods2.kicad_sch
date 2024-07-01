@@ -19,11 +19,18 @@
 
 
   (text_box "Version H0:\n- Changement de face du MOS\n- Amélioration pistes\n- 0805 pour un découplage 10µF de MAX485 (+0603 pour 100nF)\n\nVersion G0:\n- Remplacement module RS485 par MAX485E\n- Ajout d'un cavalier pour couper RX pendant la programation via USB\n\nVersion F0:\n- Déplacement piste LED trop proche du bord\n- Inversion TX/RX"
-    (at 26.67 158.75 0) (size 72.39 26.67)
+    (at 20.32 158.75 0) (size 72.39 26.67)
     (stroke (width 0) (type default))
     (fill (type none))
     (effects (font (size 1.27 1.27)) (justify left top))
     (uuid 215aacd4-2fab-4df4-a6a6-8611767bb469)
+  )
+  (text_box "TODO:\n\n- Mettre une alim 5V plus puissante (Le régulateur Nano casse sur les pompes)\n- Passer les condensateurs 603 en 805"
+    (at 102.87 158.75 0) (size 69.85 26.67)
+    (stroke (width 0) (type default))
+    (fill (type none))
+    (effects (font (size 1.27 1.27)) (justify left top))
+    (uuid b29c5acc-d408-4074-9044-e2689c2b936e)
   )
 
   (text "Carte de commande d'un Oya\nEsclave RS485 (Avec Module Nano)\nPetite Carte"

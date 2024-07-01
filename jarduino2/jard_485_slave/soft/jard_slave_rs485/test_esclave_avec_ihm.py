@@ -5,7 +5,7 @@ import time
 import serial
 import re
 
-PORT='COM15'
+PORT='COM10'
 #PORT='COM21'
 
 def calcCS(buff):
@@ -118,6 +118,10 @@ class MyApp:
         self.low_label = tk.Label(root, text="Low:", bg="red", width=10)
         self.low_label.pack(pady=5)
 
+        # Flow
+        self.flow = tk.Label(root, text="", fg="black")
+        self.flow.pack(pady=5)        
+
         # Non-editable text label
         self.info_label = tk.Label(root, text="", fg="blue")
         self.info_label.pack(pady=5)        
@@ -169,6 +173,11 @@ class MyApp:
                         else:
                             high_state=False
 
+                        if 'flow' in obj:
+                            self.flow.config(text=obj['flow'])
+                        else:
+                            self.flow.config(text='')
+                        
                         self.update_bool_states(low_state, high_state)
                         self.info_label.config(text=f"{obj['temp']}°C {obj['hum']}% {obj['volt']}V {obj['time']}s {obj['errs']} errors {obj['tick']}ms")
 
