@@ -23,7 +23,7 @@
 
 #include "credentials.h"
 
-#define VERSION "V2.0"
+#define VERSION "V2.1"
 
 #define MQTT_TRACE_ON
 //#define NO_SOUND
@@ -232,6 +232,11 @@ void flgTicks()
 
 void sendEvent(char *strEvent)
 {
+  #ifdef NO_NETWORK
+    Serial.print("Event not send. No network.");
+    return;
+  #endif
+  
   Serial.print("Send ");
   Serial.print(strEvent);
   Serial.print(": ");
@@ -309,7 +314,11 @@ void setup()
 
   flgBoot=true;
   flgDringByCmd=false;
-  setup_mqtt();  
+  #ifndef NO_NETWORK
+    setup_mqtt();
+  #else
+    WiFi.mode(WIFI_OFF);  
+  #endif
 
   lTick250ms=millis();
   lTick500ms=millis();
@@ -335,7 +344,7 @@ void loop()
   flgTicks();
   
   /// Detection mouvement
-  if (flgMouvement_front_up==true)
+  /*if (flgMouvement_front_up==true)
   {
     iCtrMouvement++;
     
@@ -343,7 +352,7 @@ void loop()
     flgMouvementEnCours=true;
 
     sendEvent("move");
-  }
+  }*/
 
   /// ******************* DETECTION DES EVENEMENTS *********************
 
@@ -471,5 +480,7 @@ void loop()
 
   flgMouvement_prev=flgMouvement;
 
-  mqttClient.loop();
+  #ifndef NO_NETWORK
+    mqttClient.loop();
+  #endif
 }

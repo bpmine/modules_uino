@@ -211,7 +211,7 @@ class RdOyasSrv(RdApp):
                     self.update_slave_var_int(name,addr,data,'tick')
                     self.update_slave_var_int(name,addr,data,'total_on_s')
 
-                    if addr==3:
+                    if addr==6:
                         print(data)
                     
                             
