@@ -5,6 +5,8 @@
 #include "master.h"
 #include "prot.h"
 
+#include "async.hpp"
+
 void Master::init()
 {
   pos=-1;
@@ -16,6 +18,12 @@ void Master::init()
   tmrWait.stop();  
 
   rxFrame.setReceiver(this);
+
+  commands=0;
+  raz_errs=0;
+  raz_time=0;
+  ponged=0;
+  toping=0;
 }
     
 Master::Master()
@@ -54,12 +62,34 @@ void Master::set_commands(unsigned short cmds)
   commands=(list.enabled_slaves() & cmds)<<1;
 }
 
+void Master::set_raz_time(unsigned short razs)
+{
+  raz_time|=(list.enabled_slaves() & razs)<<1;
+}
+
+void Master::set_raz_errs(unsigned short razs)
+{
+  raz_errs|=(list.enabled_slaves() & razs)<<1;
+}
+
+void Master::set_to_ping(unsigned short toping)
+{
+  this->toping=(list.enabled_slaves() & toping)<<1;
+  this->ponged=0;
+}
+
+unsigned short Master::get_pong_states(void)
+{
+  return this->ponged;
+}
+
 void Master::setEnable(bool enable)
 {
   if (enable==false)
   {
     eState=OFF;
     setPower(false);
+    AsyncCmd.set_sended(); ///< Liberer la commande async
   }
   else if (eState==OFF)
   {
@@ -117,12 +147,70 @@ bool Master::OnFrameReceive(FrameOya *oya)
   return false;
 }
    
-bool Master::OnFrameReceive(FramePong *)
+bool Master::OnFrameReceive(FramePong *pong)
 {
-  log("pong");
+  if (AsyncCmd.is_pending())
+  {
+    if ( (AsyncCmd.get_cmd()==MSG_PING) && (pong->addr==AsyncCmd.get_addr()) )
+    {
+      log("Pong OK",pong->addr);
+      AsyncCmd.set_acked();
+      unsigned short msk=1<<pong->addr;
+      ponged|=msk;
+      return true;
+    }
+  }
+
   return false;
 }
+
+void Master::manage_asyncs(void)
+{
+  if (AsyncCmd.is_pending()==true)
+    return;
   
+  if (toping!=0)
+  {
+    for (int i=1;i<15;i++)
+    {
+      unsigned short msk=1<<i;
+      if ( (toping&msk) == msk )
+      {
+        toping&=~msk;
+        ponged&=~msk;
+        AsyncCmd.send_ping(i);
+        break;
+      }
+    }
+  }
+  else if (raz_time!=0)
+  {
+    for (int i=1;i<15;i++)
+    {
+      unsigned short msk=1<<i;
+      if ( (raz_time&msk) == msk )
+      {
+        raz_time&=~msk;
+        AsyncCmd.send_raz_total(i);
+        break;
+      }
+    }
+  }
+  else if (raz_errs!=0)
+  {
+    for (int i=1;i<15;i++)
+    {
+      unsigned short msk=1<<i;
+      if ( (raz_errs&msk) == msk )
+      {
+        raz_errs&=~msk;
+        AsyncCmd.send_raz_errs(i);
+        break;
+      }
+    }
+  }
+}
+
 bool Master::loop(void)
 {
   recv();
@@ -196,15 +284,88 @@ bool Master::loop(void)
       pCurSlave=list.findNextOya(pos);
       if (pCurSlave==nullptr)
       {
-        eState=END;
+        if ( AsyncCmd.is_pending()==true )
+          eState=ASYNC_SEND;
+        else
+          eState=END;
       }
       else
       {
-
         eState=SEND;
       }
           
       break;          
+    }
+
+    case ASYNC_SEND:
+    {
+      log("Async");
+      FrameBuilder fb;
+
+      switch (AsyncCmd.get_cmd())
+      {
+        case MSG_RAZ_TIME:
+        {
+          FrameRazT raz;
+          raz.addr=AsyncCmd.get_addr();
+          fb.build(&raz);
+          sendBytes(fb.getBuffer(), fb.size());
+          AsyncCmd.set_sended();
+          eState = END;
+          break;
+        }
+        case MSG_RAZ_ERR:
+        {
+          FrameRazE raz;
+          raz.addr=AsyncCmd.get_addr();
+          fb.build(&raz);
+          sendBytes(fb.getBuffer(), fb.size());
+          AsyncCmd.set_sended();
+          eState = END;
+          break;
+        }
+        case MSG_PING:
+        {
+          rxFrame.reset();
+
+          FramePing ping;
+          ping.addr=AsyncCmd.get_addr();
+          ping.value=0xAA;
+          fb.build(&ping);
+          sendBytes(fb.getBuffer(), fb.size());
+          AsyncCmd.set_sended();
+
+          eState = ASYNC_RECV;
+          tmrAnswer.start();
+          break;
+        }
+        default:
+        {
+          eState = END;
+          break;
+        }
+      }
+
+      break;
+    }
+
+    case ASYNC_RECV:
+    {
+      if (AsyncCmd.is_pending()==true)
+      {
+        if (tmrAnswer.tick()==true)
+        {
+          log("Async Tmt slave ",AsyncCmd.get_addr());
+          AsyncCmd.set_tmt();
+          eState=END;
+        }
+      }
+      else
+      {
+        eState=END;
+      }
+
+      break;
     }
 
     case END:
@@ -221,6 +382,8 @@ bool Master::loop(void)
       if (flgTrace)
         log("SYNC");
 
+      manage_asyncs();
+
       return true;
     }
   }
@@ -233,7 +396,7 @@ void Master::recv(void)
   while (available())
   {
     int b = readByte();
-    if (eState != RECV)
+    if ((eState != RECV) && (eState != ASYNC_RECV))
       continue;
 
     if ((b > 0) && (b < 255))

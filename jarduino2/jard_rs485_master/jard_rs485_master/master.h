@@ -25,8 +25,12 @@ class Master : public IFrameReceiver
     SlavesList list;
     int pos;
     
-    enum {OFF,IDLE,SEND,RECV,NEXT,WAIT,END} eState;
+    enum {OFF,IDLE,SEND,RECV,NEXT,WAIT,ASYNC_SEND,ASYNC_RECV,END} eState;
     unsigned short commands;
+    unsigned short raz_time;
+    unsigned short raz_errs;
+    unsigned short ponged;
+    unsigned short toping;
     Slave *pCurSlave;
     FrameBuilder rxFrame;
     Timer tmrAnswer=Timer(TIMEOUT_MS);
@@ -40,6 +44,8 @@ class Master : public IFrameReceiver
     bool OnFrameReceive(FramePump *pump);
     bool OnFrameReceive(FrameOya *oya);
     bool OnFrameReceive(FramePong *pong);
+
+    void manage_asyncs(void);
 
   protected:
     bool flgTrace;
@@ -143,6 +149,30 @@ class Master : public IFrameReceiver
      * */
     void set_commands(unsigned short cmds);
     
+    /**
+     * @brief Déclenche le RAZ des temps totaux des esclaves
+     * @param[in] razs bits correspondant aux esclaves a RAZ (Bit0 = Esclave @1, Bit1 = Esclave @2, ... Bit14 = Esclave @14)
+     * */
+    void set_raz_time(unsigned short razs);
+
+    /**
+     * @brief Déclenche le RAZ des temps totaux des esclaves
+     * @param[in] razs bits correspondant aux esclaves a RAZ (Bit0 = Esclave @1, Bit1 = Esclave @2, ... Bit14 = Esclave @14)
+     * */
+    void set_raz_errs(unsigned short razs);
+
+    /**
+     * @brief Déclenche le ping des esclaves
+     * @param[in] toping bits correspondant aux esclaves a pinguer (Bit0 = Esclave @1, Bit1 = Esclave @2, ... Bit14 = Esclave @14)
+     * */
+    void set_to_ping(unsigned short toping);
+
+    /**
+     * @brief Recupere l'etat courant des pongs
+     * @param[in] toping bits correspondant aux esclaves a pinguer (Bit0 = Esclave @1, Bit1 = Esclave @2, ... Bit14 = Esclave @14)
+     * */
+    unsigned short get_pong_states(void);
+
     /**
      * @brief Set ON/OFF the pump
      * @param[in] on true for ON

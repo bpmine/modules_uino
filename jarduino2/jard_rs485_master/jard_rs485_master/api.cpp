@@ -99,3 +99,32 @@ unsigned short api_get_slaves_config(void)
   return Master.get_config_slaves();
 }
 
+void api_raz_all_time(void)
+{
+  Master.set_raz_time(0xFFFF);
+}
+
+void api_raz_time(unsigned char addr)
+{
+  if ((addr>0) && (addr<15))
+  {
+    unsigned short msk=1<<(addr-1);
+    Master.set_raz_time(msk);
+  }
+}
+
+void api_raz_all_errs(void)
+{
+  Master.set_raz_errs(0xFFFF);
+}
+
+void api_ping(unsigned char addr)
+{
+  unsigned short msk=1<<(addr-1);
+  Master.set_to_ping(msk);
+}
+
+unsigned short api_get_pong(void)
+{
+  return Master.get_pong_states();
+}

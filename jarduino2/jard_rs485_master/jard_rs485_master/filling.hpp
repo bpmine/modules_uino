@@ -8,13 +8,13 @@
 
 #define MAX_FILLING_EQTS                    (15)
 
-#define TIMEOUT_LOW_MS                      (1UL * 60UL * 1000UL)
-#define TIME_FILLING_AFTER_LOW_MS           (1UL * 60UL * 1000UL)
+#define TIMEOUT_LOW_MS                      (120UL * 1000UL)
+#define TIME_FILLING_AFTER_LOW_MS           (90UL * 1000UL)
 
 
 /**
  * @class SpecialFillElmSettings
- * @brief Gestion des reglages speciaux pour certains OYAs (plus de remplissage, ...)
+ * @brief Gestion des reglages speciaux pour certains OYAs (plus ou moins de remplissage, ...)
  * */
 class SpecialFillElmSettings
 {
@@ -32,14 +32,25 @@ class SpecialFillElmSettings
 };
 
 /**
- * Pour le cote barbec, les 3 derniers oyas doivent remplir plus
+ * Pour le cote barbec, les 3 derniers oyas doivent remplir moins (plus petits)
  * */
-#ifdef NODE_REDUIT
+#if defined(NODE_BARBEC) && !defined(NODE_REDUIT)
   SpecialFillElmSettings tabSpecialFillElmSettings[]={
-      SpecialFillElmSettings(6,60,2*60),
-      SpecialFillElmSettings(7,60,2*60),
-      SpecialFillElmSettings(8,60,2*60)
+      SpecialFillElmSettings(6,70,55),
+      SpecialFillElmSettings(7,70,55),
+      SpecialFillElmSettings(8,70,55)
   };
+  /**
+   * Pour le cote reduit, les adresses 2, 4 6 et 7 oyas doivent remplir moins (plus petits)
+   * */
+#elif !defined(NODE_BARBEC) && defined(NODE_REDUIT)
+  SpecialFillElmSettings tabSpecialFillElmSettings[]={
+      SpecialFillElmSettings(2,70,55),
+      SpecialFillElmSettings(4,70,55),
+      SpecialFillElmSettings(6,70,55)
+      SpecialFillElmSettings(7,70,55)
+  };
+
 #else
   SpecialFillElmSettings tabSpecialFillElmSettings[]={};
 #endif
@@ -236,14 +247,6 @@ class Filling
         nxt++;
       }
     }
-
-    /*bool maxTimeReached(void)
-    {
-      if ( (inxToFill>0) && (inxToFill<nbToFill) )
-        return tab[inxToFill]->time_s<tab[inxToFill]->time_max?false:true;
-      else
-        return true;
-    }*/
 
     void setInxToFill(int nxt)
     {

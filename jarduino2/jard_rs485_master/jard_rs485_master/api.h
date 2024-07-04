@@ -28,4 +28,10 @@ extern void api_set_hour(int hour,int minute,int second);
 extern void api_set_slaves_config(unsigned short config);
 extern unsigned short api_get_slaves_config(void);
 
+extern void api_raz_all_time(void);
+extern void api_raz_time(unsigned char addr);
+extern void api_raz_all_errs(void);
+extern void api_ping(unsigned char addr);
+extern unsigned short api_get_pong(void);
+
 #endif

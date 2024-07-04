@@ -28,6 +28,9 @@ static void _help(void)
   Serial.println("  - trace on/off");
   Serial.println("  - stats");
   Serial.println("  - razerrs");
+  Serial.println("  - raztime [@ ou all]");
+  Serial.println("  - ping @");
+  Serial.println("  - pong");
   Serial.println("  - setdate dd/mm/yyyy");
   Serial.println("  - settime hh:mm:ss");
   Serial.println("  - time");
@@ -58,7 +61,6 @@ static void _term_exec_oya(const char *strParams)
 {
   int addr;
   char onoff[20];
-  Serial.println(strParams);
   if ( (strlen(strParams)>19) || (sscanf(strParams,"%X %s",&addr,onoff)!=2) || (addr<2) || (addr>14))
   {
     Serial.println("Format incorrect!");
@@ -221,7 +223,31 @@ static void _term_exec_razerrs(void)
   if (pPump!=NULL)
     pPump->razErrors();
   
+  api_raz_all_errs();
+
   Serial.println("RAZ errors...");
+}
+
+static void _term_exec_raztime(const char *strParams)
+{
+  int addr;
+  if (strcmp(strParams,"all")==0)
+  {
+    api_raz_all_time();
+    Serial.println("RAZ time all...");
+  }
+  else if ( (strlen(strParams)>19) || (sscanf(strParams,"%X",&addr)!=1) || (addr<1) || (addr>14))
+  {
+    Serial.println("Parametres incorrects");
+  }
+  else
+  {
+    api_raz_time((unsigned char)addr);
+    Serial.print("RAZ time @");
+    char tmp[5];
+    sprintf(tmp,"%X",addr);
+    Serial.println(tmp);
+  }
 }
 
 static void _term_exec_time(void)
@@ -337,6 +363,40 @@ static void _term_exec_config_slaves(const char *strParams)
   }
 }
 
+static void _term_exec_ping(const char *strParams)
+{
+  int addr;
+  if ( (strlen(strParams)>19) || (sscanf(strParams,"%X",&addr)!=1) || (addr<1) || (addr>14))
+  {
+    Serial.println("Parametres incorrects");
+  }
+  else
+  {
+    char tmp[15];
+    sprintf(tmp,"Ping @%X",addr);
+    Serial.println(tmp);
+    api_ping(addr);
+  }
+}
+
+static void _term_exec_pong(void)
+{
+  unsigned short pong=api_get_pong();
+  for (int i=0;i<15;i++)
+  {
+    unsigned short msk=1<<i;
+    if ((msk&pong)==msk)
+    {
+      char tmp[15];
+      sprintf(tmp,"@%X is ponged",i);
+      Serial.println(tmp);
+      return;
+    }
+  }
+
+  Serial.println("Rien.");
+}
+
 static void _execCmd(const char *strCmd,const char *strParams)
 {
   if (strcmp(strCmd,"test")==0)
@@ -379,6 +439,10 @@ static void _execCmd(const char *strCmd,const char *strParams)
   {
     _term_exec_razerrs();
   }
+  else if (strcmp(strCmd,"raztime")==0)
+  {
+    _term_exec_raztime(strParams);
+  }
   else if (strcmp(strCmd,"time")==0)
   {
     _term_exec_time();
@@ -394,6 +458,14 @@ static void _execCmd(const char *strCmd,const char *strParams)
   else if (strcmp(strCmd,"confslaves")==0)
   {
     _term_exec_config_slaves(strParams);
+  }
+  else if (strcmp(strCmd,"ping")==0)
+  {
+    _term_exec_ping(strParams);
+  }
+  else if (strcmp(strCmd,"pong")==0)
+  {
+    _term_exec_pong();
   }
 }
 
@@ -418,6 +490,5 @@ void serialEvent(void)
     }
   }
 }
-
 
 #endif

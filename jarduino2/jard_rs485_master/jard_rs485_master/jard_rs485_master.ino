@@ -1,7 +1,7 @@
 /**
  * @file jard_rs485_master.ino
  *
- * @brief Programme de gestion du systeme des OYAs
+ * @brief PROGRAMME DE GESTION DU SYSTEMES DES OYAS
  **/
 #include "globals.h"
 
@@ -16,6 +16,7 @@
 
 #define COL_BLACK   CRGB(0,0,0)
 #define COL_RED     CRGB(255,0,0)
+#define COL_YELLOW  CRGB(255,255,0)
 #define COL_BLUE    CRGB(0,0,255)
 #define COL_GREEN   CRGB(0,255,0)
 #define COL_WHITE   CRGB(255,255,255)
@@ -106,14 +107,10 @@ void loop(void)
     Master.start_cycle();    
   }
   
-  if (Master.loop()==true)
-  {
-  }
+  Master.loop();
 
   if (tmrBlink.tick()==true)
-  {
     flgBlink=!flgBlink;
-  }
 
   if (tmrLeds.tick()==true)
   {
@@ -124,6 +121,11 @@ void loop(void)
         _leds[0]=COL_RED;
         break;
       }
+      case MODE_AFF_CHECK_WIFI:
+      {
+        _leds[0]=COL_YELLOW;
+        break;
+      }
       case MODE_AFF_DISPLAY:
       {
         _leds[0]=COL_GREEN;
@@ -131,7 +133,7 @@ void loop(void)
       }
       case MODE_AFF_REMOTE:
       {
-        _leds[0]=flgBlink?COL_WHITE:COL_BLACK;
+        _leds[0]=flgBlink?COL_YELLOW:COL_BLACK;
         break;
       }
       case MODE_AFF_AUTO:

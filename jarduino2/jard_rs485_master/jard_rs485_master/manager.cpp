@@ -117,8 +117,8 @@ class StateIdle:public StateGestion
          now.minute(),
          now.second()
       );
-      logger.print("Check RTC: ");
-      logger.println(strDte);
+      //logger.print("Check RTC: ");
+      //logger.println(strDte);
 
       _machine.startTimeOut(TIMEOUT_CHECK_RTC_PERIOD);
 
@@ -157,12 +157,12 @@ class StateWifiCheck:public StateGestion
     void onEnter() override
     {
       logger.println("Enter WifiCheck...");
-      _machine.startTimeOut(TIMEOUT_CHECK_WIFI_DURATION);
       Comm.setPower(true);
+      _machine.startTimeOut(TIMEOUT_CHECK_WIFI_DURATION);
     }
     void onRun() override
     {
-      mode_aff=MODE_AFF_IDLE;
+      mode_aff=MODE_AFF_CHECK_WIFI;
 
       if (Comm.isRemoteActive()==true)
         _machine.setState(stWifiRemote);

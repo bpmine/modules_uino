@@ -275,7 +275,7 @@ void WifiComm::loop(void)
           if (error)
           {
             pStr->print("\x01");
-            pStr->print(F("ERR: Erreur de désérialisation: "));
+            pStr->print(F("ERR: Erreur de dé-sérialisation: "));
             pStr->print(error.f_str());
             pStr->print("\x02");
 
