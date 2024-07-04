@@ -327,7 +327,7 @@ def config_jarduino(cln):
     disp_pump_cfg(res_cfg,res_coils)
     
 
-client= ModbusClient(method = "rtu", port=r"\\.\COM5",stopbits = 1, bytesize = 8, parity='N',baudrate= 115200,timeout=2)
+client= ModbusClient(method = "rtu", port=r"\\.\COM21",stopbits = 1, bytesize = 8, parity='N',baudrate= 115200,timeout=2)
 
 print('Connection:',end='')
 res = client.connect()

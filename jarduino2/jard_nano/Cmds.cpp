@@ -13,7 +13,7 @@
 #include "memoire.h"
 
 extern "C"{
-#include <mdbus.h>
+#include "mdbus.h"
 }
 
 #define MODBUS_JARDUINO_VERSION (8)
