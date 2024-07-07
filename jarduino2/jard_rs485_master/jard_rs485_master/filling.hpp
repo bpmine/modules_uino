@@ -8,8 +8,8 @@
 
 #define MAX_FILLING_EQTS                    (15)
 
-#define TIMEOUT_LOW_MS                      (120UL * 1000UL)
-#define TIME_FILLING_AFTER_LOW_MS           (90UL * 1000UL)
+#define TIMEOUT_LOW_MS                      (80UL * 1000UL)
+#define TIME_FILLING_AFTER_LOW_MS           (60UL * 1000UL)
 
 
 /**
@@ -36,19 +36,22 @@ class SpecialFillElmSettings
  * */
 #if defined(NODE_BARBEC) && !defined(NODE_REDUIT)
   SpecialFillElmSettings tabSpecialFillElmSettings[]={
-      SpecialFillElmSettings(6,70,55),
-      SpecialFillElmSettings(7,70,55),
-      SpecialFillElmSettings(8,70,55)
+      SpecialFillElmSettings(6,45,40),
+      SpecialFillElmSettings(7,45,40),
+      SpecialFillElmSettings(8,45,40)
   };
   /**
    * Pour le cote reduit, les adresses 2, 4 6 et 7 oyas doivent remplir moins (plus petits)
+   * @8 et @9 passent a low en 9s puis a high en 44s (Soit 53s pour passer de vide a high)
    * */
 #elif !defined(NODE_BARBEC) && defined(NODE_REDUIT)
   SpecialFillElmSettings tabSpecialFillElmSettings[]={
-      SpecialFillElmSettings(2,70,55),
-      SpecialFillElmSettings(4,70,55),
-      SpecialFillElmSettings(6,70,55)
-      SpecialFillElmSettings(7,70,55)
+      SpecialFillElmSettings(2,45,40),
+      SpecialFillElmSettings(4,45,40),
+      SpecialFillElmSettings(6,45,40),
+      SpecialFillElmSettings(7,45,40),
+      SpecialFillElmSettings(8,45,40),
+      SpecialFillElmSettings(9,45,40),
   };
 
 #else

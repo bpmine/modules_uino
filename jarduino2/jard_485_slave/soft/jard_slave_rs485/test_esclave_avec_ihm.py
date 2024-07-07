@@ -5,7 +5,7 @@ import time
 import serial
 import re
 
-PORT='COM10'
+PORT='COM14'
 #PORT='COM21'
 
 def calcCS(buff):

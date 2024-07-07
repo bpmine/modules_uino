@@ -311,7 +311,7 @@ class App:
         self.comm=comm
 
         # Collection des adresses
-        self.addresses = [1,2,3,4,5,6,7,8]
+        self.addresses = [1,2,3,4,5,6,7,8,9]
 
         self.datas={}
         for a in self.addresses:
