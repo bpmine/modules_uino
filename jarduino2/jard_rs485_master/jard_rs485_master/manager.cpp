@@ -17,7 +17,6 @@
 #include <RTClib.h>
 static DS1307 _rtc;
 
-
 #define ONE_MINUTE    (1 * 60 * 1000UL)
 #define ONE_SECOND    (1000UL)
 
@@ -137,7 +136,7 @@ class StateIdle:public StateGestion
         if (!_flgRtcTriggered)
         {
           _flgRtcTriggered=true;
-          _machine.setState(stWifiCheck);
+          //_machine.setState(stWifiCheck);
         }
       }
       else

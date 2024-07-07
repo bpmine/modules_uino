@@ -10,11 +10,23 @@
 #include "api.h"
 #include "slaves.hpp"
 #include "pins.h"
+#include "Logger.h"
 
 #define COMM_SOF 1
 #define COMM_EOF 2
 
 WifiComm Comm;
+
+typedef enum {
+  OFF,
+  IDLE,               ///< Ne fait rien
+  SEND_MASTER,        ///< Envoi de l'info master
+  WAIT_ACK_MASTER,    ///< Attente Ack suite info master
+  SEND_FIRST,         ///< Recherche premier esclave a envoyer
+  SEND,               ///< Envoi de l'info d'un esclave
+  WAIT_ACK,           ///< Attente Ack suite info esclave
+  SEND_NEXT           ///< Recherche esclave suivant a envoyer
+} T_SEND_STATE;
 
 WifiComm::WifiComm()
 {
@@ -23,6 +35,10 @@ WifiComm::WifiComm()
   flgRemoteActive=false;
   flgAlive=false;
   commands=0;
+  send_state=OFF;
+  send_pos=0;
+  send_acked=false;
+  send_pSlave=nullptr;
 }
 
 void WifiComm::begin(HardwareSerial* pSerial)
@@ -39,6 +55,10 @@ void WifiComm::begin(HardwareSerial* pSerial)
   flgAlive=false;
   flgRemoteActive=false;
   commands=0;
+  send_state=OFF;
+  send_pos=0;
+  send_acked=false;
+  send_pSlave=nullptr;
 }
 
 void WifiComm::setPower(bool on)
@@ -47,9 +67,13 @@ void WifiComm::setPower(bool on)
   {
     digitalWrite(PIN_PWR_WIFI,HIGH);
     digitalWrite(PIN_PWR_WIFI_INV,LOW);
+    send_state=SEND_MASTER;
+    send_pos=0;
+    send_acked=false;
   }
   else
   {
+    send_state=OFF;
     digitalWrite(PIN_PWR_WIFI,LOW);
     digitalWrite(PIN_PWR_WIFI_INV,HIGH);
   }
@@ -84,27 +108,23 @@ void WifiComm::pubMasterInfo(void)
   pStr->print("\x02");
 }
 
-void WifiComm::pubPumpInfo(void)
+void WifiComm::pubInfo(Pump *pPump)
 {
-  Pump *pump=api_get_pump();
-  if (pump==nullptr)
-  {
-    pStr->print("\x01ERR\x02");
+  if (pPump==nullptr)
     return;
-  }
 
   StaticJsonDocument<150> doc;
   doc["type"]="pump";
-  doc["addr"]=(int)pump->addr;
-  doc["on"]=pump->on;
-  doc["cmd"]=pump->cmd;
-  doc["flow"]=pump->flow;
-  doc["temp"]=pump->temp_dg;
-  doc["hum"]=pump->hum_pc;
-  doc["voltage"]=pump->voltage;
-  doc["comm_ok"]=pump->comm_ok;
-  doc["tick"]=pump->last_slave_tick_ms;
-  doc["total_on_s"]=pump->total_slave_on_s;
+  doc["addr"]=(int)pPump->addr;
+  doc["on"]=pPump->on;
+  doc["cmd"]=pPump->cmd;
+  doc["flow"]=pPump->flow;
+  doc["temp"]=pPump->temp_dg;
+  doc["hum"]=pPump->hum_pc;
+  doc["voltage"]=pPump->voltage;
+  doc["comm_ok"]=pPump->comm_ok;
+  doc["tick"]=pPump->last_slave_tick_ms;
+  doc["total_on_s"]=pPump->total_slave_on_s;
 
   char jsonOutput[150];
   serializeJson(doc, jsonOutput);
@@ -114,28 +134,24 @@ void WifiComm::pubPumpInfo(void)
   pStr->print("\x02");
 }
 
-void WifiComm::pubOyaInfo(int addr)
+void WifiComm::pubInfo(Oya *pOya)
 {
-  Oya *oya=api_get_oya(addr);
-  if (oya==nullptr)
-  {
-    pStr->print("\x01ERR\x02");
+  if (pOya==nullptr)
     return;
-  }
 
   StaticJsonDocument<150> doc;
   doc["type"]="oya";
-  doc["addr"]=(int)oya->addr;
-  doc["on"]=oya->on;
-  doc["cmd"]=oya->cmd;
-  doc["high"]=oya->high;
-  doc["low"]=oya->low;
-  doc["temp"]=oya->temp_dg;
-  doc["hum"]=oya->hum_pc;
-  doc["voltage"]=oya->voltage;
-  doc["comm_ok"]=oya->comm_ok;
-  doc["tick"]=oya->last_slave_tick_ms;
-  doc["total_on_s"]=oya->total_slave_on_s;
+  doc["addr"]=(int)pOya->addr;
+  doc["on"]=pOya->on;
+  doc["cmd"]=pOya->cmd;
+  doc["high"]=pOya->high;
+  doc["low"]=pOya->low;
+  doc["temp"]=pOya->temp_dg;
+  doc["hum"]=pOya->hum_pc;
+  doc["voltage"]=pOya->voltage;
+  doc["comm_ok"]=pOya->comm_ok;
+  doc["tick"]=pOya->last_slave_tick_ms;
+  doc["total_on_s"]=pOya->total_slave_on_s;
 
   char jsonOutput[150];
   serializeJson(doc, jsonOutput);
@@ -236,11 +252,8 @@ unsigned short WifiComm::getCommands(void)
   return commands;
 }
 
-void WifiComm::loop(void)
+void WifiComm::recv(void)
 {
-  if (pStr==nullptr)
-    return;
-
   while (pStr->available())
   {
     int b = pStr->read();
@@ -281,7 +294,6 @@ void WifiComm::loop(void)
 
             return;
           }
-
           if (strcmp(doc["req"],"cmds")==0)
           {
             unsigned short cmds=doc["cmds"];
@@ -290,20 +302,10 @@ void WifiComm::loop(void)
             tmrRemoteActive.start();
             tmrAlive.start();
           }
-          else if (strcmp(doc["req"],"master")==0)
+          else if (strcmp(doc["req"],"ack")==0)
           {
-            pubMasterInfo();
-            tmrAlive.start();
-          }
-          else if (strcmp(doc["req"],"pump")==0)
-          {
-            pubPumpInfo();
-            tmrAlive.start();
-          }
-          else if (strcmp(doc["req"],"oya")==0)
-          {
-            int addr=doc["addr"];
-            pubOyaInfo(addr);
+            send_acked=true;
+            tmrRemoteActive.start();
             tmrAlive.start();
           }
           else if (strcmp(doc["req"],"test")==0)
@@ -321,6 +323,106 @@ void WifiComm::loop(void)
       }
     }
   }
+}
+
+void WifiComm::sendTask(void)
+{
+  switch (send_state)
+  {
+    case OFF:
+    {
+      break;
+    }
+    case IDLE:
+    {
+      break;
+    }
+    case SEND_MASTER:
+    {
+      logger.println("Send master");
+      pubMasterInfo();
+      tmrSendAck.start();
+      send_acked=false;
+      send_state=WAIT_ACK_MASTER;
+      break;
+    }
+    case WAIT_ACK_MASTER:
+    {
+      if (tmrSendAck.tick()==true)
+        send_state=SEND_MASTER;
+      else if (send_acked==true)
+        send_state=SEND_FIRST;
+      break;
+    }
+    case SEND_FIRST:
+    {
+      logger.println("Send first");
+      api_latch_slaves();
+      SlavesList *pSlaveList=api_get_latched_slaves();
+      if (pSlaveList!=nullptr)
+      {
+        send_pSlave=pSlaveList->findFirstSlave(send_pos);
+        if (send_pSlave==nullptr)
+          send_state=IDLE;
+        else
+          send_state=SEND;
+      }
+      else
+      {
+        send_state=IDLE;
+      }
+
+      break;
+    }
+    case SEND:
+    {
+      logger.print("Send @");
+      logger.println(send_pSlave->addr);
+      if (send_pSlave->addr==1)
+        pubInfo((Pump*)send_pSlave);
+      else
+        pubInfo((Oya *)send_pSlave);
+
+      tmrSendAck.start();
+      send_acked=false;
+      send_state=WAIT_ACK;
+      break;
+    }
+    case WAIT_ACK:
+    {
+      if (tmrSendAck.tick()==true)
+        send_state=SEND;
+      else if (send_acked==true)
+        send_state=SEND_NEXT;
+      break;
+    }
+    case SEND_NEXT:
+    {
+      SlavesList *pSlaveList=api_get_latched_slaves();
+      if (pSlaveList!=nullptr)
+      {
+        send_pSlave=pSlaveList->findNextSlave(send_pos);
+        if (send_pSlave==nullptr)
+          send_state=IDLE;
+        else
+          send_state=SEND;
+      }
+      else
+      {
+        send_state=IDLE;
+      }
+      break;
+    }
+  }
+}
+
+void WifiComm::loop(void)
+{
+  if (pStr==nullptr)
+    return;
+
+  recv();
+  sendTask();
 
   if (tmrRemoteActive.tick()==true)
   {

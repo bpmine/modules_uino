@@ -74,7 +74,7 @@ void setup(void)
     Master.set_config_slaves(0x00FF);
   #endif
   #ifdef NODE_REDUIT
-    Master.set_config_slaves(0x0007F);
+    Master.set_config_slaves(0x001FF);
   #endif
 
   tmrCycle.start();
@@ -82,10 +82,6 @@ void setup(void)
   tmrBlink.start();
   flgBlink=false;
 
-  //Master.setEnable(true);
-  //digitalWrite(PIN_PWR_ON,HIGH);
-
-  //Master.set_commands(0x01);
   Comm.begin(&Serial2);
   //Comm.begin(&Serial3);
 

@@ -24,6 +24,7 @@ class Master : public IFrameReceiver
 
     SlavesList list;
     int pos;
+    SlavesList latched_list;
     
     enum {OFF,IDLE,SEND,RECV,NEXT,WAIT,ASYNC_SEND,ASYNC_RECV,END} eState;
     unsigned short commands;
@@ -196,7 +197,18 @@ class Master : public IFrameReceiver
      * @brief Retourne la liste des esclaves
      * @return Voir SlavesList
      * */
-    SlavesList &getSlavesList();
+    SlavesList &getSlavesList(void);
+
+    /**
+     * @brief Latche l'etat de la liste des esclaves
+     * */
+    void latchSlaveList(void);
+
+    /**
+     * @brief Retourne la liste des esclaves latched
+     * @return Voir SlavesList
+     * */
+    SlavesList &getLatchedSlavesList(void);
 };
 
 #endif

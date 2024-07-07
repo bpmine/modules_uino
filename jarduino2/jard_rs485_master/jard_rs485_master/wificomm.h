@@ -6,10 +6,16 @@
 #define COMM_HEADER_INCLUDED
 
 #define COMM_BUFFER_MAX_SIZE  (255)
-#define TIMEOUT_WIFI_COMM_MS  (5000)
+#define TIMEOUT_WIFI_COMM_MS  (5000UL)
+#define TIMEOUT_WIFI_ACK_MS   (2000UL)
+#define PERIOD_SEND_DATAS_MS  (10000UL)
 
 #include "timer.h"
 
+class SlavesList;
+class Slave;
+class Pump;
+class Oya;
 class HardwareSerial;
 class WifiComm
 {
@@ -23,11 +29,19 @@ class WifiComm
     bool flgAlive;
     unsigned short commands;
 
+    Timer tmrSendAck= Timer(TIMEOUT_WIFI_ACK_MS);
+    int send_state;
+    int send_pos;
+    bool send_acked;
+    Slave *send_pSlave;
+
     void pubMasterInfo(void);
-    void pubPumpInfo(void);
-    void pubOyaInfo(int addr);
+    void pubInfo(Pump *Pump);
+    void pubInfo(Oya *pOya);
 
     void execCommands(unsigned short cmds,bool ctrl);
+    void recv(void);
+    void sendTask(void);
 
   public:
     WifiComm();

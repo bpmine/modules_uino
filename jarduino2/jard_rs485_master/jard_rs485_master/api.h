@@ -7,6 +7,7 @@
 
 class Pump;
 class Oya;
+class SlavesList;
 
 extern void api_trace(bool en);
 
@@ -33,5 +34,8 @@ extern void api_raz_time(unsigned char addr);
 extern void api_raz_all_errs(void);
 extern void api_ping(unsigned char addr);
 extern unsigned short api_get_pong(void);
+
+extern void api_latch_slaves(void);
+extern SlavesList *api_get_latched_slaves(void);
 
 #endif

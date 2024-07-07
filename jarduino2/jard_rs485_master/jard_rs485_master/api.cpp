@@ -128,3 +128,13 @@ unsigned short api_get_pong(void)
 {
   return Master.get_pong_states();
 }
+
+void api_latch_slaves(void)
+{
+  Master.latchSlaveList();
+}
+
+SlavesList *api_get_latched_slaves(void)
+{
+  return &(Master.getLatchedSlavesList());
+}
