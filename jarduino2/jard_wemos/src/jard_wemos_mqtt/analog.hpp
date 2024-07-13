@@ -1,3 +1,7 @@
+/**
+ * @file analog.hpp
+ * @brief Gestion d'une mesure analogique (avec filtrage)
+*/
 #ifndef ANALOG_HEADER_INCLUDED
 #define ANALOG_HEADER_INCLUDED
 
@@ -15,6 +19,9 @@ class Analog
     unsigned char m_bCur;                   ///< Position derniere valeur analogique mesuree
     
   public:
+    /**
+     * @brief Constructeur
+    */  
     Analog()
     {
       m_bSize=MAX_ANALOG_VALS;
@@ -25,6 +32,10 @@ class Analog
       }
     }
 
+    /**
+     * @brief Constructeur
+     * @param[in] bSize Nombre d'echantillons pour la moyenne
+    */
     Analog(unsigned char bSize)
     {
       m_bSize=bSize;

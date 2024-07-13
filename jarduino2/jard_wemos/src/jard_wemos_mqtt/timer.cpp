@@ -1,3 +1,7 @@
+/**
+ * @file timer.cpp
+ * @brief IMPLEMENTATION - Gestion d'un timer en ms
+*/
 #include "timer.h"
 #include <arduino.h>
 
@@ -29,8 +33,6 @@ unsigned long Timer::getDuration_ms(void)
 {
   return duration_ms;
 }
-
-
 
 bool Timer::tick(void)
 {
