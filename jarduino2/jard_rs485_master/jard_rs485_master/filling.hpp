@@ -46,12 +46,12 @@ class SpecialFillElmSettings
    * */
 #elif !defined(NODE_BARBEC) && defined(NODE_REDUIT)
   SpecialFillElmSettings tabSpecialFillElmSettings[]={
-      SpecialFillElmSettings(2,45,40),
-      SpecialFillElmSettings(4,45,40),
-      SpecialFillElmSettings(6,45,40),
-      SpecialFillElmSettings(7,45,40),
-      SpecialFillElmSettings(8,45,40),
-      SpecialFillElmSettings(9,45,40),
+      SpecialFillElmSettings(2,45,30),
+      SpecialFillElmSettings(4,45,30),
+      SpecialFillElmSettings(6,45,30),
+      SpecialFillElmSettings(7,45,30),
+      SpecialFillElmSettings(8,45,30),
+      SpecialFillElmSettings(9,45,30),
   };
 
 #else

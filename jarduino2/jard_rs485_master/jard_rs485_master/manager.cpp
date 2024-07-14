@@ -98,9 +98,9 @@ class StateIdle:public StateGestion
     {
       mode_aff=MODE_AFF_IDLE;
 
-      if (Comm.isAlive()==true)
-        _machine.setState(stWifiCheck);
-      else if (_btn.isRising())
+      //if (Comm.isAlive()==true)
+      //  _machine.setState(stWifiCheck);
+      if (_btn.isRising())
         _machine.setState(stDisplay);
     }
 
