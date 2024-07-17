@@ -4,7 +4,9 @@
 
 #include <RTClib.h>
 
- MasterArduino Master;
+//#include "databuilder.h"
+
+MasterArduino Master;
 
 static DS1307 _rtc;
 
@@ -129,12 +131,20 @@ unsigned short api_get_pong(void)
   return Master.get_pong_states();
 }
 
-void api_latch_slaves(void)
+/*void api_latch_data(Data *pData)
 {
-  Master.latchSlaveList();
-}
+  DataBuilder bld(pData);
+  Pump *pmp=api_get_pump();
+  bld.set(pmp);
+  int pos;
+  Oya *oya=api_find_first_oya(pos);
+  while (oya!=nullptr)
+  {
+    bld.set(oya);
+    oya=api_find_next_oya(pos);
+  }
 
-SlavesList *api_get_latched_slaves(void)
-{
-  return &(Master.getLatchedSlavesList());
-}
+  DateTime now = _rtc.now();
+  bld.set(&now);
+}*/
+

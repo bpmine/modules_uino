@@ -431,16 +431,6 @@ SlavesList & Master::getSlavesList(void)
   return list;
 }
 
-void Master::latchSlaveList(void)
-{
-  latched_list.latchFrom(list);
-}
-
-SlavesList & Master::getLatchedSlavesList(void)
-{
-  return latched_list;
-}
-
 void Master::set_pump(bool on)
 {
   if (on==true)

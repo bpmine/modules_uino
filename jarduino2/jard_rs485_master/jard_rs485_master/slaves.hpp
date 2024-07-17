@@ -28,29 +28,6 @@ class Slave
     unsigned short total_slave_on_s;
     unsigned short total_slave_errs;
 
-    virtual void latchFrom(Slave *pSrc)
-    {
-      addr=pSrc->addr;
-      on=pSrc->on;
-      temp_dg=pSrc->temp_dg;
-      hum_pc=pSrc->hum_pc;
-      voltage=pSrc->voltage;
-
-      comm_ok=pSrc->comm_ok;
-
-      cycles_since_off=pSrc->cycles_since_off;
-      cycles_since_on=pSrc->cycles_since_on;
-      cycles_since_nok=pSrc->cycles_since_nok;
-      cycles_since_ok=pSrc->cycles_since_ok;
-      cycles_errors=pSrc->cycles_errors;
-
-      cmd=pSrc->cmd;
-
-      last_slave_tick_ms=pSrc->last_slave_tick_ms;
-      total_slave_on_s=pSrc->total_slave_on_s;
-      total_slave_errs=pSrc->total_slave_errs;
-    }
-
     virtual void init(void)
     {
       on=false;
@@ -160,12 +137,6 @@ class Pump : public Slave
   public:
     int flow;
 
-    virtual void latchFrom(Slave *pSrc) override
-    {
-      Slave::latchFrom(pSrc);
-      flow=((Pump*)pSrc)->flow;
-    }
-
     virtual void init(void) override
 	  {
       Slave::init();
@@ -184,13 +155,6 @@ class Oya : public Slave
   public:
     bool high;
     bool low;
-
-    virtual void latchFrom(Slave *pSrc) override
-    {
-      Slave::latchFrom(pSrc);
-      high=((Oya*)pSrc)->high;
-      low=((Oya*)pSrc)->low;
-    }
 
     virtual void init() override
 	  {
@@ -225,13 +189,6 @@ class SlavesList
     	else
     	  slaves[i]=new Oya(1+i);
       }
-    }
-
-    void latchFrom(SlavesList &src)
-    {
-      flgEnabledSlaves=src.flgEnabledSlaves;
-      for (int i=0;i<NUM_SLAVES_MAX;i++)
-        slaves[i]->latchFrom(src.slaves[i]);
     }
 
     void updCycleStats(void)

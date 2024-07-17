@@ -6,11 +6,9 @@
 #ifndef FILLING_HEADER_INCLIDED
 #define FILLING_HEADER_INCLIDED
 
+#include "globals.h"
+
 #define MAX_FILLING_EQTS                    (15)
-
-#define TIMEOUT_LOW_MS                      (80UL * 1000UL)
-#define TIME_FILLING_AFTER_LOW_MS           (60UL * 1000UL)
-
 
 /**
  * @class SpecialFillElmSettings
@@ -34,28 +32,27 @@ class SpecialFillElmSettings
 /**
  * Pour le cote barbec, les 3 derniers oyas doivent remplir moins (plus petits)
  * */
-#if defined(NODE_BARBEC) && !defined(NODE_REDUIT)
+#if (defined(NODE_BARBEC) && !defined(NODE_REDUIT))
+  #define TIMEOUT_LOW_MS                      (80UL * 1000UL)
+  #define TIME_FILLING_AFTER_LOW_MS           (60UL * 1000UL)
+
   SpecialFillElmSettings tabSpecialFillElmSettings[]={
-      SpecialFillElmSettings(6,45,40),
-      SpecialFillElmSettings(7,45,40),
-      SpecialFillElmSettings(8,45,40)
+      SpecialFillElmSettings(6,40,40),
+      SpecialFillElmSettings(7,40,40),
+      SpecialFillElmSettings(8,40,40)
   };
   /**
-   * Pour le cote reduit, les adresses 2, 4 6 et 7 oyas doivent remplir moins (plus petits)
+   * Pour le cote reduit, les adresses ???  oyas doivent remplir moins (plus petits)
    * @8 et @9 passent a low en 9s puis a high en 44s (Soit 53s pour passer de vide a high)
    * */
-#elif !defined(NODE_BARBEC) && defined(NODE_REDUIT)
-  SpecialFillElmSettings tabSpecialFillElmSettings[]={
-      SpecialFillElmSettings(2,45,30),
-      SpecialFillElmSettings(4,45,30),
-      SpecialFillElmSettings(6,45,30),
-      SpecialFillElmSettings(7,45,30),
-      SpecialFillElmSettings(8,45,30),
-      SpecialFillElmSettings(9,45,30),
-  };
+#elif (!defined(NODE_BARBEC) && defined(NODE_REDUIT))
+  #define TIMEOUT_LOW_MS                      (40UL * 1000UL)
+  #define TIME_FILLING_AFTER_LOW_MS           (30UL * 1000UL)
+
+  SpecialFillElmSettings tabSpecialFillElmSettings[]={ };
 
 #else
-  SpecialFillElmSettings tabSpecialFillElmSettings[]={};
+  #error CONFIGURATION INCONNUE !!
 #endif
 
 /**

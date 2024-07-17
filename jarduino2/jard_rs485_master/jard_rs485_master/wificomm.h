@@ -30,10 +30,6 @@ class WifiComm
     unsigned short commands;
 
     Timer tmrSendAck= Timer(TIMEOUT_WIFI_ACK_MS);
-    int send_state;
-    int send_pos;
-    bool send_acked;
-    Slave *send_pSlave;
 
     void pubMasterInfo(void);
     void pubInfo(Pump *Pump);

@@ -23,10 +23,11 @@ static DS1307 _rtc;
 #define TIMEOUT_START_EV_MS                 (ONE_SECOND)
 #define TIMEOUT_STOP_EV_AFTER_STOP_PUMP_MS  (ONE_SECOND)
 #define TIMEOUT_STAY_IN_DISPLAY_MS          (ONE_MINUTE)
-#define TIMEOUT_WAIT_STEADY_BEFORE_START_MS (8 * 1000UL)
+#define TIMEOUT_WAIT_STEADY_BEFORE_START_MS (6 * 1000UL)
 #define TIMEOUT_STOP_PREV_EV_MS             (500)
 #define TIMEOUT_CHECK_RTC_PERIOD            (30 * 1000UL)
 #define TIMEOUT_CHECK_WIFI_DURATION         (4 * 60 * 1000UL)
+#define TIMEOUT_READ_RS485                  (4 * 60 * 1000UL)
 
 Btn _btn;
 int mode_aff=MODE_AFF_IDLE;
@@ -47,6 +48,7 @@ class StateGestion:public State
       static StateMachine _machine;
 
       static State* stIdle;
+      static State* stReadBus;
       static State* stWifiCheck;
       static State* stWifiRemote;
       static State* stDisplay;
@@ -98,8 +100,6 @@ class StateIdle:public StateGestion
     {
       mode_aff=MODE_AFF_IDLE;
 
-      //if (Comm.isAlive()==true)
-      //  _machine.setState(stWifiCheck);
       if (_btn.isRising())
         _machine.setState(stDisplay);
     }
@@ -130,7 +130,7 @@ class StateIdle:public StateGestion
           _machine.setState(stStartFill);
         }
       }
-      ///@remark Toutes les heures, check du wifi
+      ///@remark Toutes les heures, lecture bus rs485 puis envoi Wifi
       else if (now.minute()==0)
       {
         if (!_flgRtcTriggered)
@@ -146,6 +146,32 @@ class StateIdle:public StateGestion
     }
 };
 
+/**
+ * @class StateReadBus
+ * @brief Etat de lecture du Bus RS485
+ * */
+class StateReadBus:public StateGestion
+{
+    void onEnter() override
+    {
+      logger.println("Enter Read RS485...");
+      api_master(true);
+      Comm.setPower(true);
+      _machine.startTimeOut(TIMEOUT_READ_RS485);
+    }
+    void onRun() override
+    {
+      if (_btn.isRising())
+        _machine.setState(stDisplay);
+    }
+    void onTimeout() override
+    {
+      logger.println("Leave Read RS485...");
+      api_master(false);
+      _machine.setState(stWifiCheck);
+    }
+};
+
 
 /**
  * @class StateWifiCheck
@@ -156,7 +182,6 @@ class StateWifiCheck:public StateGestion
     void onEnter() override
     {
       logger.println("Enter WifiCheck...");
-      Comm.setPower(true);
       _machine.startTimeOut(TIMEOUT_CHECK_WIFI_DURATION);
     }
     void onRun() override
@@ -167,15 +192,16 @@ class StateWifiCheck:public StateGestion
         _machine.setState(stWifiRemote);
       else if (_btn.isRising())
         _machine.setState(stDisplay);
+      else if (Comm.isAlive()==true)
+        _machine.startTimeOut(TIMEOUT_CHECK_WIFI_DURATION);
+
     }
     void onTimeout() override
     {
-      if (Comm.isAlive()==true)
-        _machine.startTimeOut(TIMEOUT_CHECK_WIFI_DURATION);
-      else
         _machine.setState(stIdle);
     }
 };
+
 
 /**
  * @class StateWifiRemote
@@ -224,7 +250,6 @@ class StateDisplay:public StateGestion
     void onEnter() override
     {
       logger.println("Enter display");
-      Comm.setPower(true);
       api_master(true);
       _machine.startTimeOut(TIMEOUT_STAY_IN_DISPLAY_MS);
     }
@@ -263,7 +288,6 @@ class StateStartFill:public StateGestion
     void onEnter() override
     {
       api_master(true);
-      Comm.setPower(true);
       logger.println("Enter Start fill");
       Filling.reset();
       event1S(); ///< Mettre a 0 l'event 1s (synchro sur la prochaine)
@@ -518,6 +542,7 @@ class StateStopEV:public StateGestion
 };
 
 State * StateGestion::stIdle = new StateIdle();
+State * StateGestion::stReadBus = new StateReadBus();
 State * StateGestion::stWifiCheck = new StateWifiCheck();
 State * StateGestion::stWifiRemote = new StateWifiRemote();
 State * StateGestion::stDisplay = new StateDisplay();

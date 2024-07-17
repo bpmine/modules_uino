@@ -135,7 +135,7 @@ class Comm:
         new_msg=msg[:-3]+stcs[0]+stcs[1]+msg[-1]
         msg=new_msg.encode('ascii')
 
-        #print('Send> %s' % msg)
+        print('Send> %s' % msg)
         
         #res=decodeInfo(msg)
         #print(res)
@@ -232,6 +232,7 @@ class Comm:
     
     def decode_frame(self,frame):    
         msg=str(frame,'ascii')
+        print(msg)
         res=self.decode_cmds(msg)
         if res!=None:
             return res
@@ -420,8 +421,11 @@ class App:
         for i,frame in enumerate(self.frames):
             at=self.addresses[i]
             if at in self.datas:
-                self.datas[at]['tick']+=random.randint(500,1000)
-                frame["tick_var"].set(str(self.datas[at]['tick']))
+                tck=self.datas[at]['tick']
+                tck+=random.randint(500,1000)
+                if tck>65535:
+                    tck=0;
+                frame["tick_var"].set(str(tck))
                 
                 if (self.datas[at]['status']&2) == 2:
                     self.datas[at]['time']+=1                    
