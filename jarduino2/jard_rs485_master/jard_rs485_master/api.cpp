@@ -4,7 +4,7 @@
 
 #include <RTClib.h>
 
-//#include "databuilder.h"
+#include "databuilder.h"
 
 MasterArduino Master;
 
@@ -22,27 +22,27 @@ void api_master(bool on)
 
 Pump *api_get_pump(void)
 {
-  SlavesList l=Master.getSlavesList();
-  return l.getPump();
+  SlavesList *l=Master.getSlavesList();
+  return l->getPump();
 }
 
 Oya *api_find_first_oya(int &pos)
 {
-  SlavesList l=Master.getSlavesList();
-  Oya *p=l.findFirstOya(pos);
+  SlavesList *l=Master.getSlavesList();
+  Oya *p=l->findFirstOya(pos);
   return p;
 }
 
 Oya *api_find_next_oya(int &pos)
 {
-  SlavesList l=Master.getSlavesList();
-  Oya *p=l.findNextOya(pos);
+  SlavesList *l=Master.getSlavesList();
+  Oya *p=l->findNextOya(pos);
   return p;
 }
 
 Oya *api_get_oya(int addr)
 {
-  return Master.getSlavesList().getOya(addr);
+  return Master.getSlavesList()->getOya(addr);
 }
 
 void api_set_pompe(bool on)
@@ -131,7 +131,7 @@ unsigned short api_get_pong(void)
   return Master.get_pong_states();
 }
 
-/*void api_latch_data(Data *pData)
+void api_latch_data(Data *pData)
 {
   DataBuilder bld(pData);
   Pump *pmp=api_get_pump();
@@ -146,5 +146,5 @@ unsigned short api_get_pong(void)
 
   DateTime now = _rtc.now();
   bld.set(&now);
-}*/
+}
 

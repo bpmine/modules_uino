@@ -426,9 +426,9 @@ void Master::setTrace(bool flgEnabled)
   flgTrace=flgEnabled;
 }
 
-SlavesList & Master::getSlavesList(void)
+SlavesList * Master::getSlavesList(void)
 {
-  return list;
+  return &list;
 }
 
 void Master::set_pump(bool on)

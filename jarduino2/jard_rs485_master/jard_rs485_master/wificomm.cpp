@@ -12,6 +12,8 @@
 #include "pins.h"
 #include "Logger.h"
 
+#include "data.hpp"
+
 #define COMM_SOF 1
 #define COMM_EOF 2
 
@@ -20,13 +22,13 @@ WifiComm Comm;
 typedef enum {
   OFF,
   IDLE,               ///< Ne fait rien
-  SEND_MASTER,        ///< Envoi de l'info master
-  WAIT_ACK_MASTER,    ///< Attente Ack suite info master
-  SEND_FIRST,         ///< Recherche premier esclave a envoyer
-  SEND,               ///< Envoi de l'info d'un esclave
-  WAIT_ACK,           ///< Attente Ack suite info esclave
-  SEND_NEXT           ///< Recherche esclave suivant a envoyer
+  SEND_DATA,          ///< Envoi de l'info master
+  WAIT_ACK_DATA      ///< Attente Ack suite info master
 } T_SEND_STATE;
+
+
+Data data;
+T_SEND_STATE send_state;
 
 WifiComm::WifiComm()
 {
@@ -35,7 +37,8 @@ WifiComm::WifiComm()
   flgRemoteActive=false;
   flgAlive=false;
   commands=0;
-
+  send_state=OFF;
+  tmrSendData.start();
 }
 
 void WifiComm::begin(HardwareSerial* pSerial)
@@ -52,7 +55,8 @@ void WifiComm::begin(HardwareSerial* pSerial)
   flgAlive=false;
   flgRemoteActive=false;
   commands=0;
-
+  send_state=OFF;
+  tmrSendData.start();
 }
 
 void WifiComm::setPower(bool on)
@@ -61,19 +65,21 @@ void WifiComm::setPower(bool on)
   {
     digitalWrite(PIN_PWR_WIFI,HIGH);
     digitalWrite(PIN_PWR_WIFI_INV,LOW);
-
+    send_state=IDLE;
   }
   else
   {
 
     digitalWrite(PIN_PWR_WIFI,LOW);
     digitalWrite(PIN_PWR_WIFI_INV,HIGH);
+    send_state=OFF;
   }
 
   pos=0;
   flgAlive=false;
   flgRemoteActive=false;
   commands=0;
+  tmrSendData.start();
 }
 
 void WifiComm::pubMasterInfo(void)
@@ -93,6 +99,26 @@ void WifiComm::pubMasterInfo(void)
   }
 
   char jsonOutput[150];
+  serializeJson(doc, jsonOutput);
+
+  pStr->print("\x01");
+  pStr->print(jsonOutput);
+  pStr->print("\x02");
+}
+
+void WifiComm::pubDataInfo(void)
+{
+  StaticJsonDocument<400> doc;
+
+  doc["type"]="data";
+  doc["config_slaves"]=data.config_slaves;
+  doc["commok"]=data.comm_ok;
+  doc["cmds"]=data.cmd;
+  doc["ons"]=data.on;
+  doc["lows"]=data.low;
+  doc["highs"]=data.high;
+
+  char jsonOutput[400];
   serializeJson(doc, jsonOutput);
 
   pStr->print("\x01");
@@ -233,7 +259,9 @@ void WifiComm::recv(void)
           }
           else if (strcmp(doc["req"],"ack")==0)
           {
-            //send_acked=true;
+            if (send_state==WAIT_ACK_DATA)
+              send_state=IDLE;
+
             tmrRemoteActive.start();
             tmrAlive.start();
           }
@@ -262,7 +290,7 @@ void WifiComm::recv(void)
 
 void WifiComm::sendTask(void)
 {
-  /*switch (send_state)
+  switch (send_state)
   {
     case OFF:
     {
@@ -270,40 +298,25 @@ void WifiComm::sendTask(void)
     }
     case IDLE:
     {
-
+      if (tmrSendData.tick()==true)
+        sendData();
       break;
     }
-    case SEND_MASTER:
+    case SEND_DATA:
     {
-
+      Serial.println("Send");
+      pubDataInfo();
+      tmrSendAck.start();
+      send_state=WAIT_ACK_DATA;
       break;
     }
-    case WAIT_ACK_MASTER:
+    case WAIT_ACK_DATA:
     {
+      if (tmrSendAck.tick()==true)
+        send_state=SEND_DATA;
       break;
     }
-    case SEND_FIRST:
-    {
-
-      break;
-    }
-    case SEND:
-    {
-
-      break;
-    }
-    case WAIT_ACK:
-    {
-
-      break;
-    }
-    case SEND_NEXT:
-    {
-
-
-      break;
-    }
-  }*/
+  }
 }
 
 void WifiComm::loop(void)
@@ -311,10 +324,10 @@ void WifiComm::loop(void)
   if (pStr==nullptr)
     return;
 
-  //recv();
-  //sendTask();
+  recv();
+  sendTask();
 
-  /*if (tmrRemoteActive.tick()==true)
+  if (tmrRemoteActive.tick()==true)
   {
     flgRemoteActive=false;
     commands=0;
@@ -323,6 +336,18 @@ void WifiComm::loop(void)
   if (tmrAlive.tick()==true)
   {
     flgAlive=false;
-  }*/
+  }
+}
+
+
+
+void WifiComm::sendData(void)
+{
+  if (send_state==IDLE)
+  {
+    api_latch_data(&data);
+    Serial.println("Latch");
+    send_state=SEND_DATA;
+  }
 }
 

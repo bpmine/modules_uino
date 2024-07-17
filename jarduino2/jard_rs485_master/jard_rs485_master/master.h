@@ -20,9 +20,10 @@
 class Master : public IFrameReceiver
 {
   private:
-    unsigned long nbcycles;
-
     SlavesList list;
+    SlavesList latched_list; ///< Voir pourquoi besoin de ça !!!!
+
+    unsigned long nbcycles;
     int pos;
     
     enum {OFF,IDLE,SEND,RECV,NEXT,WAIT,ASYNC_SEND,ASYNC_RECV,END} eState;
@@ -193,10 +194,10 @@ class Master : public IFrameReceiver
     void setTrace(bool flgEnabled);
 
     /**
-     * @brief Retourne la liste des esclaves
+     * @brief Retourne un pointeur vers la liste des esclaves
      * @return Voir SlavesList
      * */
-    SlavesList &getSlavesList(void);
+    SlavesList * getSlavesList(void);
 };
 
 #endif

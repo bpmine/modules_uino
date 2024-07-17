@@ -85,7 +85,7 @@ void setup(void)
   flgBlink=false;
 
   //Comm.begin(&Serial2);
-  //Comm.begin(&Serial3);
+  Comm.begin(&Serial3);
 
   manager_init();
 
@@ -147,7 +147,7 @@ void loop(void)
     }
 
 
-    Pump *pump=Master.getSlavesList().getPump();
+    Pump *pump=Master.getSlavesList()->getPump();
     if ( (pump==nullptr) || (pump->comm_ok==false) )
       _leds[1]=COL_BLACK;
     else if (pump->on==true)
@@ -158,7 +158,7 @@ void loop(void)
     for (int i=2;i<NUM_LEDS;i++)
       _leds[i]=COL_BLACK;
     int pos;
-    Oya *oya=Master.getSlavesList().findFirstOya(pos);
+    Oya *oya=Master.getSlavesList()->findFirstOya(pos);
     while (oya!=nullptr)
     {
       if ( (oya->addr>1) && (oya->addr<NUM_LEDS) )
@@ -181,13 +181,13 @@ void loop(void)
         }
       }
 
-      oya=Master.getSlavesList().findNextOya(pos);
+      oya=Master.getSlavesList()->findNextOya(pos);
     }
 
     FastLED.show();
   }
 
-  //Comm.loop();
+  Comm.loop();
 
-  //manager_run();
+  manager_run();
 }

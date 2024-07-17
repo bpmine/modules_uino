@@ -102,7 +102,7 @@ def test():
                 jsTxt=str(frame[1:-1],'ASCII')
                 js=json.loads(jsTxt)
                 print(js)
-                if js['type'] in ['master','pump','oya']:
+                if js['type'] in ['master','pump','oya','data']:
                     comm.send_ack()
                     
             except Exception as ex:

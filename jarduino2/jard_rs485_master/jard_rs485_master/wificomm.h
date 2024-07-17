@@ -17,6 +17,7 @@ class Slave;
 class Pump;
 class Oya;
 class HardwareSerial;
+class Data;
 class WifiComm
 {
   private:
@@ -30,7 +31,9 @@ class WifiComm
     unsigned short commands;
 
     Timer tmrSendAck= Timer(TIMEOUT_WIFI_ACK_MS);
+    Timer tmrSendData= Timer(PERIOD_SEND_DATAS_MS,false);
 
+    void pubDataInfo(void);
     void pubMasterInfo(void);
     void pubInfo(Pump *Pump);
     void pubInfo(Oya *pOya);
@@ -49,6 +52,8 @@ class WifiComm
     bool isRemoteActive(void);
     bool isAlive(void);
     unsigned short getCommands(void);
+
+    void sendData(void);
 };
 
 extern WifiComm Comm;

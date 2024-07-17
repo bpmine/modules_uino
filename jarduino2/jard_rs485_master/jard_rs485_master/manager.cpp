@@ -12,6 +12,7 @@
 
 #include "filling.hpp"
 #include "logger.h"
+#include "wificomm.h"
 
 #include <RTClib.h>
 static DS1307 _rtc;
@@ -91,7 +92,7 @@ class StateIdle:public StateGestion
     void onEnter() override
     {
       api_master(false);
-      //Comm.setPower(false);
+      Comm.setPower(false);
       _machine.startTimeOut(TIMEOUT_CHECK_RTC_PERIOD);
     }
 
@@ -155,7 +156,7 @@ class StateReadBus:public StateGestion
     {
       logger.println("Enter Read RS485...");
       api_master(true);
-      //Comm.setPower(true);
+      Comm.setPower(true);
       _machine.startTimeOut(TIMEOUT_READ_RS485);
     }
     void onRun() override
@@ -187,12 +188,12 @@ class StateWifiCheck:public StateGestion
     {
       mode_aff=MODE_AFF_CHECK_WIFI;
 
-      /*if (Comm.isRemoteActive()==true)
+      if (Comm.isRemoteActive()==true)
         _machine.setState(stWifiRemote);
       else if (_btn.isRising())
         _machine.setState(stDisplay);
       else if (Comm.isAlive()==true)
-        _machine.startTimeOut(TIMEOUT_CHECK_WIFI_DURATION);*/
+        _machine.startTimeOut(TIMEOUT_CHECK_WIFI_DURATION);
 
     }
     void onTimeout() override
@@ -220,13 +221,13 @@ class StateWifiRemote:public StateGestion
     {
       mode_aff=MODE_AFF_REMOTE;
 
-      /*if (Comm.isRemoteActive()==false)
+      if (Comm.isRemoteActive()==false)
         _machine.setState(stWifiCheck);
       else
       {
         unsigned short cmds=Comm.getCommands();
         api_set_commands(cmds);
-      }*/
+      }
     }
 
     void onLeave() override
@@ -250,6 +251,7 @@ class StateDisplay:public StateGestion
     {
       logger.println("Enter display");
       api_master(true);
+      Comm.setPower(true);
       _machine.startTimeOut(TIMEOUT_STAY_IN_DISPLAY_MS);
     }
     void onRun() override

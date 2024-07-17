@@ -185,10 +185,16 @@ class SlavesList
       for (int i=0;i<NUM_SLAVES_MAX;i++)
       {
     	if (i==0)
-    	  slaves[i]=new Pump(1);
+    	  slaves[i]=(Slave *)new Pump(1);
     	else
-    	  slaves[i]=new Oya(1+i);
+    	  slaves[i]=(Slave *)new Oya(1+i);
       }
+    }
+
+    ~SlavesList()
+    {
+      for (int i = 0; i < NUM_SLAVES_MAX; i++)
+        delete slaves[i];
     }
 
     void updCycleStats(void)
