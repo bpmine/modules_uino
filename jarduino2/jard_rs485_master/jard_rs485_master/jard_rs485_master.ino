@@ -23,42 +23,13 @@
 
 Timer tmrCycle(2000,false);
 
-Timer tmrLeds(500,false);
+Timer tmrLeds(100,false);
 Timer tmrBlink(300,false);
 bool flgBlink;
 
 #define NUM_LEDS  (16)
 static CRGB _leds[NUM_LEDS];  ///< Tableau des LEDs
 
-void checkResetSource()
-{
-
-  uint8_t mcusr_mirror = MCUSR; // Lire le registre MCUSR
-  MCUSR = 0; // Réinitialiser le registre MCUSR après lecture
-
-
-  Serial.println(mcusr_mirror,HEX);
-
-  for (int i=0;i<100;i++)
-    yield();
-
-  // Vérifier chaque source de reset
-  /*if (mcusr_mirror & (1 << PORF)) {
-    Serial.println("Power-on Reset");
-  }
-  if (mcusr_mirror & (1 << EXTRF)) {
-    Serial.println("External Reset");
-  }
-  if (mcusr_mirror & (1 << BORF)) {
-    Serial.println("Brown-out Reset");
-  }
-  if (mcusr_mirror & (1 << WDRF)) {
-    Serial.println("Watchdog Reset");
-  }
-  if (mcusr_mirror & (1 << JTRF)) {
-    Serial.println("JTAG Reset");
-  }*/
-}
 
 /**
  * @brief SETUP de l'arduino (initialisation)
@@ -98,7 +69,6 @@ void setup(void)
   Serial.begin(9600);
   delay(100);
   Serial.println("Boot");
-  checkResetSource();
 
   Master.begin(&Serial1, PIN_TX_EN);
 
@@ -115,7 +85,7 @@ void setup(void)
   flgBlink=false;
 
   //Comm.begin(&Serial2);
-  Comm.begin(&Serial3);
+  //Comm.begin(&Serial3);
 
   manager_init();
 
@@ -177,7 +147,7 @@ void loop(void)
     }
 
 
-    /*Pump *pump=Master.getSlavesList().getPump();
+    Pump *pump=Master.getSlavesList().getPump();
     if ( (pump==nullptr) || (pump->comm_ok==false) )
       _leds[1]=COL_BLACK;
     else if (pump->on==true)
@@ -212,12 +182,12 @@ void loop(void)
       }
 
       oya=Master.getSlavesList().findNextOya(pos);
-    }*/
+    }
 
     FastLED.show();
   }
 
   //Comm.loop();
 
-  manager_run();
+  //manager_run();
 }

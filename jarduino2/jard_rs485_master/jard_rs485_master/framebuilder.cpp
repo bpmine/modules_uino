@@ -220,7 +220,7 @@ E_FRAME_ERR FrameBuilder::recv(unsigned char b)
   {
     ///@remark Synchro trame recue, on commence l'analyse de la trame
 		pack(b);
-		return PENDING;
+		return RCVING;
   }
   else if ( (pos==1) || (pos==2) )
   {
@@ -230,7 +230,7 @@ E_FRAME_ERR FrameBuilder::recv(unsigned char b)
       ///@remark Recuperation si SOH recu   
 		  reset();        
 			pack(b);
-      return PENDING;
+      return RCVING;
     }
     else if (b == STX)
     {
@@ -242,7 +242,7 @@ E_FRAME_ERR FrameBuilder::recv(unsigned char b)
 	  {
       ///@remark Reception taille
 		  pack(b);      
-		  return PENDING;
+		  return RCVING;
 	  }
   }
   else if ((pos>2) && (pos< MAX_BUFFER_SIZE))
@@ -284,10 +284,10 @@ E_FRAME_ERR FrameBuilder::recv(unsigned char b)
   	{
   		reset();
   		pack(b);
-  		return PENDING;
+  		return RCVING;
   	}
   
-  	return PENDING;
+  	return RCVING;
   }
   else
   {

@@ -1,12 +1,11 @@
 /**
  * @file manager.cpp
- * @brief Machine à états principale: Gestion des menus et des modes de fonctionnement
+ * @brief Machine ï¿½ ï¿½tats principale: Gestion des menus et des modes de fonctionnement
  * */
 #include "manager.h"
 
 #include "api.h"
 #include "states.hpp"
-#include "wificomm.h"
 #include "btn.hpp"
 #include "pins.h"
 #include "slaves.hpp"
@@ -36,8 +35,8 @@ bool _flgRtcTriggered=false;
 
 /**
  * @class StateGestion
- * @brief Classe de base à tous les états de cette machine
- * Contient des références vers tous les états et vers la machine
+ * @brief Classe de base ï¿½ tous les ï¿½tats de cette machine
+ * Contient des rï¿½fï¿½rences vers tous les ï¿½tats et vers la machine
  * */
 class StateGestion:public State
 {
@@ -92,7 +91,7 @@ class StateIdle:public StateGestion
     void onEnter() override
     {
       api_master(false);
-      Comm.setPower(false);
+      //Comm.setPower(false);
       _machine.startTimeOut(TIMEOUT_CHECK_RTC_PERIOD);
     }
 
@@ -156,7 +155,7 @@ class StateReadBus:public StateGestion
     {
       logger.println("Enter Read RS485...");
       api_master(true);
-      Comm.setPower(true);
+      //Comm.setPower(true);
       _machine.startTimeOut(TIMEOUT_READ_RS485);
     }
     void onRun() override
@@ -188,12 +187,12 @@ class StateWifiCheck:public StateGestion
     {
       mode_aff=MODE_AFF_CHECK_WIFI;
 
-      if (Comm.isRemoteActive()==true)
+      /*if (Comm.isRemoteActive()==true)
         _machine.setState(stWifiRemote);
       else if (_btn.isRising())
         _machine.setState(stDisplay);
       else if (Comm.isAlive()==true)
-        _machine.startTimeOut(TIMEOUT_CHECK_WIFI_DURATION);
+        _machine.startTimeOut(TIMEOUT_CHECK_WIFI_DURATION);*/
 
     }
     void onTimeout() override
@@ -221,13 +220,13 @@ class StateWifiRemote:public StateGestion
     {
       mode_aff=MODE_AFF_REMOTE;
 
-      if (Comm.isRemoteActive()==false)
+      /*if (Comm.isRemoteActive()==false)
         _machine.setState(stWifiCheck);
       else
       {
         unsigned short cmds=Comm.getCommands();
         api_set_commands(cmds);
-      }
+      }*/
     }
 
     void onLeave() override
@@ -242,8 +241,8 @@ class StateWifiRemote:public StateGestion
  * @brief Etat d'affichage des OYAs
  *
  * Dans cet etat, on ne commande aucun OYA (ni pompe)
- * On affiche l'état de chaque esclave.
- * On rend actif l'interface Wifi mais il n'est pas possible de prendre le contrôle à distance
+ * On affiche l'ï¿½tat de chaque esclave.
+ * On rend actif l'interface Wifi mais il n'est pas possible de prendre le contrï¿½le ï¿½ distance
  **/
 class StateDisplay:public StateGestion
 {
@@ -582,5 +581,3 @@ void manager_run(void)
 
   StateGestion::_machine.run();
 }
-
-

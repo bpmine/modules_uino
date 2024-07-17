@@ -16,7 +16,7 @@
 typedef enum
 {
   WAITING=0,			///< Attente d'un octet de synchro STX
-  PENDING,			///< Reception en cours, trame non complete
+  RCVING,			///< Reception en cours, trame non complete
   BAD_SIZE,			///< Taille erronee
   BAD_CS,			///< Checksum errone
   BAD_FRAME,		///< Mauvais format de trame
