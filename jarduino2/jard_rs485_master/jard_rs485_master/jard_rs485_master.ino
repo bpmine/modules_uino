@@ -84,8 +84,8 @@ void setup(void)
   tmrBlink.start();
   flgBlink=false;
 
-  //Comm.begin(&Serial2);
-  Comm.begin(&Serial3);
+  Comm.begin(&Serial2);
+  //Comm.begin(&Serial3);
 
   manager_init();
 

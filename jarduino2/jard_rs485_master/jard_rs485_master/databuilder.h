@@ -12,9 +12,10 @@ class DataBuilder
     Data *pData;
 
     void set(Slave *slave);
+    unsigned short mask(int addr);
 
   public:
-    DataBuilder(Data *pData,bool raz=false);
+    DataBuilder(Data *pData,bool raz=true);
 
     void set(Pump *pump);
     void set(Oya *oya);

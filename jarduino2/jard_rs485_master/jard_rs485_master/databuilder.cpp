@@ -16,6 +16,13 @@ DataBuilder::DataBuilder(Data *pData,bool raz)
   pData->config_slaves=0;
 }
 
+inline unsigned short DataBuilder::mask(int addr)
+{
+  unsigned short msk=1<<addr;
+  return msk;
+}
+
+
 void DataBuilder::set(Slave *slave)
 {
   if (slave==nullptr)
@@ -23,8 +30,8 @@ void DataBuilder::set(Slave *slave)
 
   if ( (slave->addr>0) && (slave->addr<15) )
   {
-    int addr=(int)slave->addr;
-    unsigned short msk=1<<slave->addr;
+    int addr=(unsigned char)slave->addr;
+    unsigned short msk=mask(addr);
 
     if (slave->comm_ok)
       pData->comm_ok|=msk;
@@ -62,7 +69,7 @@ void DataBuilder::set(Oya *oya)
 
   if ( (oya->addr>0) && (oya->addr<15) )
   {
-    unsigned short msk=1<<oya->addr;
+    unsigned short msk=mask((unsigned char)oya->addr);
 
     if (oya->low)
       pData->low|=msk;

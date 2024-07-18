@@ -29,48 +29,47 @@ class RdOyasClient(RdApp):
 
         return False
 
-    def getSlaveJson(self,name,addr):
-        slv={
-            'addr':addr,
-            'type':self.get_slave_var(name,addr,'type'),
-            'comm_ok':self.get_slave_var_bool(name,addr,'comm_ok'),
-            'on':self.get_slave_var_bool(name,addr,'on'),
-            'cmd':self.get_slave_var_bool(name,addr,'cmd'),
-            'temp':self.get_slave_var_int(name,addr,'temp'),
-            'hum':self.get_slave_var_int(name,addr,'hum'),
-            'voltage':self.get_slave_var_int(name,addr,'voltage'),
-            'tick':self.get_slave_var_int(name,addr,'tick'),
-            'total_on_s':self.get_slave_var_int(name,addr,'total_on_s'),            
-            }
-
-        if slv['type']=='oya':
-            slv['low']=self.get_slave_var_bool(name,addr,'low')
-            slv['high']=self.get_slave_var_bool(name,addr,'high')            
-        elif slv['type']=='pump':
-            slv['flow']=self.get_slave_var_int(name,addr,'flow')
-
-        return slv
-
     def getModuleJson(self,name):
+
+        slaves=self.get_mod_var_int(name,'slaves')
+        comms=self.get_mod_var_int(name,'comms')
+        cmds=self.get_mod_var_int(name,'cmds')
+        ons=self.get_mod_var_int(name,'ons')
+        lows=self.get_mod_var_int(name,'lows')
+        highs=self.get_mod_var_int(name,'highs')
+        date=self.get_mod_var(name,'date')
+        date_mqtt=self.get_mod_var(name,'date_mqtt')
+            
         mod={
             'name':name,
+            'slaves':self.get_mod_var_int(name,'slaves'),
             'cmds':self.get_mod_var_int(name,'cmds'),
-            'ctrl':self.get_mod_var_bool(name,'ctrl'),
             'ons':self.get_mod_var_int(name,'ons'),
-            'comms_ok':self.get_mod_var_int(name,'comms_ok'),
+            'comms':self.get_mod_var_int(name,'comms'),
             'lows':self.get_mod_var_int(name,'lows'),
             'highs':self.get_mod_var_int(name,'highs'),
-            'config_slaves':self.get_mod_var_int(name,'config_slaves'),
             'date_mqtt':self.get_mod_var(name,'date_mqtt'),
+            'date':self.get_mod_var(name,'date'),
             'slaves':[]
             }
 
-        cfg=int(mod['config_slaves'])
+        cfg=int(slaves)
         for addr in range(1,15):
-            mask=1<<addr-1
+            mask=1<<addr
+
             if (cfg&mask)==mask:
-                jsSlave=self.getSlaveJson(name,addr)
-                mod['slaves'].append(jsSlave)
+                obj={
+                    'addr':addr,
+                    'type':'pump' if addr==1 else 'oya',
+                    'on':(ons & mask) == mask,
+                    'comm_ok':(comms & mask) == mask,
+                    }
+
+                if addr!=1:
+                    obj['high']=(highs & mask) == mask
+                    obj['low']=(lows & mask) == mask
+                
+                mod['slaves'].append(obj)
             
         
         return mod
@@ -86,7 +85,7 @@ class RdOyasClient(RdApp):
         res=self.r.smembers('%s.modules' % (self.kApp()))
         for name in res:
             mod=self.getModuleJson(name)
-            ret['modules'][name]=mod            
+            ret['modules'][name]=mod         
 
 
         return ret            
@@ -94,7 +93,7 @@ class RdOyasClient(RdApp):
      
 if __name__=='__main__':
     cln=RdOyasClient('192.168.3.200')
-    print(cln.getJson())
+    print(json.dumps(cln.getJson(),indent=1))
     print('_'*40)
 
 

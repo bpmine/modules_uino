@@ -167,6 +167,7 @@ class StateReadBus:public StateGestion
     void onTimeout() override
     {
       logger.println("Leave Read RS485...");
+      Comm.sendData();
       api_master(false);
       _machine.setState(stWifiCheck);
     }

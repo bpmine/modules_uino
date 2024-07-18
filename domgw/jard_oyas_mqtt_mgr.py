@@ -162,58 +162,14 @@ class RdOyasSrv(RdApp):
     def update_data(self,name,data):
         self.set_mod_var(name,'name',name,None)
 
-        if (data["type"]=='cmds' or data["type"]=='cmd'):
+        if (data["type"]=='data'):
+            self.update_mod_var_int(name,data,'slaves')
+            self.update_mod_var_int(name,data,'comms')
             self.update_mod_var_int(name,data,'cmds')
-            self.update_mod_var_bool(name,data,'ctrl')
             self.update_mod_var_int(name,data,'ons')
-            self.update_mod_var_int(name,data,'comms_ok')
             self.update_mod_var_int(name,data,'lows')
             self.update_mod_var_int(name,data,'highs')
-            self.update_mod_var_int(name,data,'config_slaves')
-            #self.set_mod_var(name,'date',data['date'],None)
-            
-        elif (data["type"]=='master'):
-            self.update_mod_var_int(name,data,'config_slaves')
-            
-            if name in self.slaves:
-                del self.slaves[name]
-            self.slaves[name]=set()
-            for s in data['slaves']:
-                self.slaves[name].add(s)
-
-            if DEBUG_MQTT==True:
-                print('Liste: %s' % (self.slaves[name]))            
-            
-        elif (data["type"]=='pump'):
-            addr='1'
-            self.update_slave_var_bool(name,addr,data,'comm_ok')
-            if data["comm_ok"]==True:
-                self.update_slave_var_bool(name,addr,data,'on')
-                self.update_slave_var_bool(name,addr,data,'cmd')
-                self.update_slave_var_int(name,addr,data,'flow')
-                self.update_slave_var_int(name,addr,data,'temp')
-                self.update_slave_var_int(name,addr,data,'hum')
-                self.update_slave_var_int(name,addr,data,'voltage')
-                self.update_slave_var_int(name,addr,data,'tick')
-                self.update_slave_var_int(name,addr,data,'total_on_s')
-        elif (data["type"]=='oya'):            
-            addr=data['addr']
-            if int(addr)>1 and int(addr)<15:
-                self.update_slave_var_bool(name,addr,data,'comm_ok')
-                if data["comm_ok"]==True:
-                    self.update_slave_var_bool(name,addr,data,'on')
-                    self.update_slave_var_bool(name,addr,data,'cmd')
-                    self.update_slave_var_bool(name,addr,data,'low')
-                    self.update_slave_var_bool(name,addr,data,'high')
-                    self.update_slave_var_int(name,addr,data,'temp')
-                    self.update_slave_var_int(name,addr,data,'hum')
-                    self.update_slave_var_int(name,addr,data,'voltage')
-                    self.update_slave_var_int(name,addr,data,'tick')
-                    self.update_slave_var_int(name,addr,data,'total_on_s')
-
-                    if addr==6:
-                        print(data)
-                    
+            self.set_mod_var(name,'date',data['date'],None)                    
                             
         self.set_mod_var(name,'valid',1)
 
@@ -265,27 +221,10 @@ class RdOyasSrv(RdApp):
                 print('SYNC...')
                 for n in self.modules:
                     print(n)
-                    req={'req':'master'}
+                    req={'req':'cmds','cmds':0,'ctrl':'0'}
                     msg=json.dumps(req)
                     self.client.publish(f'/oyas/cmd/{n}',msg)
                     
-                time.sleep(0.1)
-                
-                for n in self.modules:
-                    req={'req':'pump'}
-                    msg=json.dumps(req)
-                    self.client.publish(f'/oyas/cmd/{n}',msg)
-
-                time.sleep(0.1)
-
-                slvs=self.slaves
-                for a in range(2,15):
-                    for n in self.modules:
-                        if n in slvs and a in slvs[n]:
-                            req={'req':'oya','addr':a}
-                            msg=json.dumps(req)
-                            self.client.publish(f'/oyas/cmd/{n}',msg)
-                    time.sleep(0.1)
 
                 time.sleep(1)
 
@@ -304,7 +243,7 @@ class RdOyasSrv(RdApp):
         th.start()
 
         #self.modules.add('barbec')
-        self.set_app_var('on',1,None)
+        self.set_app_var('on',0,None)
         print('Start program...');
         while True:
             time.sleep(1)

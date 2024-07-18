@@ -2,6 +2,7 @@ from paho.mqtt import client as mqtt_client
 import time
 import json
 import logging
+import re
 
 broker = '192.168.3.200'
 port = 1883
@@ -40,8 +41,21 @@ def on_disconnect(client, userdata, rc):
         reconnect_count += 1
     logging.info("Reconnect failed after %s attempts. Exiting...", reconnect_count)
 
+pTopic=re.compile(r'^/oyas/data/(.+)$')
 def on_message(client, userdata, msg):
-    print(f"Received `{msg.payload.decode()}` from `{msg.topic}` topic")
+    m=pTopic.match(msg.topic)
+    if m!=None:
+        node=m.group(1)
+        #print(f"Received `{msg.payload.decode()}` from `{msg.topic}` topic")
+        try:
+            js=json.loads(msg.payload.decode())
+            print(js)
+            if 'type' in js and js['type']=='data':
+                ans=json.dumps({"req":"ack"})
+                print('->Ack')
+                client.publish(f'/oyas/cmd/{node}',ans)
+        except Exception as ex:
+            print(ex)
 
 client = mqtt_client.Client(client_id)
 
@@ -56,12 +70,12 @@ client.on_message = on_message
 #msg=json.dumps(req)
 #client.publish('/oyas/cmd/barbec',msg)
 
-req={'req':'master'}
-msg=json.dumps(req)
-client.publish(f'/oyas/cmd/{node}',msg)
+#req={'req':'master'}
+#msg=json.dumps(req)
+#client.publish(f'/oyas/cmd/{node}',msg)
 
-req={'req':'oya','addr':2}
-msg=json.dumps(req)
-client.publish(f'/oyas/cmd/{node}',msg)
+#req={'req':'oya','addr':2}
+#msg=json.dumps(req)
+#client.publish(f'/oyas/cmd/{node}',msg)
 
 client.loop_forever()

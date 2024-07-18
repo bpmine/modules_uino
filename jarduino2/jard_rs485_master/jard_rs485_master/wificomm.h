@@ -7,7 +7,7 @@
 
 #define COMM_BUFFER_MAX_SIZE  (255)
 #define TIMEOUT_WIFI_COMM_MS  (5000UL)
-#define TIMEOUT_WIFI_ACK_MS   (2000UL)
+#define TIMEOUT_WIFI_ACK_MS   (5000UL)
 #define PERIOD_SEND_DATAS_MS  (10000UL)
 
 #include "timer.h"
@@ -34,9 +34,6 @@ class WifiComm
     Timer tmrSendData= Timer(PERIOD_SEND_DATAS_MS,false);
 
     void pubDataInfo(void);
-    void pubMasterInfo(void);
-    void pubInfo(Pump *Pump);
-    void pubInfo(Oya *pOya);
 
     void execCommands(unsigned short cmds,bool ctrl);
     void recv(void);

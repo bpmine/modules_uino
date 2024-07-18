@@ -82,96 +82,31 @@ void WifiComm::setPower(bool on)
   tmrSendData.start();
 }
 
-void WifiComm::pubMasterInfo(void)
-{
-  unsigned short sc=api_get_slaves_config();
-  StaticJsonDocument<150> doc;
-
-  doc["type"]="master";
-  doc["config_slaves"]=api_get_slaves_config();
-
-  JsonArray list = doc.createNestedArray("slaves");
-  for (int i=0;i<15;i++)
-  {
-    unsigned short mask=1 << i;
-    if ((sc & mask) == mask)
-      list.add(i+1);
-  }
-
-  char jsonOutput[150];
-  serializeJson(doc, jsonOutput);
-
-  pStr->print("\x01");
-  pStr->print(jsonOutput);
-  pStr->print("\x02");
-}
-
 void WifiComm::pubDataInfo(void)
 {
   StaticJsonDocument<400> doc;
 
   doc["type"]="data";
-  doc["config_slaves"]=data.config_slaves;
-  doc["commok"]=data.comm_ok;
+  doc["slaves"]=data.config_slaves;
+  doc["comms"]=data.comm_ok;
   doc["cmds"]=data.cmd;
   doc["ons"]=data.on;
   doc["lows"]=data.low;
   doc["highs"]=data.high;
+  doc['flow']=data.flow;
+
+  char dte[40];
+  sprintf(dte,"%04d-%02d-%02dT%02d:%02d:%02dZ",
+          data.year,
+          data.month,
+          data.day,
+          data.hour,
+          data.min,
+          data.sec
+          );
+  doc["date"]=dte;
 
   char jsonOutput[400];
-  serializeJson(doc, jsonOutput);
-
-  pStr->print("\x01");
-  pStr->print(jsonOutput);
-  pStr->print("\x02");
-}
-
-void WifiComm::pubInfo(Pump *pPump)
-{
-  if (pPump==nullptr)
-    return;
-
-  StaticJsonDocument<150> doc;
-  doc["type"]="pump";
-  doc["addr"]=(int)pPump->addr;
-  doc["on"]=pPump->on;
-  doc["cmd"]=pPump->cmd;
-  doc["flow"]=pPump->flow;
-  doc["temp"]=pPump->temp_dg;
-  doc["hum"]=pPump->hum_pc;
-  doc["voltage"]=pPump->voltage;
-  doc["comm_ok"]=pPump->comm_ok;
-  doc["tick"]=pPump->last_slave_tick_ms;
-  doc["total_on_s"]=pPump->total_slave_on_s;
-
-  char jsonOutput[150];
-  serializeJson(doc, jsonOutput);
-
-  pStr->print("\x01");
-  pStr->print(jsonOutput);
-  pStr->print("\x02");
-}
-
-void WifiComm::pubInfo(Oya *pOya)
-{
-  if (pOya==nullptr)
-    return;
-
-  StaticJsonDocument<150> doc;
-  doc["type"]="oya";
-  doc["addr"]=(int)pOya->addr;
-  doc["on"]=pOya->on;
-  doc["cmd"]=pOya->cmd;
-  doc["high"]=pOya->high;
-  doc["low"]=pOya->low;
-  doc["temp"]=pOya->temp_dg;
-  doc["hum"]=pOya->hum_pc;
-  doc["voltage"]=pOya->voltage;
-  doc["comm_ok"]=pOya->comm_ok;
-  doc["tick"]=pOya->last_slave_tick_ms;
-  doc["total_on_s"]=pOya->total_slave_on_s;
-
-  char jsonOutput[150];
   serializeJson(doc, jsonOutput);
 
   pStr->print("\x01");
@@ -259,6 +194,7 @@ void WifiComm::recv(void)
           }
           else if (strcmp(doc["req"],"ack")==0)
           {
+            Serial.println("Ack");
             if (send_state==WAIT_ACK_DATA)
               send_state=IDLE;
 
@@ -339,8 +275,6 @@ void WifiComm::loop(void)
   }
 }
 
-
-
 void WifiComm::sendData(void)
 {
   if (send_state==IDLE)
@@ -348,6 +282,7 @@ void WifiComm::sendData(void)
     api_latch_data(&data);
     Serial.println("Latch");
     send_state=SEND_DATA;
+    tmrSendData.start();
   }
 }
 
