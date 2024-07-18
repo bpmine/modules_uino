@@ -6,7 +6,7 @@ import re
 import json
 import datetime
 
-fp=open('log.txt','w')
+fp=open('log.txt','a')
 
 client = mqtt.Client()
 
@@ -17,6 +17,10 @@ def on_connect(client, userdata, flags, rc):
     client.subscribe("/wifiio/data/#")
     client.subscribe("/wifiio/cmd/#")
         
+    client.subscribe("/oyas/log/#")
+    client.subscribe("/oyas/data/#")
+    client.subscribe("/oyas/cmd/#")
+
 def on_message(client,userdata,msg):
     now=datetime.datetime.now()
     sDte=now.strftime("%d/%m/%Y %H:%M:%S")
