@@ -26,8 +26,8 @@ static DS1307 _rtc;
 #define TIMEOUT_WAIT_STEADY_BEFORE_START_MS (6 * 1000UL)
 #define TIMEOUT_STOP_PREV_EV_MS             (500)
 #define TIMEOUT_CHECK_RTC_PERIOD            (30 * 1000UL)
-#define TIMEOUT_CHECK_WIFI_DURATION         (4 * 60 * 1000UL)
-#define TIMEOUT_READ_RS485                  (4 * 60 * 1000UL)
+#define TIMEOUT_CHECK_WIFI_DURATION         (60 * 1000UL)
+#define TIMEOUT_READ_RS485                  (6 * 1000UL)
 
 Btn _btn;
 int mode_aff=MODE_AFF_IDLE;
@@ -130,13 +130,13 @@ class StateIdle:public StateGestion
           _machine.setState(stStartFill);
         }
       }
-      ///@remark Toutes les heures, lecture bus rs485 puis envoi Wifi
-      else if (now.minute()==0)
+      ///@remark Toutes les 15 minutes, lecture bus rs485 puis envoi Wifi
+      else if ( (now.minute()%15) ==0)
       {
         if (!_flgRtcTriggered)
         {
           _flgRtcTriggered=true;
-          //_machine.setState(stWifiCheck);
+          _machine.setState(stReadBus);
         }
       }
       else
@@ -290,6 +290,7 @@ class StateStartFill:public StateGestion
     void onEnter() override
     {
       api_master(true);
+      Comm.setPower(true);
       logger.println("Enter Start fill");
       Filling.reset();
       event1S(); ///< Mettre a 0 l'event 1s (synchro sur la prochaine)
@@ -384,6 +385,7 @@ class StateFillLow:public StateGestion
 {
     void onEnter() override
     {
+      Comm.sendData();
       _machine.startTimeOut(Filling.getCurLowResetTimeout());
       logger.print("Enter Fill until LOW (");
       logger.print(Filling.getCurLowResetTimeout());
@@ -426,6 +428,7 @@ class StateFillWait:public StateGestion
 {
     void onEnter() override
     {
+      Comm.sendData();
       _machine.startTimeOut(Filling.getCurFillingAfterLow());
       logger.print("Fill TIMED: ");
       logger.print(Filling.getCurFillingAfterLow());
@@ -537,6 +540,7 @@ class StateStopEV:public StateGestion
 {
     void onEnter() override
     {
+      Comm.sendData();
       api_set_commands(0);
       logger.println("Enter Stop EV");
       _machine.setState(stDisplay);

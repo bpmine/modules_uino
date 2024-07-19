@@ -4,9 +4,11 @@ import json
 import time
 from jard_wemos_mqtt_client import RdWiioClient
 from jard_remplissage_client import RdRempliClient
+from jard_oyas_client import RdOyasClient
 
 wiioCln = RdWiioClient('192.168.3.200')
 rempliCln=RdRempliClient()
+oyasCln=RdOyasClient('192.168.3.200')
 
 app = Flask(__name__)
 
@@ -152,6 +154,13 @@ def get_states():
             ret['remplissages'].append(r)
     
     return json.dumps(ret)
+
+
+@app.route('/oyas', methods=['GET'])
+def get_oyas():
+    js=oyasCln.getJson()
+    return js
+
 
 if __name__=='__main__':
     app.debug = True
