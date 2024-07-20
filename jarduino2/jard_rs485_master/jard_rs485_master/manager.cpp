@@ -386,9 +386,9 @@ class StateFillLow:public StateGestion
     void onEnter() override
     {
       Comm.sendData();
-      _machine.startTimeOut(Filling.getCurLowResetTimeout());
+      _machine.startTimeOut(Filling.getCurLowResetTimeout_ms());
       logger.print("Enter Fill until LOW (");
-      logger.print(Filling.getCurLowResetTimeout());
+      logger.print(Filling.getCurLowResetTimeout_ms());
       logger.println(" ms)");
       event1S();
     }
@@ -429,9 +429,9 @@ class StateFillWait:public StateGestion
     void onEnter() override
     {
       Comm.sendData();
-      _machine.startTimeOut(Filling.getCurFillingAfterLow());
+      _machine.startTimeOut(Filling.getCurFillingAfterLow_ms());
       logger.print("Fill TIMED: ");
-      logger.print(Filling.getCurFillingAfterLow());
+      logger.print(Filling.getCurFillingAfterLow_ms());
       logger.println(" ms");
     }
     void onRun() override

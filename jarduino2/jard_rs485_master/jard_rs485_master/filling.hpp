@@ -33,8 +33,8 @@ class SpecialFillElmSettings
  * Pour le cote barbec, les 3 derniers oyas doivent remplir moins (plus petits)
  * */
 #if (defined(NODE_BARBEC) && !defined(NODE_REDUIT))
-  #define TIMEOUT_LOW_MS                      (80UL * 1000UL)
-  #define TIME_FILLING_AFTER_LOW_MS           (60UL * 1000UL)
+  #define TIMEOUT_LOW_S                      (80)
+  #define TIME_FILLING_AFTER_LOW_S           (60)
 
   SpecialFillElmSettings tabSpecialFillElmSettings[]={
       SpecialFillElmSettings(6,40,40),
@@ -46,8 +46,8 @@ class SpecialFillElmSettings
    * @8 et @9 passent a low en 9s puis a high en 44s (Soit 53s pour passer de vide a high)
    * */
 #elif (!defined(NODE_BARBEC) && defined(NODE_REDUIT))
-  #define TIMEOUT_LOW_MS                      (40UL * 1000UL)
-  #define TIME_FILLING_AFTER_LOW_MS           (30UL * 1000UL)
+  #define TIMEOUT_LOW_S                      (40)
+  #define TIME_FILLING_AFTER_LOW_S           (30)
 
   SpecialFillElmSettings tabSpecialFillElmSettings[]={ };
 
@@ -73,8 +73,8 @@ class FillElm
     {
       addr=0;
       time_s=0;
-      timeout_low_s=TIMEOUT_LOW_MS;
-      time_after_low_s=TIME_FILLING_AFTER_LOW_MS;
+      timeout_low_s=TIMEOUT_LOW_S;
+      time_after_low_s=TIME_FILLING_AFTER_LOW_S;
       low_timed_out=false;
       ended=false;
     }
@@ -266,20 +266,20 @@ class Filling
         tab[inxToFill]->low_timed_out=true;
     }
 
-    unsigned long getCurLowResetTimeout(void)
+    unsigned long getCurLowResetTimeout_ms(void)
     {
       if ( ( inxToFill>=0) && (inxToFill<MAX_FILLING_EQTS) )
-        return tab[inxToFill]->timeout_low_s;
+        return tab[inxToFill]->timeout_low_s*1000UL;
       else
-        return TIMEOUT_LOW_MS;
+        return TIMEOUT_LOW_S*1000UL;
     }
 
-    unsigned long getCurFillingAfterLow(void)
+    unsigned long getCurFillingAfterLow_ms(void)
     {
       if ( ( inxToFill>=0) && (inxToFill<MAX_FILLING_EQTS) )
-        return tab[inxToFill]->time_after_low_s;
+        return tab[inxToFill]->time_after_low_s*1000UL;
       else
-        return TIME_FILLING_AFTER_LOW_MS;
+        return TIME_FILLING_AFTER_LOW_S*1000UL;
     }
 
     int getAddrOf(int inx)
