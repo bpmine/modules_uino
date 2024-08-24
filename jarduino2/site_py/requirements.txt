@@ -1,5 +1,0 @@
-pymongo
-requests
-demjson
-pika
-flask
