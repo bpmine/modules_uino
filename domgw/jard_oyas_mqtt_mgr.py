@@ -7,7 +7,7 @@ import json
 import datetime
 import threading
 
-DEBUG_CYCLE=True
+DEBUG_CYCLE=False
 DEBUG_MQTT=False
 
 class RdApp:
