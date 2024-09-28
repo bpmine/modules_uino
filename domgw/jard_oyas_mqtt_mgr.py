@@ -7,7 +7,7 @@ import json
 import datetime
 import threading
 
-DEBUG_CYCLE=False
+DEBUG_CYCLE=True
 DEBUG_MQTT=False
 
 class RdApp:
@@ -216,6 +216,7 @@ class RdOyasSrv(RdApp):
     def sync(self):
         print('Demarrage du Thread de synchro/requete...')
         while True:
+            time.sleep(1)
             on=self.get_app_var_bool('on')
             if on==True:
                 print('SYNC...')
@@ -223,10 +224,7 @@ class RdOyasSrv(RdApp):
                     print(n)
                     req={'req':'cmds','cmds':0,'ctrl':'0'}
                     msg=json.dumps(req)
-                    self.client.publish(f'/oyas/cmd/{n}',msg)
-                    
-
-                time.sleep(1)
+                    self.client.publish(f'/oyas/cmd/{n}',msg)            
 
     def start(self):
         oldOn=False
