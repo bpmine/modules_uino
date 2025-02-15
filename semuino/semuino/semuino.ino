@@ -9,10 +9,11 @@
 #include <RTClib.h>
 #include <Wire.h>
 
-#define VERSION "V1.0"
+#define VERSION "V1.1"
 
 //#define SET_TIME
-#define SET_DATE_STR "01/03/2024"
+#define SET_TIME_OFFSET (1) ///< 1 heure en hiver et 2 heures en été
+#define SET_DATE_STR "15/02/2025"
 #define SET_TIME_STR __TIME__
 
 #define START_HOUR  (6)  ///< Heure de la montee en lumiere (au max au bout d'1h)
@@ -181,6 +182,89 @@ void setBBR(CRGB *pLeds)
   }
 }
 
+// Algorithme de Zeller pour trouver le jour de la semaine (0 = samedi, 1 = dimanche, ...)
+int getWeekday(int year, int month, int day)
+{
+  if (month < 3) 
+  {
+    month += 12;
+    year--;
+  }
+  int K = year % 100;
+  int J = year / 100;
+  int weekday = (day + (13 * (month + 1)) / 5 + K + (K / 4) + (J / 4) + 5 * J) % 7;
+  return (weekday + 6) % 7; // Convertir en format (0 = dimanche, 1 = lundi, ...)
+}
+
+int getLastSunday(int year, int month)
+{
+  int daysInMonth[] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
+
+  // Vérifier si l'année est bissextile
+  if ((year % 4 == 0 && year % 100 != 0) || (year % 400 == 0))
+  {
+    daysInMonth[1] = 29; // Février = 29 jours
+  }
+
+  int lastDay = daysInMonth[month - 1]; // Dernier jour du mois
+  int dayOfWeek = (lastDay + getWeekday(year, month, 1) - 1) % 7; // Jour de la semaine du dernier jour
+
+  return lastDay - dayOfWeek;
+}
+
+int isDST(int day, int month, int year, int hour)
+{
+  int last_sunday_march = getLastSunday(year, 3);
+  int last_sunday_october = getLastSunday(year, 10);
+
+  if (month > 3 && month < 10) return 1;
+  if (month < 3 || month > 10) return 0;
+
+  if (month == 3) {
+    if (day > last_sunday_march || (day == last_sunday_march && hour >= 2)) return 1;
+    return 0;
+  }
+
+  if (month == 10) {
+    if (day > last_sunday_october || (day == last_sunday_october && hour >= 2)) return 0;
+    return 1;
+  }
+
+  return 0;
+}
+
+void convertToLocalTime(int &year,int &month,int &day,int &hour)
+{  
+  int offset = 1;
+  if (isDST(day, month, year, hour))
+  {
+    offset = 2;
+  }
+
+  hour += offset;
+  if (hour >= 24) 
+  {
+    hour -= 24;
+    day += 1;
+
+    int days_in_month[] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
+    if ((year % 4 == 0 && year % 100 != 0) || (year % 400 == 0)) 
+    {
+      days_in_month[1] = 29;
+    }
+    if (day > days_in_month[month - 1])
+    {
+      day = 1;
+      month += 1;
+      if (month > 12) 
+      {
+        month = 1;
+        year += 1;
+      }
+    }
+  }
+}
+
 /**
  * @brief Animation au demarage (pour tester les LEDs)
  * 
@@ -301,16 +385,24 @@ void setup()
   Serial.print(" ");
   Serial.println(SET_TIME_STR);
 
-  int year, month, day, hour, minute, second;
-  sscanf(SET_DATE_STR, "%02d/%02d/%04d", &day, &month, &year);
-  sscanf(SET_TIME_STR, "%02d:%02d:%02d", &hour, &minute, &second);
-  DateTime newDte(year, month, day, hour, minute, second);
+  int year2, month2, day2, hour2, minute2, second2;
+  sscanf(SET_DATE_STR, "%02d/%02d/%04d", &day2, &month2, &year2);
+  sscanf(SET_TIME_STR, "%02d:%02d:%02d", &hour2, &minute2, &second2);
+  DateTime newDte(year2, month2, day2, hour2-SET_TIME_OFFSET, minute2, second2);
   rtc.adjust(newDte);
 #endif
 
   char tmp[22];
-  DateTime now = rtc.now();
+  DateTime now = rtc.now();  
   sprintf(tmp, "%02d/%02d/%04d %02d:%02d:%02d", now.day() , now.month(), now.year(), now.hour(), now.minute(), now.second());
+  Serial.println(tmp);
+
+  int year=now.year();
+  int month=now.month();
+  int day=now.day();
+  int hour=now.hour();
+  convertToLocalTime(year,month,day,hour);
+  sprintf(tmp, "%02d/%02d/%04d %02d:%02d:%02d", day , month, year, hour, now.minute(), now.second());
   Serial.println(tmp);
 
   delay(500);
@@ -341,10 +433,17 @@ void setup()
 */
 void getTime(int &hour,int &minute, int &second)
 {
-  DateTime now = rtc.now();
-  hour=now.hour();
-  minute=now.minute();
-  second=now.second();
+  DateTime nowUTC = rtc.now();
+  int year=nowUTC.year();
+  int month=nowUTC.month();
+  int day=nowUTC.day();
+    
+  hour=nowUTC.hour();
+  minute=nowUTC.minute();
+  second=nowUTC.second();
+  
+  convertToLocalTime(year,month,day,hour);
+
   return 0;
 }
 
@@ -637,3 +736,85 @@ void loop()
   Serial.print("Hum:");
   Serial.println(tmp);*/
 }
+
+/*inline void _term_exec_time()
+{
+  DateTime now=rtc.now();
+  Serial.print("UTC:");
+  Serial.print(now.day());Serial.print("/");Serial.print(now.month());Serial.print("/");Serial.print(now.year());
+  Serial.print(" ");
+  Serial.print(now.hour());Serial.print(":");Serial.print(now.minute());Serial.print(":");Serial.println(now.second());  
+}
+
+inline void _term_execCmd(const char *strCmd,const char *strParams)
+{
+  if (strcmp(strCmd,"test")==0)
+  {
+    Serial.println("TEST OK");
+  }
+  else if (strcmp(strCmd,"time")==0)
+  {
+    _term_exec_time();
+  }
+  else if (strcmp(strCmd,"settime")==0)
+  {
+    int hour,minute,second;
+    if ( sscanf(strParams,"%02d:%02d:%02d",&hour,&minute,&second)==3 )
+    {
+      DateTime now=rtc.now();
+      DateTime newDte(now.year(),now.month(),now.day(),hour, minute,second);
+      rtc.adjust(newDte);
+      _term_exec_time();
+    }
+    else
+    {
+      Serial.println("Paramètre incorrect!");
+    }    
+  }
+  else if (strcmp(strCmd,"setdate")==0)
+  {
+    int day,month,year;
+    if ( sscanf(strParams,"%02d/%02d/%04d",&day,&month,&year)==3 )
+    {
+      DateTime now=rtc.now();
+      DateTime newDte(year,month,day,now.hour(), now.minute(),now.second());
+      rtc.adjust(newDte);
+      _term_exec_time();
+    }
+    else
+    {
+      Serial.println("Paramètre incorrect!");
+    }    
+  }
+  else if (strcmp(strCmd,"help")==0)
+  {
+    Serial.println("Aide:");
+    Serial.println("  - help: Cette aide.");
+    Serial.println("  - test: Tester la comm.");
+    Serial.println("  - setdate <dd/mm/yyyy>: Regler la date UTC.");
+    Serial.println("  - settime <HH:MM:SS>: Regler l'heure UTC.");
+    Serial.println("_____________________________________________");    
+  }
+}
+
+void serialEvent(void)
+{
+  if (Serial.available()>0)
+  {
+    String st=Serial.readString();
+    if (st.length()>20)
+      return;
+
+    st.trim();
+
+    int inx=st.indexOf(" ");
+    if (inx==-1)
+    {
+      _term_execCmd(st.c_str(),NULL);
+    }
+    else
+    {
+      _term_execCmd(st.substring(0,inx).c_str(),st.substring(inx+1).c_str());
+    }
+  }
+}*/
