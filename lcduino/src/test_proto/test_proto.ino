@@ -9,9 +9,12 @@
 // TFT
 // =====================================================
 
-#define TFT_CS   D8
-#define TFT_DC   D2
-#define TFT_RST  D4
+#define TFT_CS        D0
+#define TFT_DC        D2
+#define TFT_RST       -1
+#define PIN_PWR_LCD   D4
+#define PIN_BUZZER    D8
+#define PIN_BUTTON    D3
 
 // SPI matériel ESP8266 :
 // SCK  = D5
@@ -1110,6 +1113,15 @@ void setup() {
 
   delay(100);
 
+  pinMode(PIN_PWR_LCD,OUTPUT);
+  pinMode(PIN_BUZZER,OUTPUT);
+  pinMode(PIN_BUTTON,INPUT_PULLUP);
+
+  digitalWrite(PIN_PWR_LCD,HIGH);
+  tone(PIN_BUZZER,440);
+  delay(500);
+  noTone(PIN_BUZZER);
+
   SPI.begin();
 
   tft.begin();
@@ -1237,6 +1249,8 @@ void setup() {
   Serial.println(
     "Serveur HTTP demarre"
   );
+
+  drawCat();
 }
 
 
@@ -1247,6 +1261,8 @@ void setup() {
 void loop() {
 
   server.handleClient();
+
+  digitalWrite(PIN_PWR_LCD,!digitalRead(PIN_BUTTON));
 
   yield();
 }
